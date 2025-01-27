@@ -27,8 +27,9 @@ pub fn log_callback(
         } else if arg.is_number() {
             output.push_str(&arg.number_value(scope).unwrap().to_string());
         } else if arg.is_object() {
-            // For objects, try to JSON.stringify them
             let global = scope.get_current_context().global(scope);
+
+            // Attempt to stringify the object
             let json = v8::String::new(scope, "JSON").unwrap();
             let json_obj = global.get(scope, json.into()).unwrap();
             let stringify = v8::String::new(scope, "stringify").unwrap();
@@ -38,15 +39,38 @@ pub fn log_callback(
                 .get(scope, stringify.into())
                 .unwrap();
 
-            // TODO(codekeyz): Re-look into this
-            // if let Some(result) =
-            //     stringify_fn
-            //         .to_object(scope)
-            //         .unwrap()
-            //         .call_as_function(scope, json_obj, &[arg])
-            // {
-            //     output.push_str(&result.to_string(scope).unwrap().to_rust_string_lossy(scope));
-            // }
+            let stringify_fn = v8::Local::<v8::Function>::try_from(stringify_fn).unwrap();
+            let recv = v8::undefined(scope).into();
+            let args = [arg.into()];
+
+            let result = stringify_fn.call(scope, recv, &args).unwrap();
+
+            // If stringify is undefined, maybe it's a class
+            if result.is_undefined() {
+                if let Some(obj) = arg.to_object(scope) {
+                    let constructor = v8::String::new(scope, "constructor").unwrap();
+                    if let Some(constructor_val) = obj.get(scope, constructor.into()) {
+                        if let Some(_) = constructor_val.to_object(scope) {
+                            let name_key = v8::String::new(scope, "name").unwrap();
+
+                            if let Some(name_val) = obj.get(scope, name_key.into()) {
+                                output.push_str("[class ");
+                                output.push_str(
+                                    &name_val
+                                        .to_string(scope)
+                                        .unwrap()
+                                        .to_rust_string_lossy(scope),
+                                );
+                                output.push(']');
+                                continue;
+                            }
+                        }
+                    }
+                }
+            } else {
+                let result_str = result.to_rust_string_lossy(scope);
+                output.push_str(&result_str);
+            }
         }
     }
 

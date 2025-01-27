@@ -2,6 +2,7 @@ use rusty_v8 as v8;
 
 mod async_runtime;
 mod polyfill_console;
+mod polyfill_exports;
 mod polyfill_fetch;
 
 pub fn init_v8<F>(closure: F)
@@ -39,6 +40,12 @@ pub fn execute_js(script_content: String, isolate: &mut v8::Isolate) {
 
         let context = v8::Context::new_from_template(handle_scope, global);
         let context_scope = &mut v8::ContextScope::new(handle_scope, context);
+
+        let exports = v8::Object::new(context_scope);
+        let exports_name = v8::String::new(context_scope, "exports").unwrap();
+        context
+            .global(context_scope)
+            .set(context_scope, exports_name.into(), exports.into());
 
         // Create and add console object
         let console_template = polyfill_console::create_console(context_scope);

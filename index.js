@@ -1,16 +1,18 @@
-async function fetchData2() {
-  console.debug("Start Fetch 2");
+class Hello {
+  constructor() {
+    console.log("Hello");
+  }
 
-  const result = await fetch("https://jsonplaceholder.typicode.com/posts/1");
-  console.log(result);
+  async fetchData() {
+    console.debug("Start Fetch 1");
 
-  return result;
+    const result = await fetch("https://jsonplaceholder.typicode.com/posts");
+    console.log(result);
+
+    return result;
+  }
 }
 
-fetch("https://jsonplaceholder.typicode.com/posts").then(async (res) => {
-  console.debug("Start Fetch 1");
+exports.Hello = Hello;
 
-  console.log(res);
-
-  await fetchData2();
-});
+console.log(exports.Hello);
