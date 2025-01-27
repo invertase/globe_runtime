@@ -5,12 +5,52 @@ pub fn log_callback(
     args: v8::FunctionCallbackArguments,
     _rv: v8::ReturnValue,
 ) {
-    let message = args
-        .get(0)
-        .to_string(scope)
-        .unwrap()
-        .to_rust_string_lossy(scope);
-    println!("{}", message);
+    // Handle multiple arguments
+    let mut output = String::new();
+
+    for i in 0..args.length() {
+        if i > 0 {
+            output.push(' ');
+        }
+
+        let arg = args.get(i);
+
+        // Handle different types of arguments
+        if arg.is_string() {
+            output.push_str(&arg.to_string(scope).unwrap().to_rust_string_lossy(scope));
+        } else if arg.is_null() {
+            output.push_str("null");
+        } else if arg.is_undefined() {
+            output.push_str("undefined");
+        } else if arg.is_boolean() {
+            output.push_str(&arg.boolean_value(scope).to_string());
+        } else if arg.is_number() {
+            output.push_str(&arg.number_value(scope).unwrap().to_string());
+        } else if arg.is_object() {
+            // For objects, try to JSON.stringify them
+            let global = scope.get_current_context().global(scope);
+            let json = v8::String::new(scope, "JSON").unwrap();
+            let json_obj = global.get(scope, json.into()).unwrap();
+            let stringify = v8::String::new(scope, "stringify").unwrap();
+            let stringify_fn = json_obj
+                .to_object(scope)
+                .unwrap()
+                .get(scope, stringify.into())
+                .unwrap();
+
+            // TODO(codekeyz): Re-look into this
+            // if let Some(result) =
+            //     stringify_fn
+            //         .to_object(scope)
+            //         .unwrap()
+            //         .call_as_function(scope, json_obj, &[arg])
+            // {
+            //     output.push_str(&result.to_string(scope).unwrap().to_rust_string_lossy(scope));
+            // }
+        }
+    }
+
+    println!("{}", output);
 }
 
 pub fn create_console<'a>(scope: &mut v8::HandleScope<'a>) -> v8::Local<'a, v8::ObjectTemplate> {

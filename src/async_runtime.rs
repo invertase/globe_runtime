@@ -1,15 +1,8 @@
-use std::sync::Once;
+use std::sync::OnceLock;
 use tokio::runtime::Runtime;
 
-static INIT: Once = Once::new();
-static mut RUNTIME: Option<Runtime> = None;
+static RUNTIME: OnceLock<Runtime> = OnceLock::new();
 
 pub fn get_runtime() -> &'static Runtime {
-    unsafe {
-        INIT.call_once(|| {
-            let rt = Runtime::new().expect("Failed to create Tokio runtime");
-            RUNTIME = Some(rt);
-        });
-        RUNTIME.as_ref().expect("Runtime is not initialized")
-    }
+    RUNTIME.get_or_init(|| Runtime::new().expect("Failed to create Tokio runtime"))
 }

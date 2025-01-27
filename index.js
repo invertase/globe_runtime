@@ -1,14 +1,16 @@
-// async function fetchData2() {
-//   const result = await fetch("https://jsonplaceholder.typicode.com/posts");
-//   console.log(result);
+async function fetchData2() {
+  console.debug("Start Fetch 2");
 
-//   return result;
-// }
+  const result = await fetch("https://jsonplaceholder.typicode.com/posts/1");
+  console.log(result);
 
-// fetchData2();
+  return result;
+}
 
-fetch("https://jsonplaceholder.typicode.com/posts").then((res) => {
+fetch("https://jsonplaceholder.typicode.com/posts").then(async (res) => {
+  console.debug("Start Fetch 1");
+
   console.log(res);
-});
 
-console.debug("Hello WOrld");
+  await fetchData2();
+});
