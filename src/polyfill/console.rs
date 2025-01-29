@@ -43,33 +43,33 @@ pub fn log_callback(
             let recv = v8::undefined(scope).into();
             let args = [arg.into()];
 
-            let result = stringify_fn.call(scope, recv, &args).unwrap();
+            let result = stringify_fn.call(scope, recv, &args);
 
-            // If stringify is undefined, maybe it's a class
-            if result.is_undefined() {
-                if let Some(obj) = arg.to_object(scope) {
-                    let constructor = v8::String::new(scope, "constructor").unwrap();
-                    if let Some(constructor_val) = obj.get(scope, constructor.into()) {
-                        if let Some(_) = constructor_val.to_object(scope) {
-                            let name_key = v8::String::new(scope, "name").unwrap();
+            if let Some(result) = result {
+                let result_str = result.to_rust_string_lossy(scope);
+                output.push_str(&result_str);
+                continue;
+            }
 
-                            if let Some(name_val) = obj.get(scope, name_key.into()) {
-                                output.push_str("[class ");
-                                output.push_str(
-                                    &name_val
-                                        .to_string(scope)
-                                        .unwrap()
-                                        .to_rust_string_lossy(scope),
-                                );
-                                output.push(']');
-                                continue;
-                            }
+            if let Some(obj) = arg.to_object(scope) {
+                let constructor = v8::String::new(scope, "constructor").unwrap();
+                if let Some(constructor_val) = obj.get(scope, constructor.into()) {
+                    if let Some(_) = constructor_val.to_object(scope) {
+                        let name_key = v8::String::new(scope, "name").unwrap();
+
+                        if let Some(name_val) = obj.get(scope, name_key.into()) {
+                            output.push_str("[class ");
+                            output.push_str(
+                                &name_val
+                                    .to_string(scope)
+                                    .unwrap()
+                                    .to_rust_string_lossy(scope),
+                            );
+                            output.push(']');
+                            continue;
                         }
                     }
                 }
-            } else {
-                let result_str = result.to_rust_string_lossy(scope);
-                output.push_str(&result_str);
             }
         }
     }

@@ -1,0 +1,6 @@
+{
+  "rust-analyzer.cargo.buildScripts.enable": true,
+  "files.associations": {
+    "dart_api_dl_impl.h": "c"
+  }
+}

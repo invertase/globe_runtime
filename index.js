@@ -1,18 +1,40 @@
-class Hello {
-  constructor() {
-    console.log("Hello");
-  }
+const { GoogleGenerativeAI } = require("@google/generative-ai");
+// async function analyzeImage() {
+//   try {
+//     // Initialize Google Generative AI with API Key
+//     const genAI = new GoogleGenerativeAI(process.env.API_KEY);
 
-  async fetchData() {
-    console.debug("Start Fetch 1");
+//     // Get the generative model
+//     const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
-    const result = await fetch("https://jsonplaceholder.typicode.com/posts");
-    console.log(result);
+//     // // Define the prompt and image data
+//     const prompt = "Does this look store-bought or homemade?";
+//     // const image = {
+//     //   inlineData: {
+//     //     data: Buffer.from(fs.readFileSync("cookie.png")).toString("base64"),
+//     //     mimeType: "image/png",
+//     //   },
+//     // };
 
-    return result;
-  }
-}
+//     // // Generate content
+//     const result = await model.generateContent([prompt]);
 
-exports.Hello = Hello;
+//     // // Log the response
+//     // console.log(result.response.text());
+//   } catch (error) {
+//     console.error("Error:", error.message);
+//   }
+// }
 
-console.log(exports.Hello);
+// // Invoke the async function
+// analyzeImage();
+
+fetch("https://jsonplaceholder.typicode.com/posts")
+  .then((res) => {
+    console.log("We got result on JS side");
+
+    send_to_port(dart_port, res);
+  })
+  .catch((error) => {
+    console.error(error);
+  });

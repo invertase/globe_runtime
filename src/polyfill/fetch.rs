@@ -3,7 +3,7 @@ use std::{str::FromStr, sync::mpsc};
 use reqwest::{Client, Method};
 use rusty_v8 as v8;
 
-use crate::async_runtime::get_runtime;
+use super::get_runtime;
 
 #[derive(Debug)]
 struct FetchOptions {
@@ -40,7 +40,7 @@ fn fetch_options_to_rust(
         let key = property_names.get_index(scope, i).unwrap();
         let key_str = key.to_string(scope).unwrap().to_rust_string_lossy(scope);
 
-        let value = fetch_opts.get(scope, key.into()).unwrap();
+        let value = fetch_opts.get(scope, key).unwrap();
         let value_str = value.to_string(scope).unwrap().to_rust_string_lossy(scope);
 
         match key_str.as_str() {
@@ -85,7 +85,7 @@ pub fn fetch(
                 let body = response.text().await.unwrap();
                 Ok(body)
             }
-            Err(_) => Err("Failed to fetch".to_string()),
+            Err(error) => Err(format!("Failed to fetch: {}", error)),
         };
         tx.send(result).unwrap();
     });
