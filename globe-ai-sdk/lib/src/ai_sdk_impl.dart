@@ -50,7 +50,7 @@ class _$AISdkImpl implements AISdk {
 
     _callAiFnAsync(namePtr, messageIdentifier, nativePort);
 
-    // calloc.free(namePtr);
+    calloc.free(namePtr);
 
     return completer.future;
   }
