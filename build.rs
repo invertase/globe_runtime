@@ -4,7 +4,7 @@ use std::path::PathBuf;
 fn main() {
     let project_dir = env::var("CARGO_MANIFEST_DIR").unwrap();
     let include_path = PathBuf::from(format!("{}/third_party/dart/include", project_dir));
-    let dart_binding_file = PathBuf::from(format!("{}/src/dart_api_dl.rs", project_dir));
+    let dart_binding_file = PathBuf::from(format!("{}/src/dart_api.rs", project_dir));
 
     // Compile the C code
     cc::Build::new()

@@ -1,40 +1,11 @@
-const { GoogleGenerativeAI } = require("@google/generative-ai");
-// async function analyzeImage() {
-//   try {
-//     // Initialize Google Generative AI with API Key
-//     const genAI = new GoogleGenerativeAI(process.env.API_KEY);
+// const { GoogleGenerativeAI } = require("@google/generative-ai");
 
-//     // Get the generative model
-//     const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+fetch(`https://jsonplaceholder.typicode.com/posts/1`)
+  .then(async (res) => {
+    let data = await res.json();
 
-//     // // Define the prompt and image data
-//     const prompt = "Does this look store-bought or homemade?";
-//     // const image = {
-//     //   inlineData: {
-//     //     data: Buffer.from(fs.readFileSync("cookie.png")).toString("base64"),
-//     //     mimeType: "image/png",
-//     //   },
-//     // };
-
-//     // // Generate content
-//     const result = await model.generateContent([prompt]);
-
-//     // // Log the response
-//     // console.log(result.response.text());
-//   } catch (error) {
-//     console.error("Error:", error.message);
-//   }
-// }
-
-// // Invoke the async function
-// analyzeImage();
-
-fetch("https://jsonplaceholder.typicode.com/posts")
-  .then((res) => {
-    console.log("We got result on JS side");
-
-    send_to_port(dart_port, res);
+    send_to_dart(JSON.stringify(data));
   })
   .catch((error) => {
-    console.error(error);
+    console.log(error);
   });

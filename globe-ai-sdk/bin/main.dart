@@ -7,4 +7,6 @@ void main() async {
   );
 
   print(result);
+
+  AISdk.dispose();
 }

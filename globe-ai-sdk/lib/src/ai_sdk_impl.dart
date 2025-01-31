@@ -4,6 +4,9 @@ typedef _CallAiFnNative
     = NativeFunction<Uint8 Function(Pointer<Utf8>, Uint8, Uint64)>;
 typedef _CallAiFnDart = int Function(Pointer<Utf8>, int, int);
 
+typedef _DisposeAiFnNative = NativeFunction<Uint8 Function()>;
+typedef _DisposeAiFnDart = int Function();
+
 class _$AISdkImpl implements AISdk {
   final ReceivePort _receivePort;
   final Map<int, Completer<String?>> _completers = <int, Completer<String?>>{};
@@ -22,6 +25,10 @@ class _$AISdkImpl implements AISdk {
       .lookup<_CallAiFnNative>('ai_sdk_execute_async')
       .asFunction<_CallAiFnDart>();
 
+  final _disposeAiFn = dylib
+      .lookup<_DisposeAiFnNative>('ai_sdk_dispose_sdk')
+      .asFunction<_DisposeAiFnDart>();
+
   _$AISdkImpl() : _receivePort = ReceivePort("ai_sdk_receive_port") {
     final initialized = dylib
         .lookupFunction<IntPtr Function(Pointer<Void>),
@@ -33,7 +40,10 @@ class _$AISdkImpl implements AISdk {
     }
 
     _receivePort.listen((message) {
-      print('Received message in Dart land: $message');
+      final formattedJson =
+          JsonEncoder.withIndent(' ').convert(json.decode(message));
+
+      stdout.writeln('Received message in Dart land: \n$formattedJson');
 
       _receivePort.close();
     });
@@ -53,5 +63,11 @@ class _$AISdkImpl implements AISdk {
     calloc.free(namePtr);
 
     return completer.future;
+  }
+
+  void dispose() {
+    final result = _disposeAiFn.call();
+    if (result == 0) return;
+    throw StateError("Failed to dispose AI SDK");
   }
 }

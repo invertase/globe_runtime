@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:ffi';
 import 'dart:io';
 import 'dart:isolate';
@@ -22,6 +23,8 @@ abstract interface class AISdk {
 
     return aiResponse;
   }
+
+  static void dispose() => _aiSdkImpl.dispose();
 }
 
 void main() async {
