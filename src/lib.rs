@@ -1,5 +1,6 @@
 mod dart_api;
 mod dart_runtime;
+mod js_resolver;
 mod js_runtime;
 
 use deno_runtime::deno_core::{self};

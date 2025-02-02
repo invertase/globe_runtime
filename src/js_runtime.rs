@@ -2,7 +2,7 @@ use std::{rc::Rc, sync::Arc};
 
 use deno_runtime::{
     deno_console,
-    deno_core::{extension, FsModuleLoader, JsRuntime, RuntimeOptions},
+    deno_core::{extension, JsRuntime, RuntimeOptions},
     deno_fetch, deno_net,
     deno_permissions::PermissionsContainer,
     deno_telemetry, deno_url, deno_web, deno_webidl,
@@ -10,7 +10,7 @@ use deno_runtime::{
     permissions::RuntimePermissionDescriptorParser,
 };
 
-use crate::dart_runtime::dart_runtime;
+use crate::{dart_runtime::dart_runtime, js_resolver::NpmFsModuleLoader};
 
 pub fn get_runtime(send_port: i64) -> JsRuntime {
     let permission_desc_parser = Arc::new(RuntimePermissionDescriptorParser::new(
@@ -35,7 +35,7 @@ pub fn get_runtime(send_port: i64) -> JsRuntime {
     ];
 
     JsRuntime::new(RuntimeOptions {
-        module_loader: Some(Rc::new(FsModuleLoader)),
+        module_loader: Some(Rc::new(NpmFsModuleLoader)),
         extension_transpiler: Some(Rc::new(|specifier, source| {
             deno_runtime::transpile::maybe_transpile_source(specifier, source)
         })),

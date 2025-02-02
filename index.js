@@ -1,10 +1,9 @@
-// const { GoogleGenerativeAI } = require("@google/generative-ai");
+// import * as googleAI from "@google/generative-ai";
+import * as AI from "./ai.js";
 
-fetch(`https://jsonplaceholder.typicode.com/posts/1`)
+AI.generate("Who is the president of Ghana?")
   .then(async (res) => {
-    let data = await res.json();
-
-    send_to_dart(JSON.stringify(data));
+    send_to_dart(JSON.stringify({ result: res }));
   })
   .catch((error) => {
     console.log(error);
