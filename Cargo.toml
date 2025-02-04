@@ -1,10 +1,9 @@
 [package]
-name = "dart_v8_runtime"
+name = "globe_runtime"
 version = "0.1.0"
 edition = "2021"
 
 [lib]
-name = "dartv8"
 crate-type = ["cdylib"]
 
 [dependencies]

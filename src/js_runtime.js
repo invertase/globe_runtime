@@ -27,6 +27,8 @@ import * as compression from "ext:deno_web/14_compression.js";
 import * as performance from "ext:deno_web/15_performance.js";
 import * as imageData from "ext:deno_web/16_image_data.js";
 
+import * as msgParkr from "ext:js_msg_packr/index.js";
+
 const { core } = Deno;
 
 Object.defineProperty(globalThis, "URL", {
@@ -98,8 +100,13 @@ Object.defineProperty(globalThis, "FormData", {
 
 /***************************** End of Fetch Section ***********************/
 
+const wrap_dart_send = (callbackId, value) => {
+  const buffer = msgParkr.pack(value);
+  core.ops.op_send_to_dart(callbackId, buffer);
+};
+
 Object.defineProperty(globalThis, "send_to_dart", {
-  value: core.ops.op_send_to_dart,
+  value: wrap_dart_send,
   enumerable: true,
   configurable: true,
   writable: true,

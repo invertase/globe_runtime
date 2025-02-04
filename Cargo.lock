@@ -944,24 +944,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "dart_v8_runtime"
-version = "0.1.0"
-dependencies = [
- "bindgen 0.71.1",
- "cc",
- "deno_core",
- "deno_error",
- "deno_runtime",
- "libc",
- "node_resolver",
- "serde_json",
- "sys_traits",
- "thiserror 2.0.11",
- "tokio",
- "v8",
-]
-
-[[package]]
 name = "dashmap"
 version = "5.5.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2856,6 +2838,24 @@ name = "glob"
 version = "0.3.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a8d1add55171497b4705a648c6b583acafb01d58050a51727785f0b2c8e0a2b2"
+
+[[package]]
+name = "globe_runtime"
+version = "0.1.0"
+dependencies = [
+ "bindgen 0.71.1",
+ "cc",
+ "deno_core",
+ "deno_error",
+ "deno_runtime",
+ "libc",
+ "node_resolver",
+ "serde_json",
+ "sys_traits",
+ "thiserror 2.0.11",
+ "tokio",
+ "v8",
+]
 
 [[package]]
 name = "globset"
