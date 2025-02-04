@@ -1,0 +1,99 @@
+import 'dart:ffi';
+import 'dart:typed_data';
+import 'package:ffi/ffi.dart';
+
+/// Protocol for all FFI-compatible types.
+abstract class FFIConvertible {
+  /// Converts a Dart object into an FFI-compatible format.
+  Pointer<Void> toFFI();
+
+  /// Returns the corresponding type identifier (for Rust).
+  FFITypeId get typeId;
+}
+
+enum FFITypeId {
+  none(0),
+  string(1),
+  integer(2),
+  double(3),
+  bool(4),
+  bytes(5);
+
+  final int value;
+  const FFITypeId(this.value);
+}
+
+extension FFITypeExtension on Object {
+  FFIConvertible get toFFIType => switch (this) {
+        String() => FFIString(this as String),
+        int() => FFIInt(this as int),
+        double() => FFIDouble(this as double),
+        bool() => FFIBool(this as bool),
+        Uint8List() => FFIBytes(this as Uint8List),
+        _ => throw UnimplementedError(
+            'FFIConvertible not found for ${this.runtimeType}'),
+      };
+}
+
+class FFIString implements FFIConvertible {
+  final String value;
+  FFIString(this.value);
+
+  @override
+  Pointer<Void> toFFI() => value.toNativeUtf8().cast();
+
+  @override
+  FFITypeId get typeId => FFITypeId.string;
+}
+
+class FFIInt implements FFIConvertible {
+  final int value;
+  FFIInt(this.value);
+
+  @override
+  Pointer<Void> toFFI() => Pointer.fromAddress(value);
+
+  @override
+  FFITypeId get typeId => FFITypeId.integer;
+}
+
+class FFIDouble implements FFIConvertible {
+  final double value;
+  FFIDouble(this.value);
+
+  @override
+  Pointer<Void> toFFI() {
+    final ptr = calloc<Double>();
+    ptr.value = value;
+    return ptr.cast();
+  }
+
+  @override
+  FFITypeId get typeId => FFITypeId.double;
+}
+
+class FFIBool extends FFIInt {
+  // ignore: unused_field
+  final bool _value;
+
+  FFIBool(this._value) : super(_value ? 1 : 0);
+
+  @override
+  FFITypeId get typeId => FFITypeId.bool;
+}
+
+class FFIBytes implements FFIConvertible {
+  final Uint8List value;
+  FFIBytes(this.value);
+
+  @override
+  Pointer<Void> toFFI() {
+    final ptr = calloc<Uint8>(value.length);
+    final byteList = ptr.asTypedList(value.length);
+    byteList.setAll(0, value);
+    return ptr.cast();
+  }
+
+  @override
+  FFITypeId get typeId => FFITypeId.bytes;
+}

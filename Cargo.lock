@@ -958,6 +958,7 @@ dependencies = [
  "sys_traits",
  "thiserror 2.0.11",
  "tokio",
+ "v8",
 ]
 
 [[package]]

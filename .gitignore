@@ -1,3 +1,4 @@
 target
 javascript
 node_modules
+.dart_tool
