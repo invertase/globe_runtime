@@ -94,8 +94,9 @@ class _$GlobeRuntimeImpl implements GlobeRuntime {
       final callbackId = data[0] as int;
       final callbackData = data[1] as Uint8List;
 
-      _callbacks[callbackId]!(callbackData);
-      _callbacks.remove(callbackId);
+      // If the callback returns true, remove it from the list
+      final completed = _callbacks[callbackId]!(callbackData);
+      if (completed) _callbacks.remove(callbackId);
     });
   }
 

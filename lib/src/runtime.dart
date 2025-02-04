@@ -17,7 +17,7 @@ part 'features/ai.dart';
 
 const allocate = ffi.malloc;
 
-typedef OnFunctionData = void Function(Uint8List data);
+typedef OnFunctionData = bool Function(Uint8List data);
 
 abstract interface class GlobeRuntime {
   final _$GlobeRuntimeImpl _impl;
