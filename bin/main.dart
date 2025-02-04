@@ -5,7 +5,7 @@ void main() async {
 
   final result = await globeAI.generate(
     model: 'gemini-1.5-flash',
-    query: 'How many planets do we have?',
+    query: 'What is the eral value of pie?',
   );
 
   print(result);

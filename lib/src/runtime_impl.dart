@@ -96,12 +96,12 @@ class _$GlobeRuntimeImpl implements GlobeRuntime {
       final callbackId = decodedData['callback_id'];
       _completers[callbackId]!(decodedData['data']);
       _completers.remove(callbackId);
-
-      _receivePort.close();
     });
   }
 
   void dispose() {
+    _receivePort.close();
+
     final result = _disposeAiFn.call();
     if (result == 0) return;
     throw StateError("Failed to dispose AI SDK");
