@@ -1,11 +1,11 @@
 import 'package:globe_runtime/globe_runtime.dart';
 
 void main() async {
-  final globeAI = GlobeRuntime.ai();
+  final globeAI = GlobeRuntime.AI();
 
   final result = await globeAI.generate(
     model: 'gemini-1.5-flash',
-    query: 'Greet me in 3 different languages',
+    query: 'How many planets do we have?',
   );
 
   print(result);

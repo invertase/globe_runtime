@@ -5,6 +5,7 @@ import 'dart:ffi';
 import 'dart:ffi' as dart_ffi;
 import 'dart:io';
 import 'dart:isolate';
+import 'dart:typed_data';
 import 'package:ffi/ffi.dart';
 import 'package:path/path.dart' as path;
 import 'package:ffi/ffi.dart' as ffi;
@@ -24,7 +25,7 @@ abstract interface class GlobeRuntime {
   // ignore: unused_element
   GlobeRuntime._(this._impl);
 
-  static GlobeAISdk ai() => GlobeAISdk._(_$GlobeRuntimeImpl("ai"));
+  static GlobeAISdk AI() => GlobeAISdk._(_$GlobeRuntimeImpl("ai.js"));
 
   void call_function({
     required String function,

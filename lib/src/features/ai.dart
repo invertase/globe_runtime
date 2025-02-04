@@ -13,7 +13,7 @@ class GlobeAISdk {
 
     _runtime.call_function(
       function: "ai_generate",
-      args: [query.toFFIType, model.toFFIType],
+      args: [model.toFFIType, query.toFFIType],
       onData: (data) => completer.complete(data),
     );
 

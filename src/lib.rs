@@ -5,24 +5,33 @@ mod js_runtime;
 mod utils;
 
 use deno_runtime::deno_core::{self};
-use tokio::runtime::Runtime;
 
-use std::ffi::{c_char, c_void, CStr};
+use std::{
+    cell::RefCell,
+    ffi::{c_char, c_void, CStr, CString},
+    rc::Rc,
+};
 
-#[repr(C)]
-pub struct GlobeJSRuntime {
-    pub runtime: deno_core::JsRuntime,
-    pub dart_port: dart_api::Dart_Port,
-    pub tokio_runtime: *mut Runtime,
-}
+static mut JS_RUNTIME: Option<Rc<RefCell<deno_core::JsRuntime>>> = None;
 
 #[no_mangle]
 pub unsafe extern "C" fn init_runtime(
     module: *const c_char,
     dart_api: *mut c_void,
     dart_port: dart_api::Dart_Port,
-    globe_js_runtime: *mut *mut GlobeJSRuntime,
+    error: *mut *const c_char,
 ) -> u8 {
+    // Ensure error is initially NULL
+    if !error.is_null() {
+        *error = std::ptr::null();
+    }
+
+    let result = dart_api::Dart_InitializeApiDL(dart_api);
+    if result != 0 {
+        *error = CString::new("Failed to initialize Dart DL C API: Version mismatch. Ensure that include/ matches Dart SDK version.").unwrap().into_raw();
+        return 1;
+    }
+
     let module_name = unsafe { CStr::from_ptr(module).to_str().unwrap() };
 
     // Resolve the JS module path
@@ -30,21 +39,20 @@ pub unsafe extern "C" fn init_runtime(
     {
         Ok(path) => path,
         Err(e) => {
-            eprintln!("Failed to resolve module path: {}", e);
+            *error = CString::new(format!("Failed to resolve module path: {}", e))
+                .unwrap()
+                .into_raw();
             return 1;
         }
     };
 
-    let mut runtime = js_runtime::get_runtime(dart_port);
-    let tokio_runtime = utils::get_runtime();
-
-    // Load and evaluate the JavaScript module
-    let load_result = tokio_runtime.block_on(async {
+    // // Load and evaluate the JavaScript module
+    let runtime_result = utils::get_runtime().block_on(async {
+        let mut runtime = js_runtime::get_runtime(dart_port);
         let mod_id = match runtime.load_main_es_module(&main_module).await {
             Ok(id) => id,
             Err(e) => {
-                eprintln!("Error loading JS module: {}", e);
-                return Err(e);
+                return Err(format!("Error loading JS module: {}", e));
             }
         };
 
@@ -52,124 +60,108 @@ pub unsafe extern "C" fn init_runtime(
 
         // Wait for module execution
         if let Err(e) = runtime.run_event_loop(Default::default()).await {
-            eprintln!("Error running event loop: {}", e);
-            return Err(e);
+            return Err(format!("Error running event loop: {}", e));
         }
 
         if let Err(e) = result.await {
-            eprintln!("Error evaluating module: {}", e);
-            return Err(e);
+            return Err(format!("Error evaluating module: {}", e));
         }
 
-        Ok(())
+        Ok(runtime)
     });
 
-    if let Err(_) = load_result {
+    if let Err(e) = runtime_result {
+        *error = CString::new(e).unwrap().into_raw();
         return 1;
     }
 
-    let result = dart_api::Dart_InitializeApiDL(dart_api);
-    if result != 0 {
-        eprintln!("Failed to initialize Dart DL C API: Version mismatch. Ensure that include/ matches Dart SDK version.");
-        return 1;
+    unsafe {
+        if JS_RUNTIME.is_none() {
+            JS_RUNTIME = Some(Rc::new(RefCell::new(runtime_result.unwrap())));
+        }
     }
-
-    // Allocate the `GlobeJSRuntime` struct and store it in the provided pointer
-    let globe_runtime = Box::new(GlobeJSRuntime {
-        runtime,
-        dart_port,
-        tokio_runtime: tokio_runtime as *const Runtime as *mut Runtime,
-    });
-    *globe_js_runtime = Box::into_raw(globe_runtime);
 
     0
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn dispose_runtime(globe_js_runtime: *mut *mut GlobeJSRuntime) -> u8 {
-    if globe_js_runtime.is_null() {
-        return 1;
-    }
-
-    let runtime = Box::from_raw(*globe_js_runtime);
-    drop(runtime);
-
-    *globe_js_runtime = std::ptr::null_mut();
-
-    0
-}
-
-#[no_mangle]
-pub unsafe extern "C" fn call_js_function(
-    name: *const c_char,
-    identifier: u8,
-    globe_js_runtime: *mut GlobeJSRuntime,
+pub unsafe extern "C" fn call_globe_function(
+    function_name: *const c_char, // Function name
+    message_identifier: i32,      // Message identifier
+    args: *const *const c_void,   // Arguments pointer
+    arg_type_ids: *const i32,     // Argument type IDs
+    arg_sizes: *const isize,      // Argument sizes (for List<String>, Uint8List)
+    args_count: i32,              // Number of arguments
 ) -> u8 {
-    if globe_js_runtime.is_null() {
-        eprintln!("Globe Runtime not initialized");
+    let function_str = unsafe { CStr::from_ptr(function_name).to_str().unwrap() };
+
+    if JS_RUNTIME.is_none() {
+        eprintln!("Error: JS runtime not initialized");
         return 1;
     }
 
-    let globe_js_runtime = &mut *globe_js_runtime;
-    let tokio_runtime = &*globe_js_runtime.tokio_runtime;
-    let javascript_runtime = &mut globe_js_runtime.runtime;
+    let runtime_ref = JS_RUNTIME.as_ref().unwrap().clone();
 
-    let function_name = unsafe { CStr::from_ptr(name).to_str().unwrap() };
+    _ = utils::get_runtime().block_on(async move {
+        let local_set = tokio::task::LocalSet::new();
 
-    tokio_runtime.block_on(async {
-        // Retrieve the function from the module
-        let add_fn = {
-            let scope = &mut javascript_runtime.handle_scope();
-            let global = scope.get_current_context().global(scope);
+        local_set
+            .run_until(async move {
+                let mut javascript_runtime = runtime_ref.borrow_mut();
+                let fnc_call = {
+                    // Retrieve the function from the module
+                    let js_function = {
+                        let scope = &mut javascript_runtime.handle_scope();
+                        let js_function = js_runtime::get_js_function(scope, function_str);
 
-            let function_key = v8::String::new(scope, function_name).unwrap();
-            let function_value = global.get(scope, function_key.into());
+                        if let Err(e) = js_function {
+                            return Err(e);
+                        }
+                        js_function.unwrap()
+                    };
 
-            // Ensure function exists
-            match function_value {
-                Some(value) if value.is_function() => {
-                    let function = v8::Local::<v8::Function>::try_from(value).unwrap();
-                    v8::Global::new(scope, function)
+                    // Prepare arguments
+                    let v8_args = {
+                        let scope = &mut javascript_runtime.handle_scope();
+                        let mut args = js_runtime::c_args_to_v8_args(
+                            scope,
+                            args,
+                            arg_type_ids,
+                            arg_sizes,
+                            args_count,
+                        );
+                        let msg_id_value: v8::Local<v8::Value> =
+                            v8::Integer::new(scope, message_identifier).into();
+
+                        args.push(v8::Global::new(scope, msg_id_value));
+                        args
+                    };
+
+                    javascript_runtime.call_with_args(&js_function, &v8_args)
+                };
+
+                // Wait for module execution
+                if let Err(e) = javascript_runtime.run_event_loop(Default::default()).await {
+                    return Err(format!("Error running event loop: {}", e));
                 }
-                _ => {
-                    eprintln!("Error: Function '{}' not found", function_name);
-                    return;
+
+                if let Err(e) = fnc_call.await {
+                    return Err(format!("Error running function: {}", e));
                 }
-            }
-        };
 
-        // Prepare arguments
-        let args = {
-            let scope = &mut javascript_runtime.handle_scope();
-            let arg1: v8::Local<v8::Value> = v8::Integer::new(scope, 3).into();
-            let arg2: v8::Local<v8::Value> = v8::Integer::new(scope, 5).into();
-            vec![v8::Global::new(scope, arg1), v8::Global::new(scope, arg2)]
-        };
-
-        // Call the JS function
-        let future = javascript_runtime.call_with_args(&add_fn, &args);
-
-        // Wait for execution
-        match future.await {
-            Ok(result) => {
-                let scope = &mut javascript_runtime.handle_scope();
-                let result_value = v8::Local::<v8::Value>::new(scope, result);
-
-                if let Some(int_result) = result_value.to_integer(scope) {
-                    println!(
-                        "Function '{}' returned: {}",
-                        function_name,
-                        int_result.value()
-                    );
-                } else {
-                    eprintln!("Function '{}' did not return an integer", function_name);
-                }
-            }
-            Err(e) => {
-                eprintln!("Error calling function '{}': {}", function_name, e);
-            }
-        }
+                Ok("Success")
+            })
+            .await
     });
+
+    0
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn dispose_runtime() -> u8 {
+    unsafe {
+        JS_RUNTIME = None; // Drop the runtime safely
+    }
 
     0
 }

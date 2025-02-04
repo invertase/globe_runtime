@@ -1,12 +1,12 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
-export const generate = async (prompt) => {
+globalThis.ai_generate = async (model, prompt, callbackId) => {
   const genAI = new GoogleGenerativeAI(
     "AIzaSyCYzKkGgvzI2snmm2rQ5uR924NYxIGSO0E"
   );
-  const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+  const geminiModel = genAI.getGenerativeModel({ model });
 
-  const result = await model.generateContent([prompt]);
+  const result = await geminiModel.generateContent([prompt]);
 
-  return result.response.text();
+  send_to_dart(callbackId, result.response.text());
 };

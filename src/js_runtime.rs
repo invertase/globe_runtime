@@ -1,4 +1,8 @@
-use std::{rc::Rc, sync::Arc};
+use std::{
+    ffi::{c_char, c_void, CStr},
+    rc::Rc,
+    sync::Arc,
+};
 
 use deno_runtime::{
     deno_console,
@@ -44,6 +48,25 @@ pub fn get_runtime(send_port: i64) -> JsRuntime {
     })
 }
 
+pub fn get_js_function(
+    scope: &mut v8::HandleScope,
+    function_str: &str,
+) -> Result<v8::Global<v8::Function>, String> {
+    let global = scope.get_current_context().global(scope);
+    let function_key = v8::String::new(scope, function_str).unwrap();
+    let function_value = global.get(scope, function_key.into());
+
+    // Ensure function exists
+    match function_value {
+        Some(value) if value.is_function() => {
+            let function = v8::Local::<v8::Function>::try_from(value)
+                .map_err(|_| format!("Error: '{}' is not a valid function", function_str))?;
+            Ok(v8::Global::new(scope, function))
+        }
+        _ => Err(format!("Error: Function '{}' not found", function_str)),
+    }
+}
+
 extension!(
     js_runtime,
     esm_entry_point = "ext:js_runtime/js_runtime.js",
@@ -60,3 +83,92 @@ extension!(deno_permissions_worker,
     state.put(ops::TestingFeaturesEnabled(options.enable_testing_features));
   },
 );
+
+#[repr(i32)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum FFITypeId {
+    None = 0,
+    String = 1,
+    Integer = 2,
+    Double = 3,
+    Bool = 4,
+    Bytes = 5,
+}
+
+impl FFITypeId {
+    // ✅ Convert from `i32` (received from Dart)
+    pub fn from_i32(value: i32) -> Option<Self> {
+        match value {
+            0 => Some(FFITypeId::None),
+            1 => Some(FFITypeId::String),
+            2 => Some(FFITypeId::Integer),
+            3 => Some(FFITypeId::Double),
+            4 => Some(FFITypeId::Bool),
+            5 => Some(FFITypeId::Bytes),
+            _ => None,
+        }
+    }
+}
+
+pub fn c_args_to_v8_args(
+    scope: &mut v8::HandleScope,
+    args: *const *const c_void,
+    type_ids: *const i32,
+    sizes: *const isize,
+    count: i32,
+) -> Vec<v8::Global<v8::Value>> {
+    let mut v8_args = Vec::new();
+
+    for i in 0..count as usize {
+        let arg_ptr = unsafe { *args.add(i) };
+        let type_id = unsafe { *type_ids.add(i) };
+        let size = unsafe { *sizes.add(i) };
+
+        if arg_ptr.is_null() {
+            println!("❌ Arg[{}] is NULL", i);
+            continue;
+        }
+
+        let ffi_type = FFITypeId::from_i32(type_id);
+
+        let v8_value: v8::Local<v8::Value> = match ffi_type {
+            Some(FFITypeId::String) => {
+                // ✅ String (Pointer to UTF-8)
+                let c_str = unsafe { CStr::from_ptr(arg_ptr as *const c_char) };
+                match c_str.to_str() {
+                    Ok(string) => v8::String::new(scope, string).unwrap().into(),
+                    Err(_) => v8::undefined(scope).into(),
+                }
+            }
+            Some(FFITypeId::Integer) => {
+                let int_value = arg_ptr as i32;
+                v8::Integer::new(scope, int_value).into()
+            }
+            Some(FFITypeId::Double) => {
+                let float_value = unsafe { *(arg_ptr as *const f64) };
+                v8::Number::new(scope, float_value).into()
+            }
+            Some(FFITypeId::Bool) => {
+                let bool_value = arg_ptr as usize != 0;
+                v8::Boolean::new(scope, bool_value).into()
+            }
+            Some(FFITypeId::Bytes) => {
+                let byte_array =
+                    unsafe { std::slice::from_raw_parts(arg_ptr as *const u8, size as usize) };
+
+                let v8_array = v8::ArrayBuffer::new_backing_store_from_boxed_slice(
+                    byte_array.to_vec().into_boxed_slice(),
+                );
+                let v8_shared_array = v8_array.make_shared();
+                let v8_buffer = v8::ArrayBuffer::with_backing_store(scope, &v8_shared_array);
+                v8_buffer.into()
+            }
+            _ => v8::undefined(scope).into(),
+        };
+
+        let global_value = v8::Global::new(scope, v8_value);
+        v8_args.push(global_value);
+    }
+
+    v8_args
+}
