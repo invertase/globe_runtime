@@ -2,10 +2,8 @@ part of '../runtime.dart';
 
 enum AiProvider { gemini, openai }
 
-class GlobeAISdk {
-  final GlobeRuntime _runtime;
-
-  GlobeAISdk._(this._runtime);
+class GlobeAISdk extends GlobeRuntimeFeature {
+  GlobeAISdk._(super._runtime);
 
   Future<String?> generate({
     AiProvider provider = AiProvider.openai,
@@ -54,6 +52,4 @@ class GlobeAISdk {
 
     return streamController.stream;
   }
-
-  void dispose() => _runtime.dispose();
 }
