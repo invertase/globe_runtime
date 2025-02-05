@@ -131,9 +131,9 @@ class _$GlobeRuntimeImpl implements GlobeRuntime {
           : objectAtIndex.typeId.value;
 
       if (objectAtIndex is FFIBytes) {
-        sizes[i] = objectAtIndex.value.length; // ✅ Store size of Uint8List
+        sizes[i] = objectAtIndex.value.length;
       } else {
-        sizes[i] = 0; // ✅ Default for non-binary types
+        sizes[i] = 0;
       }
     }
 
