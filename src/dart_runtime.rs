@@ -5,7 +5,7 @@ use deno_core::op2;
 use deno_core::OpState;
 
 trait DartJsCommsBridge {
-    fn send_to_dart(&self, callback_id: i32, message: &str) -> bool;
+    fn send_to_dart(&self, callback_id: i32, data: &[u8]) -> bool;
 }
 
 #[derive(Clone)]
@@ -14,24 +14,41 @@ pub struct DartRuntimeOptions {
 }
 
 impl DartJsCommsBridge for i64 {
-    fn send_to_dart(&self, callback_id: i32, message: &str) -> bool {
-        let json_obj = serde_json::json!({
-            "callback_id": callback_id,
-            "data": message
-        });
+    fn send_to_dart(&self, callback_id: i32, data: &[u8]) -> bool {
+        let mut data_vec = data.to_vec();
 
-        let mut json_data = match serde_json::to_vec(&json_obj) {
-            Ok(data) => data,
-            Err(e) => return false,
+        // First Dart_CObject: Integer (callback_id)
+        let mut callback_obj = dart_api::Dart_CObject {
+            type_: dart_api::Dart_CObject_kInt32,
+            value: dart_api::_Dart_CObject__bindgen_ty_1 {
+                as_int32: callback_id,
+            },
         };
 
-        let mut parent_obj = dart_api::Dart_CObject {
+        // Second Dart_CObject: Uint8Array (data)
+        let mut byte_array_obj = dart_api::Dart_CObject {
             type_: dart_api::Dart_CObject_kTypedData,
             value: dart_api::_Dart_CObject__bindgen_ty_1 {
                 as_typed_data: dart_api::_Dart_CObject__bindgen_ty_1__bindgen_ty_4 {
                     type_: dart_api::Dart_TypedData_kUint8,
-                    values: json_data.as_mut_ptr(),
-                    length: json_data.len() as isize,
+                    values: data_vec.as_mut_ptr(),
+                    length: data_vec.len() as isize,
+                },
+            },
+        };
+
+        // Create a Dart_CObject list of fixed length 2
+        let mut array_values: [*mut dart_api::Dart_CObject; 2] = [
+            &mut callback_obj as *mut dart_api::Dart_CObject,
+            &mut byte_array_obj as *mut dart_api::Dart_CObject,
+        ];
+
+        let mut parent_obj = dart_api::Dart_CObject {
+            type_: dart_api::Dart_CObject_kArray,
+            value: dart_api::_Dart_CObject__bindgen_ty_1 {
+                as_array: dart_api::_Dart_CObject__bindgen_ty_1__bindgen_ty_3 {
+                    values: array_values.as_mut_ptr(),
+                    length: array_values.len() as isize,
                 },
             },
         };
@@ -41,15 +58,13 @@ impl DartJsCommsBridge for i64 {
 }
 
 #[op2(fast)]
-fn op_send_to_dart<FP>(state: &mut OpState, callback_id: i32, #[string] message: String) -> bool
+fn op_send_to_dart<FP>(state: &mut OpState, callback_id: i32, #[buffer] data: &[u8]) -> bool
 where
     FP: DartJsCommsBridge + 'static,
 {
     let options = state.borrow::<DartRuntimeOptions>();
 
-    options
-        .send_port
-        .send_to_dart(callback_id, message.to_string().as_str())
+    options.send_port.send_to_dart(callback_id, data)
 }
 
 extension!(

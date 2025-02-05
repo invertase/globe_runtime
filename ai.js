@@ -1,12 +1,28 @@
-import { GoogleGenerativeAI } from "@google/generative-ai";
+import { OpenAI } from "openai";
 
-globalThis.ai_generate = async (model, prompt, callbackId) => {
-  const genAI = new GoogleGenerativeAI(
-    "AIzaSyCYzKkGgvzI2snmm2rQ5uR924NYxIGSO0E"
-  );
-  const geminiModel = genAI.getGenerativeModel({ model });
+globalThis.openai_generate = async (apiKey, model, content, callbackId) => {
+  const client = new OpenAI({ apiKey });
 
-  const result = await geminiModel.generateContent([prompt]);
+  const completion = await client.chat.completions.create({
+    model,
+    messages: [{ role: "user", content }],
+  });
 
-  send_to_dart(callbackId, result.response.text());
+  send_to_dart(callbackId, completion);
+};
+
+globalThis.openai_stream = async (apiKey, model, content, callbackId) => {
+  const client = new OpenAI({ apiKey });
+
+  const completion = await client.chat.completions.create({
+    model,
+    messages: [{ role: "user", content }],
+    stream: true,
+  });
+
+  for await (const chunk of completion) {
+    send_to_dart(callbackId, chunk);
+  }
+
+  send_to_dart(callbackId, "e-o-s");
 };

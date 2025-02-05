@@ -39,7 +39,7 @@ typedef _DisposeAiFnDart = int Function();
 
 class _$GlobeRuntimeImpl implements GlobeRuntime {
   final ReceivePort _receivePort;
-  final HashMap<int, OnFunctionData> _completers = HashMap();
+  final HashMap<int, OnFunctionData> _callbacks = HashMap();
 
   int _messageCount = 0;
 
@@ -48,7 +48,7 @@ class _$GlobeRuntimeImpl implements GlobeRuntime {
       Directory.current.path,
       'target',
       'debug',
-      Platform.isMacOS ? 'libdartv8.dylib' : 'libdartv8.so',
+      Platform.isMacOS ? 'libglobe_runtime.dylib' : 'libglobe_runtime.so',
     ),
   );
 
@@ -88,14 +88,15 @@ class _$GlobeRuntimeImpl implements GlobeRuntime {
     calloc.free(errorPtr);
 
     _receivePort.listen((data) {
-      if (data is! Uint8List) return;
+      if (data is! List) return;
 
-      final jsonData = utf8.decode(data);
-      final decodedData = jsonDecode(jsonData);
+      // callbackId will always be the first element
+      final callbackId = data[0] as int;
+      final callbackData = data[1] as Uint8List;
 
-      final callbackId = decodedData['callback_id'];
-      _completers[callbackId]!(decodedData['data']);
-      _completers.remove(callbackId);
+      // If the callback returns true, remove it from the list
+      final completed = _callbacks[callbackId]!(callbackData);
+      if (completed) _callbacks.remove(callbackId);
     });
   }
 
@@ -130,15 +131,15 @@ class _$GlobeRuntimeImpl implements GlobeRuntime {
           : objectAtIndex.typeId.value;
 
       if (objectAtIndex is FFIBytes) {
-        sizes[i] = objectAtIndex.value.length; // ✅ Store size of Uint8List
+        sizes[i] = objectAtIndex.value.length;
       } else {
-        sizes[i] = 0; // ✅ Default for non-binary types
+        sizes[i] = 0;
       }
     }
 
     _messageCount += 1;
     final int messageIdentifier = _messageCount;
-    _completers[messageIdentifier] = onData;
+    _callbacks[messageIdentifier] = onData;
 
     _callGlobeFunction(
       functionNamePtr,

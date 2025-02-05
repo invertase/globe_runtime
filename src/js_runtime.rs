@@ -35,6 +35,7 @@ pub fn get_runtime(send_port: i64) -> JsRuntime {
         deno_net::deno_net::init_ops_and_esm::<PermissionsContainer>(None, None),
         deno_fetch::deno_fetch::init_ops_and_esm::<PermissionsContainer>(Default::default()),
         dart_runtime::init_ops::<i64>(send_port),
+        js_msg_packr::init_ops_and_esm(),
         js_runtime::init_ops_and_esm(),
     ];
 
@@ -82,6 +83,18 @@ extension!(deno_permissions_worker,
     state.put::<PermissionsContainer>(options.permissions);
     state.put(ops::TestingFeaturesEnabled(options.enable_testing_features));
   },
+);
+
+extension!(
+    js_msg_packr,
+    esm_entry_point = "ext:js_msg_packr/index.js",
+    esm = [
+        dir "third_party/msgpackr",
+        "index.js",
+        "pack.js",
+        "unpack.js",
+        "iterators.js",
+    ],
 );
 
 #[repr(i32)]

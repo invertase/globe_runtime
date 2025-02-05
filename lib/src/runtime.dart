@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'dart:collection';
-import 'dart:convert';
 import 'dart:ffi';
 import 'dart:ffi' as dart_ffi;
 import 'dart:io';
@@ -9,6 +8,7 @@ import 'dart:typed_data';
 import 'package:ffi/ffi.dart';
 import 'package:path/path.dart' as path;
 import 'package:ffi/ffi.dart' as ffi;
+import 'package:msgpack_dart/msgpack_dart.dart' as msg_parkr;
 
 import 'runtime_data.dart';
 
@@ -17,7 +17,7 @@ part 'features/ai.dart';
 
 const allocate = ffi.malloc;
 
-typedef OnFunctionData = void Function(dynamic data);
+typedef OnFunctionData = bool Function(Uint8List data);
 
 abstract interface class GlobeRuntime {
   final _$GlobeRuntimeImpl _impl;
