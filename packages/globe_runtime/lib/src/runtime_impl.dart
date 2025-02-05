@@ -22,6 +22,7 @@ typedef _CallGlobeFunctionNative = NativeFunction<
       Pointer<Int32>, // Argument type IDs
       Pointer<IntPtr>, // Argument sizes (for List<String>, Uint8List)
       Int, // Number of arguments
+      Pointer<Pointer<Utf8>>, // error pointer
     )>;
 typedef _CallGlobeFunctionFnDart = int Function(
   Pointer<Utf8>,
@@ -30,6 +31,7 @@ typedef _CallGlobeFunctionFnDart = int Function(
   Pointer<Int32>,
   Pointer<IntPtr>,
   int,
+  Pointer<Pointer<Utf8>>,
 );
 
 typedef _DisposeAiFnNative = NativeFunction<Uint8 Function()>;
@@ -43,7 +45,7 @@ class _$GlobeRuntimeImpl implements GlobeRuntime {
 
   static late final dylib = DynamicLibrary.open(
     path.join(
-      Directory.current.path,
+      '/Users/codekeyz/Projects/OpenSource/dart_v8_runtime',
       'target',
       'debug',
       Platform.isMacOS ? 'libglobe_runtime.dylib' : 'libglobe_runtime.so',
@@ -92,6 +94,10 @@ class _$GlobeRuntimeImpl implements GlobeRuntime {
       final completed = _callbacks[callbackId]!(callbackData);
       if (completed) _callbacks.remove(callbackId);
     });
+
+    ProcessSignal.sigterm.watch().listen((_) {
+      dispose();
+    });
   }
 
   void dispose() {
@@ -108,6 +114,7 @@ class _$GlobeRuntimeImpl implements GlobeRuntime {
     List<FFIConvertible?> args = const [],
     required OnFunctionData onData,
   }) {
+    final Pointer<Pointer<Utf8>> errorPtr = calloc();
     final functionNamePtr = function.toNativeUtf8();
     final Pointer<Pointer<Void>> argPointers = calloc(args.length);
     final Pointer<Int32> typeIds = calloc(args.length);
@@ -132,18 +139,30 @@ class _$GlobeRuntimeImpl implements GlobeRuntime {
     final int messageIdentifier = _messageCount;
     _callbacks[messageIdentifier] = onData;
 
-    _callGlobeFunction(
+    final callResult = _callGlobeFunction(
       functionNamePtr,
       messageIdentifier,
       argPointers,
       typeIds,
       sizes,
       args.length,
+      errorPtr,
     );
 
     calloc.free(functionNamePtr);
     calloc.free(argPointers);
     calloc.free(typeIds);
+
+    if (callResult != 0) {
+      final Pointer<Utf8> errorMsgPtr = errorPtr.value;
+      final errorMgs = errorMsgPtr.address == 0
+          ? "Failed to call Globe Function"
+          : errorMsgPtr.toDartString();
+
+      throw StateError(errorMgs);
+    }
+
+    calloc.free(errorPtr);
   }
 
   @override
