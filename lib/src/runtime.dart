@@ -14,6 +14,7 @@ import 'runtime_data.dart';
 
 part 'runtime_impl.dart';
 part 'features/ai.dart';
+part 'features/neon.dart';
 
 const allocate = ffi.malloc;
 
@@ -22,10 +23,13 @@ typedef OnFunctionData = bool Function(Uint8List data);
 abstract interface class GlobeRuntime {
   final _$GlobeRuntimeImpl _impl;
 
-  // ignore: unused_element
   GlobeRuntime._(this._impl);
 
   static GlobeAISdk AI() => GlobeAISdk._(_$GlobeRuntimeImpl("ai.js"));
+
+  static GlobeNeonDriver Neon(String databaseUrl) =>
+      GlobeNeonDriver._(_$GlobeRuntimeImpl("neon.js"),
+          databaseUrl: databaseUrl);
 
   void call_function({
     required String function,
@@ -40,4 +44,12 @@ abstract interface class GlobeRuntime {
   }
 
   void dispose() => _impl.dispose();
+}
+
+sealed class GlobeRuntimeFeature {
+  final GlobeRuntime _runtime;
+
+  GlobeRuntimeFeature(this._runtime);
+
+  void dispose() => _runtime.dispose();
 }
