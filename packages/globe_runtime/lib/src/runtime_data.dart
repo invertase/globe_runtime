@@ -1,6 +1,4 @@
-import 'dart:ffi';
-import 'dart:typed_data';
-import 'package:ffi/ffi.dart';
+part of 'runtime.dart';
 
 /// Protocol for all FFI-compatible types.
 abstract class FFIConvertible {

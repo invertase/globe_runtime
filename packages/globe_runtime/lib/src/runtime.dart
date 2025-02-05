@@ -1,4 +1,3 @@
-import 'dart:async';
 import 'dart:collection';
 import 'dart:ffi';
 import 'dart:ffi' as dart_ffi;
@@ -8,28 +7,25 @@ import 'dart:typed_data';
 import 'package:ffi/ffi.dart';
 import 'package:path/path.dart' as path;
 import 'package:ffi/ffi.dart' as ffi;
-import 'package:msgpack_dart/msgpack_dart.dart' as msg_parkr;
-
-import 'runtime_data.dart';
 
 part 'runtime_impl.dart';
-part 'features/ai.dart';
-part 'features/neon.dart';
+part 'runtime_data.dart';
 
-const allocate = ffi.malloc;
-
+/// Callback function for when data is received from the runtime.
+///
+/// Return `true` to unregister the callback.
 typedef OnFunctionData = bool Function(Uint8List data);
 
 abstract interface class GlobeRuntime {
-  final _$GlobeRuntimeImpl _impl;
+  static late final _impl = _$GlobeRuntimeImpl();
 
-  GlobeRuntime._(this._impl);
+  static GlobeRuntime get instance => _impl;
 
-  static GlobeAISdk AI() => GlobeAISdk._(_$GlobeRuntimeImpl("ai.js"));
+  GlobeRuntime._();
 
-  static GlobeNeonDriver Neon(String databaseUrl) =>
-      GlobeNeonDriver._(_$GlobeRuntimeImpl("neon.js"),
-          databaseUrl: databaseUrl);
+  void loadModule(String module) {
+    return _impl.loadModule(module, workingDirectory: Directory.current.path);
+  }
 
   void call_function({
     required String function,
@@ -44,12 +40,4 @@ abstract interface class GlobeRuntime {
   }
 
   void dispose() => _impl.dispose();
-}
-
-sealed class GlobeRuntimeFeature {
-  final GlobeRuntime _runtime;
-
-  GlobeRuntimeFeature(this._runtime);
-
-  void dispose() => _runtime.dispose();
 }

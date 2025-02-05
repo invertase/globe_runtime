@@ -4,13 +4,11 @@ final class NativeGlobeRuntime extends dart_ffi.Opaque {}
 
 typedef _CallGlobeRuntimeInitFnNative = NativeFunction<
     Int Function(
-      Pointer<Utf8>, // module
       Pointer<Void>, // dart API-DL
       Uint64, // dart send port
       Pointer<Pointer<Utf8>>, // error pointer
     )>;
 typedef _CallGlobeRuntimeInitFnDart = int Function(
-  Pointer<Utf8>,
   Pointer<Void>,
   int,
   Pointer<Pointer<Utf8>>,
@@ -64,13 +62,10 @@ class _$GlobeRuntimeImpl implements GlobeRuntime {
       .lookup<_CallGlobeFunctionNative>('call_globe_function')
       .asFunction<_CallGlobeFunctionFnDart>();
 
-  _$GlobeRuntimeImpl(String module)
-      : _receivePort = ReceivePort("globe_runtime") {
-    final modulePtr = module.toNativeUtf8();
+  _$GlobeRuntimeImpl() : _receivePort = ReceivePort("globe_runtime") {
     final Pointer<Pointer<Utf8>> errorPtr = calloc();
 
     final initialized = _globeRuntimeInitFn.call(
-      modulePtr,
       NativeApi.initializeApiDLData,
       _receivePort.sendPort.nativePort,
       errorPtr,
@@ -84,7 +79,6 @@ class _$GlobeRuntimeImpl implements GlobeRuntime {
       throw StateError(errorMgs);
     }
 
-    calloc.free(modulePtr);
     calloc.free(errorPtr);
 
     _receivePort.listen((data) {
@@ -107,9 +101,6 @@ class _$GlobeRuntimeImpl implements GlobeRuntime {
     if (result == 0) return;
     throw StateError("Failed to dispose AI SDK");
   }
-
-  @override
-  _$GlobeRuntimeImpl get _impl => this;
 
   @override
   void call_function({
@@ -154,4 +145,7 @@ class _$GlobeRuntimeImpl implements GlobeRuntime {
     calloc.free(argPointers);
     calloc.free(typeIds);
   }
+
+  @override
+  void loadModule(String modulePath, {String? workingDirectory}) {}
 }
