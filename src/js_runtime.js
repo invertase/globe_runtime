@@ -45,6 +45,27 @@ Object.defineProperty(globalThis, "clearTimeout", {
   writable: true,
 });
 
+Object.defineProperty(globalThis, "ReadableStream", {
+  value: streams.ReadableStream,
+  enumerable: false,
+  configurable: true,
+  writable: true,
+});
+
+Object.defineProperty(globalThis, "TextEncoder", {
+  value: encoding.TextEncoder,
+  enumerable: false,
+  configurable: true,
+  writable: true,
+});
+
+Object.defineProperty(globalThis, "TextDecoder", {
+  value: encoding.TextDecoder,
+  enumerable: false,
+  configurable: true,
+  writable: true,
+});
+
 Object.defineProperty(globalThis, "URL", {
   value: url.URL,
   enumerable: false,

@@ -46,8 +46,8 @@ class GlobeAISdk {
           streamController.close();
           return true;
         }
-
-        streamController.add("Woohoo");
+        final cbunk = decoded['choices'][0]['delta']['content'];
+        streamController.add(cbunk);
         return false;
       },
     );

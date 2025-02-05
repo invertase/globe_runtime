@@ -21,7 +21,7 @@ globalThis.openai_stream = async (apiKey, model, content, callbackId) => {
   });
 
   for await (const chunk of completion) {
-    console.log(chunk);
+    send_to_dart(callbackId, chunk);
   }
 
   send_to_dart(callbackId, "e-o-s");
