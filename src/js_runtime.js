@@ -31,6 +31,20 @@ import * as msgParkr from "ext:js_msg_packr/index.js";
 
 const { core } = Deno;
 
+Object.defineProperty(globalThis, "setTimeout", {
+  value: timers.setTimeout,
+  enumerable: true,
+  configurable: true,
+  writable: true,
+});
+
+Object.defineProperty(globalThis, "clearTimeout", {
+  value: timers.clearTimeout,
+  enumerable: true,
+  configurable: true,
+  writable: true,
+});
+
 Object.defineProperty(globalThis, "URL", {
   value: url.URL,
   enumerable: false,

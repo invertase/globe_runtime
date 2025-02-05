@@ -1,12 +1,16 @@
-use std::{fs, path::Path};
+use std::{
+    env,
+    path::{Path, PathBuf},
+};
 
 use deno_core::{
-    error::ModuleLoaderError, futures::FutureExt, normalize_path, resolve_import, url::Url,
-    ModuleLoadResponse, ModuleLoader, ModuleSource, ModuleSourceCode, ModuleSpecifier, ModuleType,
-    RequestedModuleType, ResolutionKind,
+    error::ModuleLoaderError, futures::FutureExt, url::Url, ModuleLoadResponse, ModuleLoader,
+    ModuleSource, ModuleSourceCode, ModuleSpecifier, ModuleType, RequestedModuleType,
+    ResolutionKind,
 };
+
 use deno_error::JsErrorBox;
-use serde_json::Value;
+use node_resolve::Resolver;
 
 #[derive(Debug, thiserror::Error, deno_error::JsError)]
 #[class(inherit)]
@@ -28,7 +32,7 @@ impl ModuleLoader for NpmFsModuleLoader {
         _kind: ResolutionKind,
     ) -> Result<ModuleSpecifier, ModuleLoaderError> {
         if is_file_import(specifier) {
-            return Ok(resolve_import(specifier, referrer)?);
+            return Ok(deno_core::resolve_import(specifier, referrer)?);
         }
         resolve_npm(specifier, referrer)
     }
@@ -107,45 +111,23 @@ fn resolve_npm(specifier: &str, referrer: &str) -> Result<ModuleSpecifier, Modul
         .to_file_path()
         .map_err(|_| JsErrorBox::generic("Referrer is not a file URL"))?;
 
-    let mut current_dir = referrer_path
+    let current_dir = referrer_path
         .parent()
-        .ok_or_else(|| JsErrorBox::generic("Referrer has no parent directory"))?;
+        .map(PathBuf::from)
+        .unwrap_or_else(|| env::current_dir().expect("Failed to get current directory"));
 
-    while let Some(parent) = current_dir.parent() {
-        let node_modules = current_dir.join("node_modules");
-        let package_dir = node_modules.join(specifier);
+    let resolved_path = Resolver::default()
+        .with_extensions([".mjs"])
+        .with_main_fields(["module"])
+        .with_basedir(current_dir)
+        .resolve(specifier);
 
-        if package_dir.exists() {
-            let package_json = package_dir.join("package.json");
-            if !package_json.exists() {
-                return Err(ModuleLoaderError::from(JsErrorBox::generic(
-                    "Package directory does not contain package.json",
-                )));
-            }
-            let contents = fs::read_to_string(&package_json).map_err(JsErrorBox::from_err)?;
-            let package: Value = serde_json::from_str(&contents).map_err(JsErrorBox::from_err)?;
-
-            let main = package
-                .get("module")
-                .and_then(|v| v.as_str())
-                .unwrap_or("index.mjs");
-            let main_path = normalize_path(&package_dir.join(main));
-
-            if !main_path.exists() {
-                return Err(ModuleLoaderError::from(JsErrorBox::generic(format!(
-                    "Main module does not exist: {main}"
-                ))));
-            }
-
-            return Url::from_file_path(main_path)
-                .map(ModuleSpecifier::from)
-                .map_err(|_| JsErrorBox::generic("Failed to convert file path to URL").into());
-        }
-
-        current_dir = parent;
+    match resolved_path {
+        Ok(path) => Url::from_file_path(path)
+            .map(ModuleSpecifier::from)
+            .map_err(|_| JsErrorBox::generic("Failed to convert file path to URL").into()),
+        Err(err) => Err(ModuleLoaderError::from(JsErrorBox::generic(
+            err.to_string(),
+        ))),
     }
-
-    Err(ModuleLoaderError::from(JsErrorBox::generic(
-        "Module not found in node_modules",
-    )))
 }

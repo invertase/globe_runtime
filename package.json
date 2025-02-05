@@ -10,7 +10,6 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@google/generative-ai": "^0.21.0",
-    "node-fetch": "^3.3.2"
+    "openai": "^4.82.0"
   }
 }

@@ -14,9 +14,8 @@ deno_runtime = { version = "0.196.0", features = ["transpile"] }
 libc = "0.2.169"
 tokio = "1.43.0"
 thiserror = "2.0.3"
-serde_json = "1.0.85"
 sys_traits = "=0.1.7"
-node_resolver = "0.26.0"
+node-resolve = "2.2.0"
 
 [build-dependencies]
 bindgen = "0.71.1"
