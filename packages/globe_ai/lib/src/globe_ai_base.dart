@@ -30,15 +30,23 @@ final class GlobeAISdk {
 
   GlobeAISdk._(this.provider, this._runtime);
 
-  static Future<GlobeAISdk> instance(AiProvider provider) async {
-    await GlobeRuntime.instance.registerModule(_codeURL);
-    return GlobeAISdk._(provider, GlobeRuntime.instance);
+  Future<void> _registerModuleIfNotAlready() async {
+    final instance = GlobeRuntime.instance;
+    if (instance.isModuleRegistered(_moduleName)) return;
+    return GlobeRuntime.instance.registerModule(_codeURL);
   }
+
+  static GlobeAISdk create(AiProvider provider) => GlobeAISdk._(
+        provider,
+        GlobeRuntime.instance,
+      );
 
   Future<String?> generate({
     required String query,
     required String model,
   }) async {
+    await _registerModuleIfNotAlready();
+
     final completer = Completer<String?>();
 
     _runtime.callFunction(
@@ -59,7 +67,9 @@ final class GlobeAISdk {
   Stream<String> stream({
     required String query,
     required String model,
-  }) {
+  }) async* {
+    await _registerModuleIfNotAlready();
+
     final streamController = StreamController<String>();
 
     _runtime.callFunction(
@@ -83,6 +93,6 @@ final class GlobeAISdk {
       },
     );
 
-    return streamController.stream;
+    yield* streamController.stream;
   }
 }
