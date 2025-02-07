@@ -54,25 +54,7 @@ pub fn get_js_function(
     module: &str,
     function: &str,
 ) -> Result<v8::Global<v8::Function>, String> {
-    let global = scope.get_current_context().global(scope);
-
-    // Access the module object inside globalThis
-    let module_key = v8::String::new(scope, module)
-        .ok_or_else(|| format!("Error: Failed to create V8 string for module '{}'", module))?;
-    let module_value = global.get(scope, module_key.into());
-
-    // Ensure module exists
-    let module_obj = match module_value {
-        Some(value) if value.is_object() => value.to_object(scope).unwrap(),
-        _ => {
-            return Err(format!(
-                "Error: Module '{}' not registered in runtime.",
-                module
-            ))
-        }
-    };
-
-    // Get the function from the module object
+    let module_obj = get_js_module(scope, module)?;
     let function_key = v8::String::new(scope, function).ok_or_else(|| {
         format!(
             "Error: Failed to create V8 string for function '{}'",
@@ -81,7 +63,6 @@ pub fn get_js_function(
     })?;
     let function_value = module_obj.get(scope, function_key.into());
 
-    // Ensure function exists
     match function_value {
         Some(value) if value.is_function() => {
             let function = v8::Local::<v8::Function>::try_from(value)
@@ -89,6 +70,29 @@ pub fn get_js_function(
             Ok(v8::Global::new(scope, function))
         }
         _ => Err(format!("Error: Function '{}' not found", function)),
+    }
+}
+
+pub fn get_js_module<'a>(
+    scope: &mut v8::HandleScope<'a>,
+    module: &str,
+) -> Result<v8::Local<'a, v8::Object>, String> {
+    let global = scope.get_current_context().global(scope);
+
+    // Access the module object inside globalThis
+    let module_key = v8::String::new(scope, module)
+        .ok_or_else(|| format!("Error: Failed to create V8 string for module '{}'", module))?;
+    let module_value = global.get(scope, module_key.into());
+
+    // Ensure module exists
+    match module_value {
+        Some(value) if value.is_object() => Ok(value.to_object(scope).unwrap()),
+        _ => {
+            return Err(format!(
+                "Error: Module '{}' not registered in runtime.",
+                module
+            ))
+        }
     }
 }
 

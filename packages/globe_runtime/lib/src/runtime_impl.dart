@@ -48,8 +48,29 @@ typedef _RegisterModuleFnDart = int Function(
   Pointer<Pointer<Utf8>>,
 );
 
+typedef _IsModuleRegisteredFnNative
+    = NativeFunction<Uint8 Function(Pointer<Utf8>)>;
+typedef _IsModuleRegisteredFnDart = int Function(Pointer<Utf8>);
+
 typedef _DisposeAiFnNative = NativeFunction<Uint8 Function()>;
 typedef _DisposeAiFnDart = int Function();
+
+String get _dylibPath {
+  // if (Platform.environment['GLOBE'] != null) {
+  // return path.join(
+  //   Directory.current.path,
+  //   'public/',
+  //   'libglobe_runtime.so',
+  // );
+  // }
+
+  return path.join(
+    Directory.current.path,
+    'target',
+    'debug',
+    Platform.isMacOS ? 'libglobe_runtime.dylib' : 'libglobe_runtime.so',
+  );
+}
 
 class _$GlobeRuntimeImpl {
   final ReceivePort _receivePort;
@@ -57,14 +78,7 @@ class _$GlobeRuntimeImpl {
 
   int _messageCount = 0;
 
-  static final dylib = DynamicLibrary.open(
-    path.join(
-      '/Users/codekeyz/Projects/OpenSource/dart_v8_runtime',
-      'target',
-      'debug',
-      Platform.isMacOS ? 'libglobe_runtime.dylib' : 'libglobe_runtime.so',
-    ),
-  );
+  static final dylib = DynamicLibrary.open(_dylibPath);
 
   final _globeRuntimeInitFn = dylib
       .lookup<_CallGlobeRuntimeInitFnNative>('init_runtime')
@@ -73,6 +87,10 @@ class _$GlobeRuntimeImpl {
   final _registerModuleFn = dylib
       .lookup<_RegisterModuleFnNative>('register_module')
       .asFunction<_RegisterModuleFnDart>();
+
+  final _isModuleRegisteredFn = dylib
+      .lookup<_IsModuleRegisteredFnNative>('is_module_registered')
+      .asFunction<_IsModuleRegisteredFnDart>();
 
   final _callGlobeFunction = dylib
       .lookup<_CallGlobeFunctionNative>('call_globe_function')
@@ -84,7 +102,6 @@ class _$GlobeRuntimeImpl {
 
   _$GlobeRuntimeImpl() : _receivePort = ReceivePort("globe_runtime") {
     final Pointer<Pointer<Utf8>> errorPtr = calloc();
-
     final initialized = _globeRuntimeInitFn.call(
       NativeApi.initializeApiDLData,
       _receivePort.sendPort.nativePort,
@@ -172,7 +189,8 @@ class _$GlobeRuntimeImpl {
       errorPtr,
     );
 
-    calloc.free(functionNamePtr);
+    malloc.free(functionNamePtr);
+    malloc.free(moduleNamePtr);
     calloc.free(argPointers);
     calloc.free(typeIds);
 
@@ -195,7 +213,6 @@ class _$GlobeRuntimeImpl {
     final (file, workdir) = await _resolveModule(modulePath, workingDirectory);
     final modulePathPtr = file.toNativeUtf8();
     final workingDirPtr = workdir.toNativeUtf8();
-
     final Pointer<Pointer<Utf8>> errorPtr = calloc();
 
     if (_registerModuleFn(modulePathPtr, workingDirPtr, errorPtr) != 0) {
@@ -207,8 +224,16 @@ class _$GlobeRuntimeImpl {
       throw StateError(errorMgs);
     }
 
-    calloc.free(modulePathPtr);
+    malloc.free(workingDirPtr);
+    malloc.free(modulePathPtr);
     calloc.free(errorPtr);
+  }
+
+  bool isModuleRegisted(String moduleName) {
+    final moduleNamePtr = moduleName.toNativeUtf8();
+    final result = _isModuleRegisteredFn(moduleNamePtr);
+    malloc.free(moduleNamePtr);
+    return result == 0;
   }
 
   Future<(String, String)> _resolveModule(
@@ -234,6 +259,8 @@ class _$GlobeRuntimeImpl {
       if (response.statusCode != 200) {
         throw HttpException(response.body);
       }
+
+      await runtimeFile.create(recursive: true);
       await runtimeFile.writeAsBytes(response.bodyBytes);
       return (fileName, dir.path);
     } catch (e) {

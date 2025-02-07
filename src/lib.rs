@@ -52,21 +52,53 @@ pub unsafe extern "C" fn register_module(
         *error = std::ptr::null();
     }
 
-    let module_name = unsafe { CStr::from_ptr(module).to_str().unwrap() };
-    let working_dir_name = unsafe { CStr::from_ptr(working_dir).to_str().unwrap() };
+    // Convert module name
+    let module_name = if module.is_null() {
+        set_error(error, "Module name pointer is null");
+        return 1;
+    } else {
+        match CStr::from_ptr(module).to_str() {
+            Ok(name) => name,
+            Err(_) => {
+                set_error(error, "Failed to convert module name");
+                return 1;
+            }
+        }
+    };
+
+    // Convert working directory
+    let working_dir_name = if working_dir.is_null() {
+        set_error(error, "Working directory pointer is null");
+        return 1;
+    } else {
+        match CStr::from_ptr(working_dir).to_str() {
+            Ok(name) => name,
+            Err(_) => {
+                set_error(error, "Failed to convert working directory name");
+                return 1;
+            }
+        }
+    };
+
+    println!("Registering module: {}", module_name);
 
     // Resolve the JS module path
     let main_module = match deno_core::resolve_path(module_name, &PathBuf::from(working_dir_name)) {
         Ok(path) => path,
         Err(e) => {
-            *error = CString::new(format!("Failed to resolve module path: {}", e))
-                .unwrap()
-                .into_raw();
+            set_error(
+                error,
+                format!("Failed to resolve module path: {}", e).as_str(),
+            );
             return 1;
         }
     };
 
+    println!("Resolved module path: {:?}", main_module);
+
     let runtime_ref = JS_RUNTIME.as_ref().unwrap().clone();
+
+    println!("Loading module into runtime...");
 
     utils::get_runtime().block_on(async move {
         let local_set = tokio::task::LocalSet::new();
@@ -78,9 +110,10 @@ pub unsafe extern "C" fn register_module(
                 let mod_id = match javascript_runtime.load_main_es_module(&main_module).await {
                     Ok(id) => id,
                     Err(e) => {
-                        *error = CString::new(format!("Failed to resolve module path: {}", e))
-                            .unwrap()
-                            .into_raw();
+                        set_error(
+                            error,
+                            format!("Failed to load module into runtime: {}", e).as_str(),
+                        );
                         return 1;
                     }
                 };
@@ -89,20 +122,39 @@ pub unsafe extern "C" fn register_module(
 
                 // Wait for module execution
                 if let Err(e) = javascript_runtime.run_event_loop(Default::default()).await {
-                    *error = CString::new(format!("Error running event loop: {}", e))
-                        .unwrap()
-                        .into_raw();
+                    set_error(error, format!("Error running event loop: {}", e).as_str());
                     return 1;
                 }
 
                 if let Err(e) = result.await {
-                    *error = CString::new(format!("Error evaluating module: {}", e))
-                        .unwrap()
-                        .into_raw();
+                    set_error(error, format!("Error evaluating module: {}", e).as_str());
                     return 1;
                 }
 
                 0
+            })
+            .await
+    })
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn is_module_registered(module_name: *const c_char) -> u8 {
+    let module_str = unsafe { CStr::from_ptr(module_name).to_str().unwrap() };
+    let runtime_ref = JS_RUNTIME.as_ref().unwrap().clone();
+
+    utils::get_runtime().block_on(async move {
+        let local_set = tokio::task::LocalSet::new();
+
+        local_set
+            .run_until(async move {
+                let mut javascript_runtime = runtime_ref.borrow_mut();
+                let scope = &mut javascript_runtime.handle_scope();
+                let js_module = js_runtime::get_js_module(scope, module_str);
+
+                match js_module {
+                    Ok(_) => 0,
+                    Err(_) => 1,
+                }
             })
             .await
     })
@@ -123,9 +175,7 @@ pub unsafe extern "C" fn call_globe_function(
     let function_str = unsafe { CStr::from_ptr(function_name).to_str().unwrap() };
 
     if JS_RUNTIME.is_none() {
-        *error = CString::new("Error: JS runtime not initialized")
-            .unwrap()
-            .into_raw();
+        set_error(error, "Error: JS runtime not initialized");
         return 1;
     }
 
@@ -193,4 +243,11 @@ pub unsafe extern "C" fn dispose_runtime() -> u8 {
     }
 
     0
+}
+
+// Helper function to set error messages
+unsafe fn set_error(error: *mut *const c_char, msg: &str) {
+    if !error.is_null() {
+        *error = CString::new(msg).unwrap().into_raw();
+    }
 }

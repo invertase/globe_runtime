@@ -36,6 +36,10 @@ interface class GlobeRuntime {
     );
   }
 
+  bool isModuleRegistered(String moduleName) {
+    return _instance!.isModuleRegisted(moduleName);
+  }
+
   void callFunction(
     String moduleName, {
     required String function,
