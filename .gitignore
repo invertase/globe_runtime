@@ -2,3 +2,7 @@ target
 javascript
 node_modules
 .dart_tool
+.idea
+
+**/pubspec_overrides.yaml
+*.iml

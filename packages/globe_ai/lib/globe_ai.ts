@@ -1,6 +1,6 @@
 import { OpenAI } from "openai";
 
-globalThis.openai_generate = async (apiKey, model, content, callbackId) => {
+const openai_generate = async (apiKey: string, model: string, content: string, callbackId: number) => {
   const client = new OpenAI({ apiKey });
 
   const completion = await client.chat.completions.create({
@@ -11,7 +11,7 @@ globalThis.openai_generate = async (apiKey, model, content, callbackId) => {
   send_to_dart(callbackId, completion);
 };
 
-globalThis.openai_stream = async (apiKey, model, content, callbackId) => {
+const openai_stream = async (apiKey: string, model: string, content: string, callbackId: number) => {
   const client = new OpenAI({ apiKey });
 
   const completion = await client.chat.completions.create({
@@ -26,3 +26,11 @@ globalThis.openai_stream = async (apiKey, model, content, callbackId) => {
 
   send_to_dart(callbackId, "e-o-s");
 };
+
+registerJSModule("GlobeAISdk", {
+  openai_generate,
+  openai_stream,
+});
+
+
+

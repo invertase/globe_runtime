@@ -1,9 +1,8 @@
 {
-  "name": "globe_runtime",
+  "name": "dart_v8_runtime",
   "version": "1.0.0",
   "description": "",
   "type": "module",
-  "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
@@ -12,6 +11,6 @@
   "license": "ISC",
   "dependencies": {
     "@neondatabase/serverless": "^0.10.4",
-    "openai": "^4.82.0"
+    "openai": "^4.83.0"
   }
 }

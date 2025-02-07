@@ -1,6 +1,4 @@
-import 'dart:ffi';
-import 'dart:typed_data';
-import 'package:ffi/ffi.dart';
+part of 'runtime.dart';
 
 /// Protocol for all FFI-compatible types.
 abstract class FFIConvertible {
@@ -30,8 +28,8 @@ extension FFITypeExtension on Object {
         double() => FFIDouble(this as double),
         bool() => FFIBool(this as bool),
         Uint8List() => FFIBytes(this as Uint8List),
-        _ => throw UnimplementedError(
-            'FFIConvertible not found for ${this.runtimeType}'),
+        _ =>
+          throw UnimplementedError('FFIConvertible not found for $runtimeType'),
       };
 }
 

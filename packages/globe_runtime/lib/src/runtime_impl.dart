@@ -4,13 +4,11 @@ final class NativeGlobeRuntime extends dart_ffi.Opaque {}
 
 typedef _CallGlobeRuntimeInitFnNative = NativeFunction<
     Int Function(
-      Pointer<Utf8>, // module
       Pointer<Void>, // dart API-DL
       Uint64, // dart send port
       Pointer<Pointer<Utf8>>, // error pointer
     )>;
 typedef _CallGlobeRuntimeInitFnDart = int Function(
-  Pointer<Utf8>,
   Pointer<Void>,
   int,
   Pointer<Pointer<Utf8>>,
@@ -18,34 +16,50 @@ typedef _CallGlobeRuntimeInitFnDart = int Function(
 
 typedef _CallGlobeFunctionNative = NativeFunction<
     Int Function(
+      Pointer<Utf8>, // Module name
       Pointer<Utf8>, // Function name
       Int, // Message identifier
       Pointer<Pointer<Void>>, // Arguments pointer
       Pointer<Int32>, // Argument type IDs
       Pointer<IntPtr>, // Argument sizes (for List<String>, Uint8List)
       Int, // Number of arguments
+      Pointer<Pointer<Utf8>>, // error pointer
     )>;
 typedef _CallGlobeFunctionFnDart = int Function(
+  Pointer<Utf8>,
   Pointer<Utf8>,
   int,
   Pointer<Pointer<Void>>,
   Pointer<Int32>,
   Pointer<IntPtr>,
   int,
+  Pointer<Pointer<Utf8>>,
+);
+
+typedef _RegisterModuleFnNative = NativeFunction<
+    Uint8 Function(
+      Pointer<Utf8>,
+      Pointer<Utf8>,
+      Pointer<Pointer<Utf8>>,
+    )>;
+typedef _RegisterModuleFnDart = int Function(
+  Pointer<Utf8>,
+  Pointer<Utf8>,
+  Pointer<Pointer<Utf8>>,
 );
 
 typedef _DisposeAiFnNative = NativeFunction<Uint8 Function()>;
 typedef _DisposeAiFnDart = int Function();
 
-class _$GlobeRuntimeImpl implements GlobeRuntime {
+class _$GlobeRuntimeImpl {
   final ReceivePort _receivePort;
   final HashMap<int, OnFunctionData> _callbacks = HashMap();
 
   int _messageCount = 0;
 
-  static late final dylib = DynamicLibrary.open(
+  static final dylib = DynamicLibrary.open(
     path.join(
-      Directory.current.path,
+      '/Users/codekeyz/Projects/OpenSource/dart_v8_runtime',
       'target',
       'debug',
       Platform.isMacOS ? 'libglobe_runtime.dylib' : 'libglobe_runtime.so',
@@ -56,21 +70,22 @@ class _$GlobeRuntimeImpl implements GlobeRuntime {
       .lookup<_CallGlobeRuntimeInitFnNative>('init_runtime')
       .asFunction<_CallGlobeRuntimeInitFnDart>();
 
-  final _disposeAiFn = dylib
-      .lookup<_DisposeAiFnNative>('dispose_runtime')
-      .asFunction<_DisposeAiFnDart>();
+  final _registerModuleFn = dylib
+      .lookup<_RegisterModuleFnNative>('register_module')
+      .asFunction<_RegisterModuleFnDart>();
 
   final _callGlobeFunction = dylib
       .lookup<_CallGlobeFunctionNative>('call_globe_function')
       .asFunction<_CallGlobeFunctionFnDart>();
 
-  _$GlobeRuntimeImpl(String module)
-      : _receivePort = ReceivePort("globe_runtime") {
-    final modulePtr = module.toNativeUtf8();
+  final _disposeRuntimeFn = dylib
+      .lookup<_DisposeAiFnNative>('dispose_runtime')
+      .asFunction<_DisposeAiFnDart>();
+
+  _$GlobeRuntimeImpl() : _receivePort = ReceivePort("globe_runtime") {
     final Pointer<Pointer<Utf8>> errorPtr = calloc();
 
     final initialized = _globeRuntimeInitFn.call(
-      modulePtr,
       NativeApi.initializeApiDLData,
       _receivePort.sendPort.nativePort,
       errorPtr,
@@ -84,7 +99,6 @@ class _$GlobeRuntimeImpl implements GlobeRuntime {
       throw StateError(errorMgs);
     }
 
-    calloc.free(modulePtr);
     calloc.free(errorPtr);
 
     _receivePort.listen((data) {
@@ -94,30 +108,36 @@ class _$GlobeRuntimeImpl implements GlobeRuntime {
       final callbackId = data[0] as int;
       final callbackData = data[1] as Uint8List;
 
+      final callback = _callbacks[callbackId];
+      if (callback == null) return;
+
       // If the callback returns true, remove it from the list
-      final completed = _callbacks[callbackId]!(callbackData);
+      final completed = callback(callbackData);
       if (completed) _callbacks.remove(callbackId);
+    });
+
+    ProcessSignal.sigterm.watch().listen((_) {
+      dispose();
     });
   }
 
   void dispose() {
     _receivePort.close();
-
-    final result = _disposeAiFn.call();
+    final result = _disposeRuntimeFn.call();
     if (result == 0) return;
     throw StateError("Failed to dispose AI SDK");
   }
 
-  @override
-  _$GlobeRuntimeImpl get _impl => this;
-
-  @override
-  void call_function({
+  void callFunction(
+    String moduleName, {
     required String function,
     List<FFIConvertible?> args = const [],
     required OnFunctionData onData,
   }) {
+    final moduleNamePtr = moduleName.toNativeUtf8();
     final functionNamePtr = function.toNativeUtf8();
+
+    final Pointer<Pointer<Utf8>> errorPtr = calloc();
     final Pointer<Pointer<Void>> argPointers = calloc(args.length);
     final Pointer<Int32> typeIds = calloc(args.length);
     final Pointer<IntPtr> sizes = calloc(args.length);
@@ -141,17 +161,91 @@ class _$GlobeRuntimeImpl implements GlobeRuntime {
     final int messageIdentifier = _messageCount;
     _callbacks[messageIdentifier] = onData;
 
-    _callGlobeFunction(
+    final callResult = _callGlobeFunction(
+      moduleNamePtr,
       functionNamePtr,
       messageIdentifier,
       argPointers,
       typeIds,
       sizes,
       args.length,
+      errorPtr,
     );
 
     calloc.free(functionNamePtr);
     calloc.free(argPointers);
     calloc.free(typeIds);
+
+    if (callResult != 0) {
+      final Pointer<Utf8> errorMsgPtr = errorPtr.value;
+      final errorMgs = errorMsgPtr.address == 0
+          ? "Failed to call Globe Function"
+          : errorMsgPtr.toDartString();
+
+      throw StateError(errorMgs);
+    }
+
+    calloc.free(errorPtr);
+  }
+
+  FutureOr<void> registerModule(
+    String modulePath,
+    String workingDirectory,
+  ) async {
+    final (file, workdir) = await _resolveModule(modulePath, workingDirectory);
+    final modulePathPtr = file.toNativeUtf8();
+    final workingDirPtr = workdir.toNativeUtf8();
+
+    final Pointer<Pointer<Utf8>> errorPtr = calloc();
+
+    if (_registerModuleFn(modulePathPtr, workingDirPtr, errorPtr) != 0) {
+      final Pointer<Utf8> errorMsgPtr = errorPtr.value;
+      final errorMgs = errorMsgPtr.address == 0
+          ? "Failed to register module"
+          : errorMsgPtr.toDartString();
+
+      throw StateError(errorMgs);
+    }
+
+    calloc.free(modulePathPtr);
+    calloc.free(errorPtr);
+  }
+
+  Future<(String, String)> _resolveModule(
+    String modulePath,
+    String workingDirectory,
+  ) async {
+    if (!modulePath.startsWith('https://')) {
+      return (modulePath, workingDirectory);
+    }
+
+    final dir = Directory(path.join(_getUserHomeDirectory, '.globe/runtime/'));
+    if (!dir.existsSync()) await dir.create(recursive: true);
+
+    final fileName = path.basename(modulePath);
+    final runtimeFile = File(path.join(dir.path, fileName));
+
+    if (runtimeFile.existsSync()) {
+      return (fileName, dir.path);
+    }
+
+    try {
+      final response = await http.get(Uri.parse(modulePath));
+      if (response.statusCode != 200) {
+        throw HttpException(response.body);
+      }
+      await runtimeFile.writeAsBytes(response.bodyBytes);
+      return (fileName, dir.path);
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  String get _getUserHomeDirectory {
+    if (Platform.isWindows) {
+      return Platform.environment['USERPROFILE'] ?? 'C:\\Users\\Default';
+    } else {
+      return Platform.environment['HOME'] ?? '/';
+    }
   }
 }

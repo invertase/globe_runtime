@@ -9,6 +9,7 @@ use deno_runtime::deno_core::{self};
 use std::{
     cell::RefCell,
     ffi::{c_char, c_void, CStr, CString},
+    path::PathBuf,
     rc::Rc,
 };
 
@@ -16,12 +17,10 @@ static mut JS_RUNTIME: Option<Rc<RefCell<deno_core::JsRuntime>>> = None;
 
 #[no_mangle]
 pub unsafe extern "C" fn init_runtime(
-    module: *const c_char,
     dart_api: *mut c_void,
     dart_port: dart_api::Dart_Port,
     error: *mut *const c_char,
 ) -> u8 {
-    // Ensure error is initially NULL
     if !error.is_null() {
         *error = std::ptr::null();
     }
@@ -32,11 +31,32 @@ pub unsafe extern "C" fn init_runtime(
         return 1;
     }
 
+    let runtime = js_runtime::get_runtime(dart_port);
+
+    unsafe {
+        if JS_RUNTIME.is_none() {
+            JS_RUNTIME = Some(Rc::new(RefCell::new(runtime)));
+        }
+    }
+
+    0
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn register_module(
+    module: *const c_char,
+    working_dir: *const c_char,
+    error: *mut *const c_char,
+) -> u8 {
+    if !error.is_null() {
+        *error = std::ptr::null();
+    }
+
     let module_name = unsafe { CStr::from_ptr(module).to_str().unwrap() };
+    let working_dir_name = unsafe { CStr::from_ptr(working_dir).to_str().unwrap() };
 
     // Resolve the JS module path
-    let main_module = match deno_core::resolve_path(module_name, &std::env::current_dir().unwrap())
-    {
+    let main_module = match deno_core::resolve_path(module_name, &PathBuf::from(working_dir_name)) {
         Ok(path) => path,
         Err(e) => {
             *error = CString::new(format!("Failed to resolve module path: {}", e))
@@ -46,63 +66,72 @@ pub unsafe extern "C" fn init_runtime(
         }
     };
 
-    // // Load and evaluate the JavaScript module
-    let runtime_result = utils::get_runtime().block_on(async {
-        let mut runtime = js_runtime::get_runtime(dart_port);
-        let mod_id = match runtime.load_main_es_module(&main_module).await {
-            Ok(id) => id,
-            Err(e) => {
-                return Err(format!("Error loading JS module: {}", e));
-            }
-        };
+    let runtime_ref = JS_RUNTIME.as_ref().unwrap().clone();
 
-        let result = runtime.mod_evaluate(mod_id);
+    utils::get_runtime().block_on(async move {
+        let local_set = tokio::task::LocalSet::new();
 
-        // Wait for module execution
-        if let Err(e) = runtime.run_event_loop(Default::default()).await {
-            return Err(format!("Error running event loop: {}", e));
-        }
+        local_set
+            .run_until(async move {
+                let mut javascript_runtime = runtime_ref.borrow_mut();
 
-        if let Err(e) = result.await {
-            return Err(format!("Error evaluating module: {}", e));
-        }
+                let mod_id = match javascript_runtime.load_main_es_module(&main_module).await {
+                    Ok(id) => id,
+                    Err(e) => {
+                        *error = CString::new(format!("Failed to resolve module path: {}", e))
+                            .unwrap()
+                            .into_raw();
+                        return 1;
+                    }
+                };
 
-        Ok(runtime)
-    });
+                let result = javascript_runtime.mod_evaluate(mod_id);
 
-    if let Err(e) = runtime_result {
-        *error = CString::new(e).unwrap().into_raw();
-        return 1;
-    }
+                // Wait for module execution
+                if let Err(e) = javascript_runtime.run_event_loop(Default::default()).await {
+                    *error = CString::new(format!("Error running event loop: {}", e))
+                        .unwrap()
+                        .into_raw();
+                    return 1;
+                }
 
-    unsafe {
-        if JS_RUNTIME.is_none() {
-            JS_RUNTIME = Some(Rc::new(RefCell::new(runtime_result.unwrap())));
-        }
-    }
+                if let Err(e) = result.await {
+                    *error = CString::new(format!("Error evaluating module: {}", e))
+                        .unwrap()
+                        .into_raw();
+                    return 1;
+                }
 
-    0
+                0
+            })
+            .await
+    })
 }
 
 #[no_mangle]
 pub unsafe extern "C" fn call_globe_function(
+    module_name: *const c_char,   // Module name
     function_name: *const c_char, // Function name
     message_identifier: i32,      // Message identifier
     args: *const *const c_void,   // Arguments pointer
     arg_type_ids: *const i32,     // Argument type IDs
     arg_sizes: *const isize,      // Argument sizes (for List<String>, Uint8List)
     args_count: i32,              // Number of arguments
+    error: *mut *const c_char,    // Error message
 ) -> u8 {
+    let module_str = unsafe { CStr::from_ptr(module_name).to_str().unwrap() };
     let function_str = unsafe { CStr::from_ptr(function_name).to_str().unwrap() };
 
     if JS_RUNTIME.is_none() {
-        eprintln!("Error: JS runtime not initialized");
+        *error = CString::new("Error: JS runtime not initialized")
+            .unwrap()
+            .into_raw();
         return 1;
     }
 
     let runtime_ref = JS_RUNTIME.as_ref().unwrap().clone();
 
-    _ = utils::get_runtime().block_on(async move {
+    let result = utils::get_runtime().block_on(async move {
         let local_set = tokio::task::LocalSet::new();
 
         local_set
@@ -112,12 +141,7 @@ pub unsafe extern "C" fn call_globe_function(
                     // Retrieve the function from the module
                     let js_function = {
                         let scope = &mut javascript_runtime.handle_scope();
-                        let js_function = js_runtime::get_js_function(scope, function_str);
-
-                        if let Err(e) = js_function {
-                            return Err(e);
-                        }
-                        js_function.unwrap()
+                        js_runtime::get_js_function(scope, module_str, function_str)?
                     };
 
                     // Prepare arguments
@@ -149,10 +173,15 @@ pub unsafe extern "C" fn call_globe_function(
                     return Err(format!("Error running function: {}", e));
                 }
 
-                Ok("Success")
+                Ok(())
             })
             .await
     });
+
+    if let Err(e) = result {
+        *error = CString::new(e).unwrap().into_raw();
+        return 1;
+    }
 
     0
 }
