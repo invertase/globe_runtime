@@ -107,6 +107,7 @@ pub unsafe extern "C" fn load_module(module: *const c_char, error: *mut *const c
 
 #[no_mangle]
 pub unsafe extern "C" fn call_globe_function(
+    module_name: *const c_char,   // Module name
     function_name: *const c_char, // Function name
     message_identifier: i32,      // Message identifier
     args: *const *const c_void,   // Arguments pointer
@@ -115,6 +116,7 @@ pub unsafe extern "C" fn call_globe_function(
     args_count: i32,              // Number of arguments
     error: *mut *const c_char,    // Error message
 ) -> u8 {
+    let module_str = unsafe { CStr::from_ptr(module_name).to_str().unwrap() };
     let function_str = unsafe { CStr::from_ptr(function_name).to_str().unwrap() };
 
     if JS_RUNTIME.is_none() {
@@ -136,7 +138,7 @@ pub unsafe extern "C" fn call_globe_function(
                     // Retrieve the function from the module
                     let js_function = {
                         let scope = &mut javascript_runtime.handle_scope();
-                        js_runtime::get_js_function(scope, function_str)?
+                        js_runtime::get_js_function(scope, module_str, function_str)?
                     };
 
                     // Prepare arguments

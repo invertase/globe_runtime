@@ -146,3 +146,40 @@ Object.defineProperty(globalThis, "send_to_dart", {
   configurable: true,
   writable: true,
 });
+
+function register_js_module(moduleName, moduleFunctions) {
+  if (globalThis[moduleName]) {
+    throw new Error(`Module "${moduleName}" is already registered.`);
+  }
+
+  // Create the module object inside globalThis
+  const moduleObj = {};
+  globalThis[moduleName] = moduleObj;
+
+  Object.entries(moduleFunctions).forEach(([key, func]) => {
+    if (typeof func !== "function") {
+      throw new Error(
+        `Error: "${key}" in module "${moduleName}" is not a function.`
+      );
+    }
+
+    Object.defineProperty(moduleObj, key, {
+      value: func.bind(moduleObj), // Ensure correct binding
+      enumerable: true,
+      configurable: true,
+      writable: true,
+    });
+  });
+
+  console.info(
+    `Module "${moduleName}" registered with functions:`,
+    Object.keys(moduleObj)
+  );
+}
+
+Object.defineProperty(globalThis, "registerJSModule", {
+  value: register_js_module,
+  enumerable: true,
+  configurable: true,
+  writable: true,
+});

@@ -51,20 +51,39 @@ pub fn get_runtime(send_port: i64) -> JsRuntime {
 
 pub fn get_js_function(
     scope: &mut v8::HandleScope,
-    function_str: &str,
+    module: &str,
+    function: &str,
 ) -> Result<v8::Global<v8::Function>, String> {
     let global = scope.get_current_context().global(scope);
-    let function_key = v8::String::new(scope, function_str).unwrap();
-    let function_value = global.get(scope, function_key.into());
+
+    // Access the module object inside globalThis
+    let module_key = v8::String::new(scope, module)
+        .ok_or_else(|| format!("Error: Failed to create V8 string for module '{}'", module))?;
+    let module_value = global.get(scope, module_key.into());
+
+    // Ensure module exists
+    let module_obj = match module_value {
+        Some(value) if value.is_object() => value.to_object(scope).unwrap(),
+        _ => return Err(format!("Error: Module '{}' not found", module)),
+    };
+
+    // Get the function from the module object
+    let function_key = v8::String::new(scope, function).ok_or_else(|| {
+        format!(
+            "Error: Failed to create V8 string for function '{}'",
+            function
+        )
+    })?;
+    let function_value = module_obj.get(scope, function_key.into());
 
     // Ensure function exists
     match function_value {
         Some(value) if value.is_function() => {
             let function = v8::Local::<v8::Function>::try_from(value)
-                .map_err(|_| format!("Error: '{}' is not a valid function", function_str))?;
+                .map_err(|_| format!("Error: '{}' is not a valid function", function))?;
             Ok(v8::Global::new(scope, function))
         }
-        _ => Err(format!("Error: Function '{}' not found", function_str)),
+        _ => Err(format!("Error: Function '{}' not found", function)),
     }
 }
 
