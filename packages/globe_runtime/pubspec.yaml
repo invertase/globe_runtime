@@ -7,6 +7,7 @@ environment:
 
 dev_dependencies:
   test: ^1.24.0
+  lints: ^5.1.1
   
 dependencies:
   ffi: ^2.1.3
