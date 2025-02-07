@@ -57,7 +57,7 @@ class _$GlobeRuntimeImpl {
 
   int _messageCount = 0;
 
-  static late final dylib = DynamicLibrary.open(
+  static final dylib = DynamicLibrary.open(
     path.join(
       '/Users/codekeyz/Projects/OpenSource/dart_v8_runtime',
       'target',
