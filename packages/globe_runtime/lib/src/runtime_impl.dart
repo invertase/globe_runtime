@@ -188,9 +188,14 @@ class _$GlobeRuntimeImpl {
     calloc.free(errorPtr);
   }
 
-  void registerModule(String modulePath, String workingDirectory) {
-    final modulePathPtr = modulePath.toNativeUtf8();
-    final workingDirPtr = workingDirectory.toNativeUtf8();
+  FutureOr<void> registerModule(
+    String modulePath,
+    String workingDirectory,
+  ) async {
+    final (file, workdir) = await _resolveModule(modulePath, workingDirectory);
+    final modulePathPtr = file.toNativeUtf8();
+    final workingDirPtr = workdir.toNativeUtf8();
+
     final Pointer<Pointer<Utf8>> errorPtr = calloc();
 
     if (_registerModuleFn(modulePathPtr, workingDirPtr, errorPtr) != 0) {
@@ -204,5 +209,43 @@ class _$GlobeRuntimeImpl {
 
     calloc.free(modulePathPtr);
     calloc.free(errorPtr);
+  }
+
+  Future<(String, String)> _resolveModule(
+    String modulePath,
+    String workingDirectory,
+  ) async {
+    if (!modulePath.startsWith('https://')) {
+      return (modulePath, workingDirectory);
+    }
+
+    final dir = Directory(path.join(_getUserHomeDirectory, '.globe/runtime/'));
+    if (!dir.existsSync()) await dir.create(recursive: true);
+
+    final fileName = path.basename(modulePath);
+    final runtimeFile = File(path.join(dir.path, fileName));
+
+    if (runtimeFile.existsSync()) {
+      return (fileName, dir.path);
+    }
+
+    try {
+      final response = await http.get(Uri.parse(modulePath));
+      if (response.statusCode != 200) {
+        throw HttpException(response.body);
+      }
+      await runtimeFile.writeAsBytes(response.bodyBytes);
+      return (fileName, dir.path);
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  String get _getUserHomeDirectory {
+    if (Platform.isWindows) {
+      return Platform.environment['USERPROFILE'] ?? 'C:\\Users\\Default';
+    } else {
+      return Platform.environment['HOME'] ?? '/';
+    }
   }
 }

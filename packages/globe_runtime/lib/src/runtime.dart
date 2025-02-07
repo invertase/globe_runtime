@@ -1,9 +1,11 @@
+import 'dart:async';
 import 'dart:collection';
 import 'dart:ffi';
 import 'dart:ffi' as dart_ffi;
 import 'dart:io';
 import 'dart:isolate';
 import 'dart:typed_data';
+import 'package:http/http.dart' as http;
 import 'package:ffi/ffi.dart';
 import 'package:path/path.dart' as path;
 
@@ -26,7 +28,7 @@ interface class GlobeRuntime {
     return _cachedInstance = GlobeRuntime._(_$GlobeRuntimeImpl());
   }
 
-  void registerModule(String entryFile, {String? workingDir}) {
+  FutureOr<void> registerModule(String entryFile, {String? workingDir}) {
     workingDir ??= Directory.current.path;
     return _instance!.registerModule(
       entryFile,

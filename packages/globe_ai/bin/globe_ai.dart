@@ -7,7 +7,7 @@ const OpenAIKey =
     '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';
 
 void main() async {
-  final globeAI = GlobeAISdk.instance(OpenAIProvider(apiKey: OpenAIKey));
+  final globeAI = await GlobeAISdk.instance(OpenAIProvider(apiKey: OpenAIKey));
 
   final result = await globeAI.generate(
     model: 'gpt-4o',
