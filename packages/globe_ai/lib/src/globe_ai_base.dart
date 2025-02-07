@@ -1,7 +1,9 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:globe_runtime/globe_runtime.dart';
 import 'package:msgpack_dart/msgpack_dart.dart' as msg_parkr;
+import 'package:path/path.dart' as path;
 
 abstract class AiProvider {
   final String? baseUrl;
@@ -21,13 +23,20 @@ class GeminiAIProvider extends AiProvider {
 }
 
 final class GlobeAISdk {
-  static const String moduleName = 'GlobeAISdk';
+  static const String _moduleName = 'GlobeAISdk';
   final GlobeRuntime _runtime;
   final AiProvider provider;
 
   GlobeAISdk._(this.provider, this._runtime);
 
   static GlobeAISdk instance(AiProvider provider) {
+    final filePath =
+        path.join(Directory.current.path, 'packages/globe_ai/dist/');
+    GlobeRuntime.instance.registerModule(
+      "globe_ai.mjs",
+      workingDir: filePath,
+    );
+
     return GlobeAISdk._(provider, GlobeRuntime.instance);
   }
 
@@ -38,7 +47,7 @@ final class GlobeAISdk {
     final completer = Completer<String?>();
 
     _runtime.callFunction(
-      moduleName,
+      _moduleName,
       function: "${provider.name.toLowerCase()}_generate",
       args: [provider.apiKey.toFFIType, model.toFFIType, query.toFFIType],
       onData: (data) {
@@ -52,14 +61,14 @@ final class GlobeAISdk {
     return completer.future;
   }
 
-  Stream<String?> stream({
+  Stream<String> stream({
     required String query,
     required String model,
   }) {
-    final streamController = StreamController<String?>();
+    final streamController = StreamController<String>();
 
     _runtime.callFunction(
-      moduleName,
+      _moduleName,
       function: "${provider.name.toLowerCase()}_stream",
       args: [provider.apiKey.toFFIType, model.toFFIType, query.toFFIType],
       onData: (data) {
@@ -68,8 +77,13 @@ final class GlobeAISdk {
           streamController.close();
           return true;
         }
-        final cbunk = decoded['choices'][0]['delta']['content'];
-        streamController.add(cbunk);
+        final chunk = decoded['choices'][0]['delta']['content'];
+        if (chunk == null) {
+          streamController.close();
+          return true;
+        }
+
+        streamController.add(chunk);
         return false;
       },
     );

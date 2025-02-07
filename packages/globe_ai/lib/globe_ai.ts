@@ -27,7 +27,7 @@ const openai_stream = async (apiKey: string, model: string, content: string, cal
   send_to_dart(callbackId, "e-o-s");
 };
 
-registerJSModule("Globe-AI", {
+registerJSModule("GlobeAISdk", {
   openai_generate,
   openai_stream,
 });

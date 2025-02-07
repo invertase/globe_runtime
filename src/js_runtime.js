@@ -171,9 +171,9 @@ function register_js_module(moduleName, moduleFunctions) {
     });
   });
 
-  console.info(
+  console.log(
     `Module "${moduleName}" registered with functions:`,
-    Object.keys(moduleObj)
+    JSON.stringify(Object.keys(moduleObj))
   );
 }
 

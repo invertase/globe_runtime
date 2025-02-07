@@ -22,5 +22,9 @@ void main() async {
     model: 'gpt-4o',
     query: 'Tell me short 5 line story',
   );
-  await for (final data in stream) stdout.write(data);
+  await for (final data in stream) {
+    stdout.write(data);
+  }
+
+  exit(0);
 }

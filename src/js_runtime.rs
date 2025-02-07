@@ -64,7 +64,12 @@ pub fn get_js_function(
     // Ensure module exists
     let module_obj = match module_value {
         Some(value) if value.is_object() => value.to_object(scope).unwrap(),
-        _ => return Err(format!("Error: Module '{}' not found", module)),
+        _ => {
+            return Err(format!(
+                "Error: Module '{}' not registered in runtime.",
+                module
+            ))
+        }
     };
 
     // Get the function from the module object

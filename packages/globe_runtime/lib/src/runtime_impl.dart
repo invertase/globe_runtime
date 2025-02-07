@@ -36,9 +36,14 @@ typedef _CallGlobeFunctionFnDart = int Function(
   Pointer<Pointer<Utf8>>,
 );
 
-typedef _RegisterModuleFnNative
-    = NativeFunction<Uint8 Function(Pointer<Utf8>, Pointer<Pointer<Utf8>>)>;
+typedef _RegisterModuleFnNative = NativeFunction<
+    Uint8 Function(
+      Pointer<Utf8>,
+      Pointer<Utf8>,
+      Pointer<Pointer<Utf8>>,
+    )>;
 typedef _RegisterModuleFnDart = int Function(
+  Pointer<Utf8>,
   Pointer<Utf8>,
   Pointer<Pointer<Utf8>>,
 );
@@ -46,7 +51,7 @@ typedef _RegisterModuleFnDart = int Function(
 typedef _DisposeAiFnNative = NativeFunction<Uint8 Function()>;
 typedef _DisposeAiFnDart = int Function();
 
-class _$GlobeRuntimeImpl implements GlobeRuntime {
+class _$GlobeRuntimeImpl {
   final ReceivePort _receivePort;
   final HashMap<int, OnFunctionData> _callbacks = HashMap();
 
@@ -103,8 +108,11 @@ class _$GlobeRuntimeImpl implements GlobeRuntime {
       final callbackId = data[0] as int;
       final callbackData = data[1] as Uint8List;
 
+      final callback = _callbacks[callbackId];
+      if (callback == null) return;
+
       // If the callback returns true, remove it from the list
-      final completed = _callbacks[callbackId]!(callbackData);
+      final completed = callback(callbackData);
       if (completed) _callbacks.remove(callbackId);
     });
 
@@ -113,16 +121,13 @@ class _$GlobeRuntimeImpl implements GlobeRuntime {
     });
   }
 
-  @override
   void dispose() {
     _receivePort.close();
-
     final result = _disposeRuntimeFn.call();
     if (result == 0) return;
     throw StateError("Failed to dispose AI SDK");
   }
 
-  @override
   void callFunction(
     String moduleName, {
     required String function,
@@ -183,13 +188,12 @@ class _$GlobeRuntimeImpl implements GlobeRuntime {
     calloc.free(errorPtr);
   }
 
-  @override
-  void registerModule(String modulePath, {String? workingDirectory}) {
+  void registerModule(String modulePath, String workingDirectory) {
     final modulePathPtr = modulePath.toNativeUtf8();
+    final workingDirPtr = workingDirectory.toNativeUtf8();
     final Pointer<Pointer<Utf8>> errorPtr = calloc();
 
-    final callResult = _registerModuleFn(modulePathPtr, errorPtr);
-    if (callResult != 0) {
+    if (_registerModuleFn(modulePathPtr, workingDirPtr, errorPtr) != 0) {
       final Pointer<Utf8> errorMsgPtr = errorPtr.value;
       final errorMgs = errorMsgPtr.address == 0
           ? "Failed to register module"

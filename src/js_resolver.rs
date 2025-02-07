@@ -125,7 +125,13 @@ fn resolve_npm(specifier: &str, referrer: &str) -> Result<ModuleSpecifier, Modul
     match resolved_path {
         Ok(path) => Url::from_file_path(path)
             .map(ModuleSpecifier::from)
-            .map_err(|_| JsErrorBox::generic("Failed to convert file path to URL").into()),
+            .map_err(|_| {
+                JsErrorBox::generic(format!(
+                    "Failed to fetch node module: {}, {}",
+                    specifier, referrer
+                ))
+                .into()
+            }),
         Err(err) => Err(ModuleLoaderError::from(JsErrorBox::generic(
             err.to_string(),
         ))),

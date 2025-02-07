@@ -9,6 +9,7 @@ use deno_runtime::deno_core::{self};
 use std::{
     cell::RefCell,
     ffi::{c_char, c_void, CStr, CString},
+    path::PathBuf,
     rc::Rc,
 };
 
@@ -42,16 +43,20 @@ pub unsafe extern "C" fn init_runtime(
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn register_module(module: *const c_char, error: *mut *const c_char) -> u8 {
+pub unsafe extern "C" fn register_module(
+    module: *const c_char,
+    working_dir: *const c_char,
+    error: *mut *const c_char,
+) -> u8 {
     if !error.is_null() {
         *error = std::ptr::null();
     }
 
     let module_name = unsafe { CStr::from_ptr(module).to_str().unwrap() };
+    let working_dir_name = unsafe { CStr::from_ptr(working_dir).to_str().unwrap() };
 
     // Resolve the JS module path
-    let main_module = match deno_core::resolve_path(module_name, &std::env::current_dir().unwrap())
-    {
+    let main_module = match deno_core::resolve_path(module_name, &PathBuf::from(working_dir_name)) {
         Ok(path) => path,
         Err(e) => {
             *error = CString::new(format!("Failed to resolve module path: {}", e))
@@ -99,10 +104,8 @@ pub unsafe extern "C" fn register_module(module: *const c_char, error: *mut *con
 
                 0
             })
-            .await;
-    });
-
-    0
+            .await
+    })
 }
 
 #[no_mangle]

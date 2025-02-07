@@ -15,17 +15,22 @@ part 'runtime_data.dart';
 /// Return `true` to unregister the callback.
 typedef OnFunctionData = bool Function(Uint8List data);
 
-abstract interface class GlobeRuntime {
-  static final _impl = _$GlobeRuntimeImpl();
+interface class GlobeRuntime {
+  final _$GlobeRuntimeImpl? _instance;
 
-  static GlobeRuntime get instance => _impl;
+  GlobeRuntime._(this._instance);
 
-  GlobeRuntime._();
+  static GlobeRuntime? _cachedInstance;
+  static GlobeRuntime get instance {
+    if (_cachedInstance != null) return _cachedInstance!;
+    return _cachedInstance = GlobeRuntime._(_$GlobeRuntimeImpl());
+  }
 
-  void registerModule(String entryFile) {
-    return _impl.registerModule(
+  void registerModule(String entryFile, {String? workingDir}) {
+    workingDir ??= Directory.current.path;
+    return _instance!.registerModule(
       entryFile,
-      workingDirectory: Directory.current.path,
+      workingDir,
     );
   }
 
@@ -35,7 +40,7 @@ abstract interface class GlobeRuntime {
     List<FFIConvertible?> args = const [],
     required OnFunctionData onData,
   }) {
-    return _impl.callFunction(
+    return _instance!.callFunction(
       moduleName,
       function: function,
       args: args,
@@ -43,5 +48,5 @@ abstract interface class GlobeRuntime {
     );
   }
 
-  void dispose() => _impl.dispose();
+  void dispose() => _instance!.dispose();
 }
