@@ -16,6 +16,7 @@ typedef _CallGlobeRuntimeInitFnDart = int Function(
 
 typedef _CallGlobeFunctionNative = NativeFunction<
     Int Function(
+      Pointer<Utf8>, // Module name
       Pointer<Utf8>, // Function name
       Int, // Message identifier
       Pointer<Pointer<Void>>, // Arguments pointer
@@ -26,11 +27,19 @@ typedef _CallGlobeFunctionNative = NativeFunction<
     )>;
 typedef _CallGlobeFunctionFnDart = int Function(
   Pointer<Utf8>,
+  Pointer<Utf8>,
   int,
   Pointer<Pointer<Void>>,
   Pointer<Int32>,
   Pointer<IntPtr>,
   int,
+  Pointer<Pointer<Utf8>>,
+);
+
+typedef _RegisterModuleFnNative
+    = NativeFunction<Uint8 Function(Pointer<Utf8>, Pointer<Pointer<Utf8>>)>;
+typedef _RegisterModuleFnDart = int Function(
+  Pointer<Utf8>,
   Pointer<Pointer<Utf8>>,
 );
 
@@ -56,13 +65,17 @@ class _$GlobeRuntimeImpl implements GlobeRuntime {
       .lookup<_CallGlobeRuntimeInitFnNative>('init_runtime')
       .asFunction<_CallGlobeRuntimeInitFnDart>();
 
-  final _disposeAiFn = dylib
-      .lookup<_DisposeAiFnNative>('dispose_runtime')
-      .asFunction<_DisposeAiFnDart>();
+  final _registerModuleFn = dylib
+      .lookup<_RegisterModuleFnNative>('register_module')
+      .asFunction<_RegisterModuleFnDart>();
 
   final _callGlobeFunction = dylib
       .lookup<_CallGlobeFunctionNative>('call_globe_function')
       .asFunction<_CallGlobeFunctionFnDart>();
+
+  final _disposeRuntimeFn = dylib
+      .lookup<_DisposeAiFnNative>('dispose_runtime')
+      .asFunction<_DisposeAiFnDart>();
 
   _$GlobeRuntimeImpl() : _receivePort = ReceivePort("globe_runtime") {
     final Pointer<Pointer<Utf8>> errorPtr = calloc();
@@ -100,22 +113,26 @@ class _$GlobeRuntimeImpl implements GlobeRuntime {
     });
   }
 
+  @override
   void dispose() {
     _receivePort.close();
 
-    final result = _disposeAiFn.call();
+    final result = _disposeRuntimeFn.call();
     if (result == 0) return;
     throw StateError("Failed to dispose AI SDK");
   }
 
   @override
-  void call_function({
+  void callFunction(
+    String moduleName, {
     required String function,
     List<FFIConvertible?> args = const [],
     required OnFunctionData onData,
   }) {
-    final Pointer<Pointer<Utf8>> errorPtr = calloc();
+    final moduleNamePtr = moduleName.toNativeUtf8();
     final functionNamePtr = function.toNativeUtf8();
+
+    final Pointer<Pointer<Utf8>> errorPtr = calloc();
     final Pointer<Pointer<Void>> argPointers = calloc(args.length);
     final Pointer<Int32> typeIds = calloc(args.length);
     final Pointer<IntPtr> sizes = calloc(args.length);
@@ -140,6 +157,7 @@ class _$GlobeRuntimeImpl implements GlobeRuntime {
     _callbacks[messageIdentifier] = onData;
 
     final callResult = _callGlobeFunction(
+      moduleNamePtr,
       functionNamePtr,
       messageIdentifier,
       argPointers,
@@ -166,5 +184,21 @@ class _$GlobeRuntimeImpl implements GlobeRuntime {
   }
 
   @override
-  void loadModule(String modulePath, {String? workingDirectory}) {}
+  void registerModule(String modulePath, {String? workingDirectory}) {
+    final modulePathPtr = modulePath.toNativeUtf8();
+    final Pointer<Pointer<Utf8>> errorPtr = calloc();
+
+    final callResult = _registerModuleFn(modulePathPtr, errorPtr);
+    if (callResult != 0) {
+      final Pointer<Utf8> errorMsgPtr = errorPtr.value;
+      final errorMgs = errorMsgPtr.address == 0
+          ? "Failed to register module"
+          : errorMsgPtr.toDartString();
+
+      throw StateError(errorMgs);
+    }
+
+    calloc.free(modulePathPtr);
+    calloc.free(errorPtr);
+  }
 }

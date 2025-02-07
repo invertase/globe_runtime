@@ -6,7 +6,6 @@ import 'dart:isolate';
 import 'dart:typed_data';
 import 'package:ffi/ffi.dart';
 import 'package:path/path.dart' as path;
-import 'package:ffi/ffi.dart' as ffi;
 
 part 'runtime_impl.dart';
 part 'runtime_data.dart';
@@ -17,22 +16,27 @@ part 'runtime_data.dart';
 typedef OnFunctionData = bool Function(Uint8List data);
 
 abstract interface class GlobeRuntime {
-  static late final _impl = _$GlobeRuntimeImpl();
+  static final _impl = _$GlobeRuntimeImpl();
 
   static GlobeRuntime get instance => _impl;
 
   GlobeRuntime._();
 
-  void loadModule(String module) {
-    return _impl.loadModule(module, workingDirectory: Directory.current.path);
+  void registerModule(String entryFile) {
+    return _impl.registerModule(
+      entryFile,
+      workingDirectory: Directory.current.path,
+    );
   }
 
-  void call_function({
+  void callFunction(
+    String moduleName, {
     required String function,
     List<FFIConvertible?> args = const [],
     required OnFunctionData onData,
   }) {
-    return _impl.call_function(
+    return _impl.callFunction(
+      moduleName,
       function: function,
       args: args,
       onData: onData,

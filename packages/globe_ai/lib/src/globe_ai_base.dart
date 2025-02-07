@@ -21,6 +21,7 @@ class GeminiAIProvider extends AiProvider {
 }
 
 final class GlobeAISdk {
+  static const String moduleName = 'GlobeAISdk';
   final GlobeRuntime _runtime;
   final AiProvider provider;
 
@@ -36,7 +37,8 @@ final class GlobeAISdk {
   }) async {
     final completer = Completer<String?>();
 
-    _runtime.call_function(
+    _runtime.callFunction(
+      moduleName,
       function: "${provider.name.toLowerCase()}_generate",
       args: [provider.apiKey.toFFIType, model.toFFIType, query.toFFIType],
       onData: (data) {
@@ -56,7 +58,8 @@ final class GlobeAISdk {
   }) {
     final streamController = StreamController<String?>();
 
-    _runtime.call_function(
+    _runtime.callFunction(
+      moduleName,
       function: "${provider.name.toLowerCase()}_stream",
       args: [provider.apiKey.toFFIType, model.toFFIType, query.toFFIType],
       onData: (data) {

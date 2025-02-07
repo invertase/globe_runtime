@@ -42,7 +42,7 @@ pub unsafe extern "C" fn init_runtime(
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn load_module(module: *const c_char, error: *mut *const c_char) -> u8 {
+pub unsafe extern "C" fn register_module(module: *const c_char, error: *mut *const c_char) -> u8 {
     if !error.is_null() {
         *error = std::ptr::null();
     }
