@@ -4,7 +4,9 @@ version = "0.1.0"
 edition = "2021"
 
 [lib]
+name = "_globe_runtime"
 crate-type = ["cdylib"]
+
 
 [dependencies]
 v8 = "130.0.7"
