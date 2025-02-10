@@ -121,14 +121,13 @@ class _$GlobeRuntimeImpl {
 
       // callbackId will always be the first element
       final callbackId = data[0] as int;
-      final callbackData = data[1] as Uint8List;
+      final callbackData = Message.fromData(data[1]);
 
       final callback = _callbacks[callbackId];
       if (callback == null) return;
 
       // If the callback returns true, remove it from the list
-      final completed = callback(callbackData);
-      if (completed) _callbacks.remove(callbackId);
+      if (callback(callbackData)) _callbacks.remove(callbackId);
     });
 
     ProcessSignal.sigterm.watch().listen((_) {

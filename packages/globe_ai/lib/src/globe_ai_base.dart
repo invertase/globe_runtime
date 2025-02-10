@@ -1,7 +1,6 @@
 import 'dart:async';
 
 import 'package:globe_runtime/globe_runtime.dart';
-import 'package:msgpack_dart/msgpack_dart.dart' as msg_parkr;
 
 abstract class AiProvider {
   final String? baseUrl;
@@ -54,7 +53,7 @@ final class GlobeAISdk {
       function: "${provider.name.toLowerCase()}_generate",
       args: [provider.apiKey.toFFIType, model.toFFIType, query.toFFIType],
       onData: (data) {
-        final decoded = msg_parkr.deserialize(data);
+        final decoded = data.message as Map<dynamic, dynamic>;
         final message = decoded['choices'][0]['message']['content'];
         completer.complete(message);
         return true;
@@ -77,11 +76,12 @@ final class GlobeAISdk {
       function: "${provider.name.toLowerCase()}_stream",
       args: [provider.apiKey.toFFIType, model.toFFIType, query.toFFIType],
       onData: (data) {
-        final decoded = msg_parkr.deserialize(data);
-        if (decoded == 'e-o-s') {
+        final decoded = data.message as Map<dynamic, dynamic>;
+        if (data.type == MessageType.stream_end) {
           streamController.close();
           return true;
         }
+
         final chunk = decoded['choices'][0]['delta']['content'];
         if (chunk == null) {
           streamController.close();

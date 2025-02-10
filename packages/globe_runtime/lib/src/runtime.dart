@@ -8,6 +8,7 @@ import 'dart:typed_data';
 import 'package:http/http.dart' as http;
 import 'package:ffi/ffi.dart';
 import 'package:path/path.dart' as path;
+import 'package:msgpack_dart/msgpack_dart.dart' as msg_parkr;
 
 part 'runtime_impl.dart';
 part 'runtime_data.dart';
@@ -15,7 +16,7 @@ part 'runtime_data.dart';
 /// Callback function for when data is received from the runtime.
 ///
 /// Return `true` to unregister the callback.
-typedef OnFunctionData = bool Function(Uint8List data);
+typedef OnFunctionData = bool Function(Message data);
 
 interface class GlobeRuntime {
   final _$GlobeRuntimeImpl? _instance;
