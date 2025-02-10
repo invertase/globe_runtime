@@ -100,6 +100,7 @@ class FFIBytes implements FFIConvertible {
 
 enum MessageType {
   value,
+  error,
   stream_start,
   stream_end,
 }

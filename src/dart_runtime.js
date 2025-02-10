@@ -4,14 +4,25 @@ const { core } = Deno;
 
 const MessageType = {
   VALUE: 0,
-  STREAM_START: 1,
-  STREAM_END: 2,
+  ERROR: 1,
+  STREAM_START: 2,
+  STREAM_END: 3,
 };
 
 const wrap_dart_send = (callbackId, value) => {
   const buffer = msgParkr.pack(value);
   return core.ops.op_send_to_dart(callbackId, buffer);
 };
+
+Object.defineProperty(globalThis, "send_error_to_dart", {
+  value: (callbackId, data) => {
+    const message = { type: MessageType.ERROR, data };
+    return wrap_dart_send(callbackId, message);
+  },
+  enumerable: true,
+  configurable: true,
+  writable: true,
+});
 
 Object.defineProperty(globalThis, "send_value_to_dart", {
   value: (callbackId, data) => {
