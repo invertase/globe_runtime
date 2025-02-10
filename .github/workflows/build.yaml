@@ -19,10 +19,6 @@ jobs:
             runs-on: ubuntu-20.04
             target: aarch64-unknown-linux-gnu	
 
-          - os-name: Linux-riscv64-gnu
-            runs-on: ubuntu-20.04
-            target: riscv64gc-unknown-linux-gnu
-
           - os-name: Windows-x86_64
             runs-on: windows-latest
             target: x86_64-pc-windows-msvc
