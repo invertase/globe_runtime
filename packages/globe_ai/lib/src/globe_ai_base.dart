@@ -53,6 +53,11 @@ final class GlobeAISdk {
       function: "${provider.name.toLowerCase()}_generate",
       args: [provider.apiKey.toFFIType, model.toFFIType, query.toFFIType],
       onData: (data) {
+        if (data.type == MessageType.error) {
+          completer.completeError(data.message);
+          return true;
+        }
+
         final decoded = data.message as Map<dynamic, dynamic>;
         final message = decoded['choices'][0]['message']['content'];
         completer.complete(message);
@@ -76,6 +81,13 @@ final class GlobeAISdk {
       function: "${provider.name.toLowerCase()}_stream",
       args: [provider.apiKey.toFFIType, model.toFFIType, query.toFFIType],
       onData: (data) {
+        if (data.type == MessageType.error) {
+          streamController
+            ..addError(data.message)
+            ..close();
+          return true;
+        }
+
         if (data.type == MessageType.stream_end) {
           streamController.close();
           return true;
