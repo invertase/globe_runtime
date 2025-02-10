@@ -47,4 +47,5 @@ jobs:
       - name: Publish artifacts and release
         uses: houseabsolute/actions-rust-release@v0
         with:
+          executable-name: globe_runtime
           target: ${{ matrix.platform.target }}
