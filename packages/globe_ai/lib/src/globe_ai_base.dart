@@ -76,12 +76,12 @@ final class GlobeAISdk {
       function: "${provider.name.toLowerCase()}_stream",
       args: [provider.apiKey.toFFIType, model.toFFIType, query.toFFIType],
       onData: (data) {
-        final decoded = data.message as Map<dynamic, dynamic>;
         if (data.type == MessageType.stream_end) {
           streamController.close();
           return true;
         }
 
+        final decoded = data.message as Map<dynamic, dynamic>;
         final chunk = decoded['choices'][0]['delta']['content'];
         if (chunk == null) {
           streamController.close();
