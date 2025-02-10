@@ -56,15 +56,17 @@ typedef _DisposeAiFnNative = NativeFunction<Uint8 Function()>;
 typedef _DisposeAiFnDart = int Function();
 
 String get _dylibPath {
+  const libName = 'lib_globe_runtime';
+
   if (Platform.environment['GLOBE'] != null) {
-    return 'usr/lib/lib_globe_runtime.so';
+    return 'usr/lib/$libName.so';
   }
 
   return path.join(
     Directory.current.path,
     'target',
     'debug',
-    Platform.isMacOS ? 'libglobe_runtime.dylib' : 'libglobe_runtime.so',
+    Platform.isMacOS ? '$libName.dylib' : '$libName.so',
   );
 }
 

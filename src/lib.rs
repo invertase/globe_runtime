@@ -13,7 +13,19 @@ use std::{
     rc::Rc,
 };
 
-static mut JS_RUNTIME: Option<Rc<RefCell<deno_core::JsRuntime>>> = None;
+thread_local! {
+    static JS_RUNTIME: RefCell<Option<Rc<RefCell<deno_core::JsRuntime>>>> = RefCell::new(None);
+}
+
+fn get_runtime_instance() -> Rc<RefCell<deno_core::JsRuntime>> {
+    JS_RUNTIME.with(|runtime| {
+        runtime
+            .borrow()
+            .as_ref()
+            .expect("Error: JS Runtime has not been initialized! Call `init_runtime()` first.")
+            .clone()
+    })
+}
 
 #[no_mangle]
 pub unsafe extern "C" fn init_runtime(
@@ -27,17 +39,15 @@ pub unsafe extern "C" fn init_runtime(
 
     let result = dart_api::Dart_InitializeApiDL(dart_api);
     if result != 0 {
-        *error = CString::new("Failed to initialize Dart DL C API: Version mismatch. Ensure that include/ matches Dart SDK version.").unwrap().into_raw();
+        set_error(error, "Failed to initialize Dart DL C API: Version mismatch. Ensure that include/ matches Dart SDK version.");
         return 1;
     }
 
     let runtime = js_runtime::get_runtime(dart_port);
 
-    unsafe {
-        if JS_RUNTIME.is_none() {
-            JS_RUNTIME = Some(Rc::new(RefCell::new(runtime)));
-        }
-    }
+    JS_RUNTIME.with(|js_runtime| {
+        *js_runtime.borrow_mut() = Some(Rc::new(RefCell::new(runtime)));
+    });
 
     0
 }
@@ -80,8 +90,6 @@ pub unsafe extern "C" fn register_module(
         }
     };
 
-    println!("Registering module: {}", module_name);
-
     // Resolve the JS module path
     let main_module = match deno_core::resolve_path(module_name, &PathBuf::from(working_dir_name)) {
         Ok(path) => path,
@@ -94,13 +102,9 @@ pub unsafe extern "C" fn register_module(
         }
     };
 
-    println!("Resolved module path: {:?}", main_module);
+    let runtime_ref = get_runtime_instance();
 
-    let runtime_ref = JS_RUNTIME.as_ref().unwrap().clone();
-
-    println!("Loading module into runtime...");
-
-    utils::get_runtime().block_on(async move {
+    utils::tokio_runtime().block_on(async move {
         let local_set = tokio::task::LocalSet::new();
 
         local_set
@@ -140,9 +144,9 @@ pub unsafe extern "C" fn register_module(
 #[no_mangle]
 pub unsafe extern "C" fn is_module_registered(module_name: *const c_char) -> u8 {
     let module_str = unsafe { CStr::from_ptr(module_name).to_str().unwrap() };
-    let runtime_ref = JS_RUNTIME.as_ref().unwrap().clone();
+    let runtime_ref = get_runtime_instance();
 
-    utils::get_runtime().block_on(async move {
+    utils::tokio_runtime().block_on(async move {
         let local_set = tokio::task::LocalSet::new();
 
         local_set
@@ -174,14 +178,9 @@ pub unsafe extern "C" fn call_globe_function(
     let module_str = unsafe { CStr::from_ptr(module_name).to_str().unwrap() };
     let function_str = unsafe { CStr::from_ptr(function_name).to_str().unwrap() };
 
-    if JS_RUNTIME.is_none() {
-        set_error(error, "Error: JS runtime not initialized");
-        return 1;
-    }
+    let runtime_ref = get_runtime_instance();
 
-    let runtime_ref = JS_RUNTIME.as_ref().unwrap().clone();
-
-    let result = utils::get_runtime().block_on(async move {
+    let result = utils::tokio_runtime().block_on(async move {
         let local_set = tokio::task::LocalSet::new();
 
         local_set
@@ -238,9 +237,9 @@ pub unsafe extern "C" fn call_globe_function(
 
 #[no_mangle]
 pub unsafe extern "C" fn dispose_runtime() -> u8 {
-    unsafe {
-        JS_RUNTIME = None; // Drop the runtime safely
-    }
+    JS_RUNTIME.with(|runtime| {
+        *runtime.borrow_mut() = None;
+    });
 
     0
 }

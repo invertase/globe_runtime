@@ -164,17 +164,12 @@ function register_js_module(moduleName, moduleFunctions) {
     }
 
     Object.defineProperty(moduleObj, key, {
-      value: func.bind(moduleObj), // Ensure correct binding
+      value: func.bind(moduleObj),
       enumerable: true,
       configurable: true,
       writable: true,
     });
   });
-
-  console.log(
-    `Module "${moduleName}" registered with functions:`,
-    JSON.stringify(Object.keys(moduleObj))
-  );
 }
 
 Object.defineProperty(globalThis, "registerJSModule", {
