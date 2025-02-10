@@ -26,6 +26,10 @@ jobs:
           - os-name: macOS-x86_64
             runs-on: macOS-latest
             target: x86_64-apple-darwin
+          
+          - os-name: macOS-aarch64
+            runs-on: macOS-latest
+            target: aarch64-apple-darwin
 
     runs-on: ${{ matrix.platform.runs-on }}
     steps:
