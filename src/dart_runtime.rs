@@ -73,6 +73,11 @@ extension!(
     ops = [
         op_send_to_dart<FP>,
     ],
+    esm_entry_point = "ext:dart_runtime/dart_runtime.js",
+    esm = [
+        dir "src",
+        "dart_runtime.js",
+    ],
     options = {
         send_port: i64,
     },

@@ -27,10 +27,6 @@ import * as compression from "ext:deno_web/14_compression.js";
 import * as performance from "ext:deno_web/15_performance.js";
 import * as imageData from "ext:deno_web/16_image_data.js";
 
-import * as msgParkr from "ext:js_msg_packr/index.js";
-
-const { core } = Deno;
-
 Object.defineProperty(globalThis, "setTimeout", {
   value: timers.setTimeout,
   enumerable: true,
@@ -94,8 +90,6 @@ Object.defineProperty(globalThis, "AbortController", {
   writable: true,
 });
 
-/***************************** Start of Fetch Section *********************/
-
 Deno.core.setWasmStreamingCallback(fetch.handleWasmStreaming);
 
 Object.defineProperty(globalThis, "fetch", {
@@ -129,52 +123,6 @@ Object.defineProperty(globalThis, "Headers", {
 Object.defineProperty(globalThis, "FormData", {
   value: formData.FormData,
   enumerable: false,
-  configurable: true,
-  writable: true,
-});
-
-/***************************** End of Fetch Section ***********************/
-
-const wrap_dart_send = (callbackId, value) => {
-  const buffer = msgParkr.pack(value);
-  core.ops.op_send_to_dart(callbackId, buffer);
-};
-
-Object.defineProperty(globalThis, "send_to_dart", {
-  value: wrap_dart_send,
-  enumerable: true,
-  configurable: true,
-  writable: true,
-});
-
-function register_js_module(moduleName, moduleFunctions) {
-  if (globalThis[moduleName]) {
-    throw new Error(`Module "${moduleName}" is already registered.`);
-  }
-
-  // Create the module object inside globalThis
-  const moduleObj = {};
-  globalThis[moduleName] = moduleObj;
-
-  Object.entries(moduleFunctions).forEach(([key, func]) => {
-    if (typeof func !== "function") {
-      throw new Error(
-        `Error: "${key}" in module "${moduleName}" is not a function.`
-      );
-    }
-
-    Object.defineProperty(moduleObj, key, {
-      value: func.bind(moduleObj),
-      enumerable: true,
-      configurable: true,
-      writable: true,
-    });
-  });
-}
-
-Object.defineProperty(globalThis, "registerJSModule", {
-  value: register_js_module,
-  enumerable: true,
   configurable: true,
   writable: true,
 });

@@ -34,9 +34,9 @@ pub fn get_runtime(send_port: i64) -> JsRuntime {
         ),
         deno_net::deno_net::init_ops_and_esm::<PermissionsContainer>(None, None),
         deno_fetch::deno_fetch::init_ops_and_esm::<PermissionsContainer>(Default::default()),
-        dart_runtime::init_ops::<i64>(send_port),
-        js_msg_packr::init_ops_and_esm(),
         js_runtime::init_ops_and_esm(),
+        js_msg_packr::init_ops_and_esm(),
+        dart_runtime::init_ops_and_esm::<i64>(send_port),
     ];
 
     JsRuntime::new(RuntimeOptions {

@@ -8,7 +8,7 @@ const openai_generate = async (apiKey: string, model: string, content: string, c
     messages: [{ role: "user", content }],
   });
 
-  send_to_dart(callbackId, completion);
+  send_value_to_dart(callbackId, completion);
 };
 
 const openai_stream = async (apiKey: string, model: string, content: string, callbackId: number) => {
@@ -21,10 +21,10 @@ const openai_stream = async (apiKey: string, model: string, content: string, cal
   });
 
   for await (const chunk of completion) {
-    send_to_dart(callbackId, chunk);
+    stream_value_to_dart(callbackId, chunk);
   }
 
-  send_to_dart(callbackId, "e-o-s");
+  stream_end_to_dart(callbackId);
 };
 
 registerJSModule("GlobeAISdk", {
