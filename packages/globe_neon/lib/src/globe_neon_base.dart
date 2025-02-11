@@ -88,7 +88,7 @@ final class NeonTxnOptions extends NeonSQLOptions {
         ...super.toJson(),
         'readOnly': readOnly,
         'deferrable': deferrable,
-        if (isolationLevel != null) 'isolationLevel': isolationLevel?.name,
+        if (isolationLevel != null) 'isolationLevel': isolationLevel!.name,
       };
 }
 
