@@ -9,10 +9,14 @@ const NEON_DB_URL =
 void main() async {
   final neon = GlobeNeonSdk.create(NEON_DB_URL);
 
-  final result = await neon.sql(
-    'SELECT * FROM posts',
-    options: NeonSQLOptions(fullResults: true),
-  );
+  var result = await neon.sql('SELECT * FROM posts');
+
+  print(JsonEncoder.withIndent(' ').convert(result));
+
+  result = await neon.transaction([
+    NeonSQL.sql('SELECT * FROM posts'),
+    NeonSQL.sql('SELECT * FROM posts WHERE id = 1'),
+  ]);
 
   print(JsonEncoder.withIndent(' ').convert(result));
 

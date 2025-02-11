@@ -60,7 +60,7 @@ function register_js_module(moduleName, moduleFunctions) {
   }
 
   // Create the module object inside globalThis
-  const moduleObj = {};
+  const moduleObj = { data: {} };
   globalThis[moduleName] = moduleObj;
 
   Object.entries(moduleFunctions).forEach(([key, func]) => {

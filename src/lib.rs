@@ -187,8 +187,8 @@ pub unsafe extern "C" fn call_globe_function(
             .run_until(async move {
                 let mut javascript_runtime = runtime_ref.borrow_mut();
                 let fnc_call = {
-                    // Retrieve the function from the module
-                    let js_function = {
+                    // Retrieve function & module state from the module
+                    let (js_function, module_state) = {
                         let scope = &mut javascript_runtime.handle_scope();
                         js_runtime::get_js_function(scope, module_str, function_str)?
                     };
@@ -203,9 +203,14 @@ pub unsafe extern "C" fn call_globe_function(
                             arg_sizes,
                             args_count,
                         );
+
+                        // Insert module state as first argument
+                        args.insert(0, module_state);
+
                         let msg_id_value: v8::Local<v8::Value> =
                             v8::Integer::new(scope, message_identifier).into();
 
+                        // Insert message identifier as last argument
                         args.push(v8::Global::new(scope, msg_id_value));
                         args
                     };

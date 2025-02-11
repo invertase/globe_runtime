@@ -50,14 +50,20 @@ class NeonSQLOptions {
 
 class NeonSQL {
   final String sql;
+  final List<dynamic> params;
   final NeonSQLOptions? options;
 
-  const NeonSQL(this.sql, this.options);
+  const NeonSQL(this.sql, this.options, {this.params = const []});
 
-  factory NeonSQL.sql(String sql) => NeonSQL(sql, const NeonSQLOptions());
+  factory NeonSQL.sql(String sql, {List<dynamic>? params}) => NeonSQL(
+        sql,
+        const NeonSQLOptions(),
+        params: params ?? const [],
+      );
 
   Map<String, dynamic> toJson() => {
         'sql': sql,
+        'params': params,
         'options': options?.toJson(),
       };
 }
@@ -82,7 +88,7 @@ final class NeonTxnOptions extends NeonSQLOptions {
         ...super.toJson(),
         'readOnly': readOnly,
         'deferrable': deferrable,
-        'isolationLevel': isolationLevel?.name,
+        if (isolationLevel != null) 'isolationLevel': isolationLevel!.name,
       };
 }
 
