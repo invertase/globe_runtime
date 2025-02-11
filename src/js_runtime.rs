@@ -53,8 +53,16 @@ pub fn get_js_function(
     scope: &mut v8::HandleScope,
     module: &str,
     function: &str,
-) -> Result<v8::Global<v8::Function>, String> {
+) -> Result<(v8::Global<v8::Function>, v8::Global<v8::Value>), String> {
     let module_obj = get_js_module(scope, module)?;
+
+    let data_key = v8::String::new(scope, "data")
+        .ok_or_else(|| "Error: Failed to create V8 string for 'data' property".to_string())?;
+    let data_value = module_obj
+        .get(scope, data_key.into())
+        .ok_or_else(|| format!("Error: 'data' property not found in module '{}'", module))?;
+    let data_global = v8::Global::new(scope, data_value);
+
     let function_key = v8::String::new(scope, function).ok_or_else(|| {
         format!(
             "Error: Failed to create V8 string for function '{}'",
@@ -67,7 +75,9 @@ pub fn get_js_function(
         Some(value) if value.is_function() => {
             let function = v8::Local::<v8::Function>::try_from(value)
                 .map_err(|_| format!("Error: '{}' is not a valid function", function))?;
-            Ok(v8::Global::new(scope, function))
+            let function_global = v8::Global::new(scope, function);
+
+            Ok((function_global, data_global))
         }
         _ => Err(format!("Error: Function '{}' not found", function)),
     }
