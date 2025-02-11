@@ -1,12 +1,18 @@
-import { neon } from "@neondatabase/serverless";
+import { neon, NeonQueryFunction } from "@neondatabase/serverless";
+
+type GlobeNeonState = {
+  neon?: NeonQueryFunction<false, false>;
+};
 
 const neon_execute = async (
+  state: GlobeNeonState,
   dbUrl: string,
   statement: string,
   options: string,
   callbackId: number
 ) => {
-  const sql = neon(dbUrl);
+  const sql = (state.neon ??= neon(dbUrl));
+
   const parsedOptions = JSON.parse(options);
   const params = parsedOptions.params || [];
   const authToken = parsedOptions.authToken || undefined;
