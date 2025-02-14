@@ -35,7 +35,7 @@ pub fn get_runtime(send_port: i64) -> JsRuntime {
         deno_net::deno_net::init_ops_and_esm::<PermissionsContainer>(None, None),
         deno_fetch::deno_fetch::init_ops_and_esm::<PermissionsContainer>(Default::default()),
         js_runtime::init_ops_and_esm(),
-        js_msg_packr::init_ops_and_esm(),
+        google_protobuf::init_ops_and_esm(),
         dart_runtime::init_ops_and_esm::<i64>(send_port),
     ];
 
@@ -124,14 +124,23 @@ extension!(deno_permissions_worker,
 );
 
 extension!(
-    js_msg_packr,
-    esm_entry_point = "ext:js_msg_packr/index.js",
+    google_protobuf,
+    esm_entry_point = "ext:google_protobuf/google-protobuf.js",
     esm = [
-        dir "third_party/msgpackr",
-        "index.js",
-        "pack.js",
-        "unpack.js",
-        "iterators.js",
+        dir "third_party/google-protobuf",
+        "google-protobuf.js",
+        "google/protobuf/compiler/plugin_pb.js",
+        "google/protobuf/any_pb.js",
+        "google/protobuf/api_pb.js",
+        "google/protobuf/descriptor_pb.js",
+        "google/protobuf/duration_pb.js",
+        "google/protobuf/empty_pb.js",
+        "google/protobuf/field_mask_pb.js",
+        "google/protobuf/source_context_pb.js",
+        "google/protobuf/struct_pb.js",
+        "google/protobuf/timestamp_pb.js",
+        "google/protobuf/type_pb.js",
+        "google/protobuf/wrappers_pb.js",
     ],
 );
 

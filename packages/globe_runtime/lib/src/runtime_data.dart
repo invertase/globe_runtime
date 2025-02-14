@@ -97,25 +97,3 @@ class FFIBytes implements FFIConvertible {
   @override
   FFITypeId get typeId => FFITypeId.bytes;
 }
-
-enum MessageType {
-  value,
-  error,
-  stream_start,
-  stream_end,
-}
-
-final class Message {
-  final MessageType type;
-  final dynamic message;
-
-  Message._(this.type, this.message);
-
-  factory Message.fromData(Uint8List data) {
-    final decoded = msg_parkr.deserialize(data);
-    final type = MessageType.values[decoded['type']];
-    final messageData = decoded['data'];
-
-    return Message._(type, messageData);
-  }
-}

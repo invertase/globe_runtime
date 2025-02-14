@@ -77,6 +77,7 @@ extension!(
     esm = [
         dir "src",
         "dart_runtime.js",
+        "protos/runtime_data_pb.js",
     ],
     options = {
         send_port: i64,

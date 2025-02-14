@@ -1,13 +1,4 @@
-import * as msgParkr from "ext:js_msg_packr/index.js";
-
 const { core } = Deno;
-
-const MessageType = {
-  VALUE: 0,
-  ERROR: 1,
-  STREAM_START: 2,
-  STREAM_END: 3,
-};
 
 const wrap_dart_send = (callbackId, value) => {
   const buffer = msgParkr.pack(value);

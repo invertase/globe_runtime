@@ -129,8 +129,8 @@ final class GlobeNeonSdk {
       function: "neon_execute",
       args: [_databaseUrl.toFFIType, sql.toFFIType, encodedOptions.toFFIType],
       onData: (data) {
-        if (data.type == MessageType.error) {
-          completer.completeError(data.message);
+        if (data.type == MessageType.ERROR) {
+          completer.completeError(data.data);
           return true;
         }
 

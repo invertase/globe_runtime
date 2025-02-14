@@ -2,3 +2,9 @@ name: workspace
 
 packages:
   - packages/**
+
+scripts:
+  generate:protobuf:
+    run: |
+      protoc --dart_out=packages/globe_runtime/lib/src/ --js_out=import_style=commonjs,binary:src/ protos/*.proto
+    description: Generate Dart and JavaScript Protobuf files
