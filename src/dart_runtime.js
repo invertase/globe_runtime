@@ -1,3 +1,6 @@
+import * as gpbf from "ext:google_protobuf/google-protobuf.js";
+import * as dartRuntime from "ext:dart_runtime/dart_runtime.js";
+
 const { core } = Deno;
 
 const wrap_dart_send = (callbackId, value) => {

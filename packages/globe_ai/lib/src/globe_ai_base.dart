@@ -53,12 +53,12 @@ final class GlobeAISdk {
       function: "${provider.name.toLowerCase()}_generate",
       args: [provider.apiKey.toFFIType, model.toFFIType, query.toFFIType],
       onData: (data) {
-        if (data.type == MessageType.error) {
-          completer.completeError(data.message);
+        if (data.type == MessageType.ERROR) {
+          completer.completeError(data.data);
           return true;
         }
 
-        final decoded = data.message as Map<dynamic, dynamic>;
+        final decoded = data.data as Map<dynamic, dynamic>;
         final message = decoded['choices'][0]['message']['content'];
         completer.complete(message);
         return true;
@@ -81,19 +81,19 @@ final class GlobeAISdk {
       function: "${provider.name.toLowerCase()}_stream",
       args: [provider.apiKey.toFFIType, model.toFFIType, query.toFFIType],
       onData: (data) {
-        if (data.type == MessageType.error) {
+        if (data.type == MessageType.ERROR) {
           streamController
-            ..addError(data.message)
+            ..addError(data.data)
             ..close();
           return true;
         }
 
-        if (data.type == MessageType.stream_end) {
+        if (data.type == MessageType.STREAM_END) {
           streamController.close();
           return true;
         }
 
-        final decoded = data.message as Map<dynamic, dynamic>;
+        final decoded = data.data as Map<dynamic, dynamic>;
         final chunk = decoded['choices'][0]['delta']['content'];
         if (chunk == null) {
           streamController.close();

@@ -27,6 +27,20 @@ import * as compression from "ext:deno_web/14_compression.js";
 import * as performance from "ext:deno_web/15_performance.js";
 import * as imageData from "ext:deno_web/16_image_data.js";
 
+Object.defineProperty(globalThis, "self", {
+  value: globalThis,
+  enumerable: true,
+  configurable: true,
+  writable: true,
+});
+
+Object.defineProperty(globalThis, "this", {
+  value: globalThis,
+  enumerable: true,
+  configurable: true,
+  writable: true,
+});
+
 Object.defineProperty(globalThis, "setTimeout", {
   value: timers.setTimeout,
   enumerable: true,
