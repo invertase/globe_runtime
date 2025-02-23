@@ -21,8 +21,7 @@ class GeminiAIProvider extends AiProvider {
 
 final class GlobeAISdk {
   static const String _moduleName = 'GlobeAISdk';
-  static const String _codeURL =
-      "https://globe-tasks.globeapp.dev/runtime/globe_ai.mjs";
+  static const String _codeURL = "packages/globe_ai/dist/globe_ai_v1.mjs";
 
   final GlobeRuntime _runtime;
   final AiProvider provider;

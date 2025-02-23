@@ -9,7 +9,7 @@ import 'package:http/http.dart' as http;
 import 'package:ffi/ffi.dart';
 import 'package:path/path.dart' as path;
 
-import 'protos/runtime_data.pb.dart';
+import 'protos/runtime_data.pbserver.dart';
 
 part 'runtime_impl.dart';
 part 'runtime_data.dart';
