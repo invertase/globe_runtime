@@ -66,19 +66,14 @@ where
 
     options.send_port.send_to_dart(callback_id, data)
 }
-
 extension!(
     dart_runtime,
     parameters = [FP: DartJsCommsBridge],
     ops = [
         op_send_to_dart<FP>,
     ],
-    esm_entry_point = "ext:dart_runtime/dart_runtime.js",
-    esm = [
-        dir "src",
-        "dart_runtime.js",
-        "protos/runtime_data_pb.js",
-    ],
+    esm_entry_point = "ext:dart_runtime/dart_runtime.ts",
+    esm = [ dir "src", "dart_runtime.ts", "dart_runtime_data.ts" ],
     options = {
         send_port: i64,
     },
