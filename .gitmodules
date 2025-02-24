@@ -1,3 +1,0 @@
-[submodule "third_party/msgpackr"]
-	path = third_party/msgpackr
-	url = https://github.com/kriszyp/msgpackr.git

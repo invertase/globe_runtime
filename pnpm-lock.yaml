@@ -8,6 +8,9 @@ importers:
 
   .:
     dependencies:
+      '@bufbuild/protobuf':
+        specifier: ^2.2.3
+        version: 2.2.3
       '@neondatabase/serverless':
         specifier: ^0.10.4
         version: 0.10.4
@@ -23,6 +26,9 @@ importers:
         version: 5.7.3
 
 packages:
+
+  '@bufbuild/protobuf@2.2.3':
+    resolution: {integrity: sha512-tFQoXHJdkEOSwj5tRIZSPNUuXK3RaR7T1nUrPgbYX1pUbvqqaaZAsfo+NXBPsz5rZMSKVFrgK1WL8Q/MSLvprg==}
 
   '@esbuild/aix-ppc64@0.24.2':
     resolution: {integrity: sha512-thpVCb/rhxE/BnMLQ7GReQLLN8q9qbHmI55F4489/ByVg2aQaQ6kbcLb6FHkocZzQhxc4gx0sCk0tJkKBFzDhA==}
@@ -752,6 +758,8 @@ packages:
     engines: {node: '>=12'}
 
 snapshots:
+
+  '@bufbuild/protobuf@2.2.3': {}
 
   '@esbuild/aix-ppc64@0.24.2':
     optional: true

@@ -2,3 +2,17 @@ name: workspace
 
 packages:
   - packages/**
+
+scripts:
+  generate:protobuf:
+    run: |
+      # Generate Dart files
+      protoc --dart_out=packages/globe_runtime/lib/generated/ --proto_path=protos protos/*.proto
+
+      # Generate TypeScript files using ts-proto
+      protoc \
+        --plugin=protoc-gen-ts_proto=$(which protoc-gen-ts_proto) \
+        --ts_proto_out=src/ \
+        --proto_path=protos \
+        protos/*.proto
+    description: Generate Dart and TypeScript Protobuf files

@@ -27,6 +27,22 @@ import * as compression from "ext:deno_web/14_compression.js";
 import * as performance from "ext:deno_web/15_performance.js";
 import * as imageData from "ext:deno_web/16_image_data.js";
 
+import { core } from "ext:core/mod.js";
+
+Object.defineProperty(globalThis, "self", {
+  value: core.propGetterOnly(() => globalThis),
+  enumerable: true,
+  configurable: false,
+  writable: false,
+});
+
+Object.defineProperty(globalThis, "Window", {
+  value: globalInterfaces.windowConstructorDescriptor,
+  enumerable: false,
+  configurable: true,
+  writable: true,
+});
+
 Object.defineProperty(globalThis, "setTimeout", {
   value: timers.setTimeout,
   enumerable: true,
@@ -70,14 +86,14 @@ Object.defineProperty(globalThis, "URL", {
 });
 
 Object.defineProperty(globalThis, "URLPattern", {
-  value: url.URLPattern,
+  value: urlPattern.URLPattern,
   enumerable: false,
   configurable: true,
   writable: true,
 });
 
 Object.defineProperty(globalThis, "URLSearchParams", {
-  value: url.URLSearchParams,
+  value: urlPattern.URLSearchParams,
   enumerable: false,
   configurable: true,
   writable: true,
@@ -85,6 +101,104 @@ Object.defineProperty(globalThis, "URLSearchParams", {
 
 Object.defineProperty(globalThis, "AbortController", {
   value: abortSignal.AbortController,
+  enumerable: false,
+  configurable: true,
+  writable: true,
+});
+
+Object.defineProperty(globalThis, "FileReader", {
+  value: fileReader.FileReader,
+  enumerable: false,
+  configurable: true,
+  writable: true,
+});
+
+Object.defineProperty(globalThis, "atob", {
+  value: base64.atob,
+  enumerable: true,
+  configurable: true,
+  writable: true,
+});
+
+Object.defineProperty(globalThis, "btoa", {
+  value: base64.btoa,
+  enumerable: true,
+  configurable: true,
+  writable: true,
+});
+
+Object.defineProperty(globalThis, "DOMException", {
+  value: DOMException,
+  enumerable: false,
+  configurable: true,
+  writable: true,
+});
+
+Object.defineProperty(globalThis, "CompressionStream", {
+  value: compression.CompressionStream,
+  enumerable: false,
+  configurable: true,
+  writable: true,
+});
+
+Object.defineProperty(globalThis, "DecompressionStream", {
+  value: compression.DecompressionStream,
+  enumerable: false,
+  configurable: true,
+  writable: true,
+});
+
+Object.defineProperty(globalThis, "ImageData", {
+  value: imageData.ImageData,
+  enumerable: false,
+  configurable: true,
+  writable: true,
+});
+
+Object.defineProperty(globalThis, "MessageChannel", {
+  value: messagePort.MessageChannel,
+  enumerable: false,
+  configurable: true,
+  writable: true,
+});
+
+Object.defineProperty(globalThis, "MessagePort", {
+  value: messagePort.MessagePort,
+  enumerable: false,
+  configurable: true,
+  writable: true,
+});
+
+Object.defineProperty(globalThis, "Performance", {
+  value: performance.Performance,
+  enumerable: false,
+  configurable: true,
+  writable: true,
+});
+
+Object.defineProperty(globalThis, "PerformanceEntry", {
+  value: performance.PerformanceEntry,
+  enumerable: false,
+  configurable: true,
+  writable: true,
+});
+
+Object.defineProperty(globalThis, "PerformanceMark", {
+  value: performance.PerformanceMark,
+  enumerable: false,
+  configurable: true,
+  writable: true,
+});
+
+Object.defineProperty(globalThis, "PerformanceMeasure", {
+  value: performance.PerformanceMeasure,
+  enumerable: false,
+  configurable: true,
+  writable: true,
+});
+
+Object.defineProperty(globalThis, "EventSource", {
+  value: eventSource.EventSource,
   enumerable: false,
   configurable: true,
   writable: true,
