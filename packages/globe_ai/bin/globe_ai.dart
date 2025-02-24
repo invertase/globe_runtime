@@ -13,16 +13,16 @@ void main() async {
     model: 'gpt-4o',
     query: 'Who is the president of the United States?',
   );
-  stdout.writeln(result);
+  stdout.writeln(result.choices[0].message.content);
 
-  // // stream
-  // final stream = globeAI.stream(
-  //   model: 'gpt-4o',
-  //   query: 'Tell me short 5 line story',
-  // );
-  // await for (final data in stream) {
-  //   stdout.write(data);
-  // }
+  // stream
+  final stream = globeAI.stream(
+    model: 'gpt-4o',
+    query: 'Tell me short 5 line story',
+  );
+  await for (final data in stream) {
+    stdout.write(data.choices[0].delta.content);
+  }
 
   exit(0);
 }

@@ -35,7 +35,7 @@ const ChatCompletion_Message$json = {
   '2': [
     {'1': 'role', '3': 1, '4': 1, '5': 9, '10': 'role'},
     {'1': 'content', '3': 2, '4': 1, '5': 9, '10': 'content'},
-    {'1': 'refusal', '3': 3, '4': 1, '5': 11, '6': '.google.protobuf.Any', '10': 'refusal'},
+    {'1': 'refusal', '3': 3, '4': 1, '5': 9, '10': 'refusal'},
   ],
 };
 
@@ -45,8 +45,7 @@ const ChatCompletion_Choices$json = {
   '2': [
     {'1': 'index', '3': 1, '4': 1, '5': 13, '10': 'index'},
     {'1': 'message', '3': 2, '4': 1, '5': 11, '6': '.ChatCompletion.Message', '10': 'message'},
-    {'1': 'logprobs', '3': 3, '4': 1, '5': 11, '6': '.google.protobuf.Any', '10': 'logprobs'},
-    {'1': 'finish_reason', '3': 4, '4': 1, '5': 9, '10': 'finishReason'},
+    {'1': 'finish_reason', '3': 3, '4': 1, '5': 9, '10': 'finishReason'},
   ],
 };
 
@@ -89,21 +88,57 @@ final $typed_data.Uint8List chatCompletionDescriptor = $convert.base64Decode(
     'aWNlcxgFIAMoCzIXLkNoYXRDb21wbGV0aW9uLkNob2ljZXNSB2Nob2ljZXMSKwoFdXNhZ2UYBi'
     'ABKAsyFS5DaGF0Q29tcGxldGlvbi5Vc2FnZVIFdXNhZ2USIQoMc2VydmljZV90aWVyGAcgASgJ'
     'UgtzZXJ2aWNlVGllchItChJzeXN0ZW1fZmluZ2VycHJpbnQYCCABKAlSEXN5c3RlbUZpbmdlcn'
-    'ByaW50GmcKB01lc3NhZ2USEgoEcm9sZRgBIAEoCVIEcm9sZRIYCgdjb250ZW50GAIgASgJUgdj'
-    'b250ZW50Ei4KB3JlZnVzYWwYAyABKAsyFC5nb29nbGUucHJvdG9idWYuQW55UgdyZWZ1c2FsGq'
-    'kBCgdDaG9pY2VzEhQKBWluZGV4GAEgASgNUgVpbmRleBIxCgdtZXNzYWdlGAIgASgLMhcuQ2hh'
-    'dENvbXBsZXRpb24uTWVzc2FnZVIHbWVzc2FnZRIwCghsb2dwcm9icxgDIAEoCzIULmdvb2dsZS'
-    '5wcm90b2J1Zi5BbnlSCGxvZ3Byb2JzEiMKDWZpbmlzaF9yZWFzb24YBCABKAlSDGZpbmlzaFJl'
-    'YXNvbhpfChVQcm9tcHRfdG9rZW5zX2RldGFpbHMSIwoNY2FjaGVkX3Rva2VucxgBIAEoDVIMY2'
-    'FjaGVkVG9rZW5zEiEKDGF1ZGlvX3Rva2VucxgCIAEoDVILYXVkaW9Ub2tlbnMa5QEKGUNvbXBs'
-    'ZXRpb25fdG9rZW5zX2RldGFpbHMSKQoQcmVhc29uaW5nX3Rva2VucxgBIAEoDVIPcmVhc29uaW'
-    '5nVG9rZW5zEiEKDGF1ZGlvX3Rva2VucxgCIAEoDVILYXVkaW9Ub2tlbnMSPAoaYWNjZXB0ZWRf'
-    'cHJlZGljdGlvbl90b2tlbnMYAyABKA1SGGFjY2VwdGVkUHJlZGljdGlvblRva2VucxI8ChpyZW'
-    'plY3RlZF9wcmVkaWN0aW9uX3Rva2VucxgEIAEoDVIYcmVqZWN0ZWRQcmVkaWN0aW9uVG9rZW5z'
-    'Gr4CCgVVc2FnZRIjCg1wcm9tcHRfdG9rZW5zGAEgASgNUgxwcm9tcHRUb2tlbnMSKwoRY29tcG'
-    'xldGlvbl90b2tlbnMYAiABKA1SEGNvbXBsZXRpb25Ub2tlbnMSIQoMdG90YWxfdG9rZW5zGAMg'
-    'ASgNUgt0b3RhbFRva2VucxJZChVwcm9tcHRfdG9rZW5zX2RldGFpbHMYBCABKAsyJS5DaGF0Q2'
-    '9tcGxldGlvbi5Qcm9tcHRfdG9rZW5zX2RldGFpbHNSE3Byb21wdFRva2Vuc0RldGFpbHMSZQoZ'
-    'Y29tcGxldGlvbl90b2tlbnNfZGV0YWlscxgFIAEoCzIpLkNoYXRDb21wbGV0aW9uLkNvbXBsZX'
-    'Rpb25fdG9rZW5zX2RldGFpbHNSF2NvbXBsZXRpb25Ub2tlbnNEZXRhaWxz');
+    'ByaW50GlEKB01lc3NhZ2USEgoEcm9sZRgBIAEoCVIEcm9sZRIYCgdjb250ZW50GAIgASgJUgdj'
+    'b250ZW50EhgKB3JlZnVzYWwYAyABKAlSB3JlZnVzYWwadwoHQ2hvaWNlcxIUCgVpbmRleBgBIA'
+    'EoDVIFaW5kZXgSMQoHbWVzc2FnZRgCIAEoCzIXLkNoYXRDb21wbGV0aW9uLk1lc3NhZ2VSB21l'
+    'c3NhZ2USIwoNZmluaXNoX3JlYXNvbhgDIAEoCVIMZmluaXNoUmVhc29uGl8KFVByb21wdF90b2'
+    'tlbnNfZGV0YWlscxIjCg1jYWNoZWRfdG9rZW5zGAEgASgNUgxjYWNoZWRUb2tlbnMSIQoMYXVk'
+    'aW9fdG9rZW5zGAIgASgNUgthdWRpb1Rva2VucxrlAQoZQ29tcGxldGlvbl90b2tlbnNfZGV0YW'
+    'lscxIpChByZWFzb25pbmdfdG9rZW5zGAEgASgNUg9yZWFzb25pbmdUb2tlbnMSIQoMYXVkaW9f'
+    'dG9rZW5zGAIgASgNUgthdWRpb1Rva2VucxI8ChphY2NlcHRlZF9wcmVkaWN0aW9uX3Rva2Vucx'
+    'gDIAEoDVIYYWNjZXB0ZWRQcmVkaWN0aW9uVG9rZW5zEjwKGnJlamVjdGVkX3ByZWRpY3Rpb25f'
+    'dG9rZW5zGAQgASgNUhhyZWplY3RlZFByZWRpY3Rpb25Ub2tlbnMavgIKBVVzYWdlEiMKDXByb2'
+    '1wdF90b2tlbnMYASABKA1SDHByb21wdFRva2VucxIrChFjb21wbGV0aW9uX3Rva2VucxgCIAEo'
+    'DVIQY29tcGxldGlvblRva2VucxIhCgx0b3RhbF90b2tlbnMYAyABKA1SC3RvdGFsVG9rZW5zEl'
+    'kKFXByb21wdF90b2tlbnNfZGV0YWlscxgEIAEoCzIlLkNoYXRDb21wbGV0aW9uLlByb21wdF90'
+    'b2tlbnNfZGV0YWlsc1ITcHJvbXB0VG9rZW5zRGV0YWlscxJlChljb21wbGV0aW9uX3Rva2Vuc1'
+    '9kZXRhaWxzGAUgASgLMikuQ2hhdENvbXBsZXRpb24uQ29tcGxldGlvbl90b2tlbnNfZGV0YWls'
+    'c1IXY29tcGxldGlvblRva2Vuc0RldGFpbHM=');
+
+@$core.Deprecated('Use chatCompletionChunkDescriptor instead')
+const ChatCompletionChunk$json = {
+  '1': 'ChatCompletionChunk',
+  '2': [
+    {'1': 'id', '3': 1, '4': 1, '5': 9, '10': 'id'},
+    {'1': 'object', '3': 2, '4': 1, '5': 9, '10': 'object'},
+    {'1': 'created', '3': 3, '4': 1, '5': 13, '10': 'created'},
+    {'1': 'model', '3': 4, '4': 1, '5': 9, '10': 'model'},
+    {'1': 'choices', '3': 5, '4': 3, '5': 11, '6': '.ChatCompletionChunk.Choices', '10': 'choices'},
+    {'1': 'usage', '3': 6, '4': 1, '5': 11, '6': '.ChatCompletion.Usage', '10': 'usage'},
+    {'1': 'service_tier', '3': 7, '4': 1, '5': 9, '10': 'serviceTier'},
+    {'1': 'system_fingerprint', '3': 8, '4': 1, '5': 9, '10': 'systemFingerprint'},
+  ],
+  '3': [ChatCompletionChunk_Choices$json],
+};
+
+@$core.Deprecated('Use chatCompletionChunkDescriptor instead')
+const ChatCompletionChunk_Choices$json = {
+  '1': 'Choices',
+  '2': [
+    {'1': 'index', '3': 1, '4': 1, '5': 13, '10': 'index'},
+    {'1': 'delta', '3': 2, '4': 1, '5': 11, '6': '.ChatCompletion.Message', '10': 'delta'},
+    {'1': 'finish_reason', '3': 3, '4': 1, '5': 9, '10': 'finishReason'},
+  ],
+};
+
+/// Descriptor for `ChatCompletionChunk`. Decode as a `google.protobuf.DescriptorProto`.
+final $typed_data.Uint8List chatCompletionChunkDescriptor = $convert.base64Decode(
+    'ChNDaGF0Q29tcGxldGlvbkNodW5rEg4KAmlkGAEgASgJUgJpZBIWCgZvYmplY3QYAiABKAlSBm'
+    '9iamVjdBIYCgdjcmVhdGVkGAMgASgNUgdjcmVhdGVkEhQKBW1vZGVsGAQgASgJUgVtb2RlbBI2'
+    'CgdjaG9pY2VzGAUgAygLMhwuQ2hhdENvbXBsZXRpb25DaHVuay5DaG9pY2VzUgdjaG9pY2VzEi'
+    'sKBXVzYWdlGAYgASgLMhUuQ2hhdENvbXBsZXRpb24uVXNhZ2VSBXVzYWdlEiEKDHNlcnZpY2Vf'
+    'dGllchgHIAEoCVILc2VydmljZVRpZXISLQoSc3lzdGVtX2ZpbmdlcnByaW50GAggASgJUhFzeX'
+    'N0ZW1GaW5nZXJwcmludBpzCgdDaG9pY2VzEhQKBWluZGV4GAEgASgNUgVpbmRleBItCgVkZWx0'
+    'YRgCIAEoCzIXLkNoYXRDb21wbGV0aW9uLk1lc3NhZ2VSBWRlbHRhEiMKDWZpbmlzaF9yZWFzb2'
+    '4YAyABKAlSDGZpbmlzaFJlYXNvbg==');
 

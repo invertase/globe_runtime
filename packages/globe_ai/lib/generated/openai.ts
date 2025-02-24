@@ -242,7 +242,7 @@ export namespace ChatCompletion {
         constructor(data?: any[] | {
             role?: string;
             content?: string;
-            refusal?: dependency_1.google.protobuf.Any;
+            refusal?: string;
         }) {
             super();
             pb_1.Message.initialize(this, Array.isArray(data) ? data : [], 0, -1, [], this.#one_of_decls);
@@ -271,18 +271,15 @@ export namespace ChatCompletion {
             pb_1.Message.setField(this, 2, value);
         }
         get refusal() {
-            return pb_1.Message.getWrapperField(this, dependency_1.google.protobuf.Any, 3) as dependency_1.google.protobuf.Any;
+            return pb_1.Message.getFieldWithDefault(this, 3, "") as string;
         }
-        set refusal(value: dependency_1.google.protobuf.Any) {
-            pb_1.Message.setWrapperField(this, 3, value);
-        }
-        get has_refusal() {
-            return pb_1.Message.getField(this, 3) != null;
+        set refusal(value: string) {
+            pb_1.Message.setField(this, 3, value);
         }
         static fromObject(data: {
             role?: string;
             content?: string;
-            refusal?: ReturnType<typeof dependency_1.google.protobuf.Any.prototype.toObject>;
+            refusal?: string;
         }): Message {
             const message = new Message({});
             if (data.role != null) {
@@ -292,7 +289,7 @@ export namespace ChatCompletion {
                 message.content = data.content;
             }
             if (data.refusal != null) {
-                message.refusal = dependency_1.google.protobuf.Any.fromObject(data.refusal);
+                message.refusal = data.refusal;
             }
             return message;
         }
@@ -300,7 +297,7 @@ export namespace ChatCompletion {
             const data: {
                 role?: string;
                 content?: string;
-                refusal?: ReturnType<typeof dependency_1.google.protobuf.Any.prototype.toObject>;
+                refusal?: string;
             } = {};
             if (this.role != null) {
                 data.role = this.role;
@@ -309,7 +306,7 @@ export namespace ChatCompletion {
                 data.content = this.content;
             }
             if (this.refusal != null) {
-                data.refusal = this.refusal.toObject();
+                data.refusal = this.refusal;
             }
             return data;
         }
@@ -321,8 +318,8 @@ export namespace ChatCompletion {
                 writer.writeString(1, this.role);
             if (this.content.length)
                 writer.writeString(2, this.content);
-            if (this.has_refusal)
-                writer.writeMessage(3, this.refusal, () => this.refusal.serialize(writer));
+            if (this.refusal.length)
+                writer.writeString(3, this.refusal);
             if (!w)
                 return writer.getResultBuffer();
         }
@@ -339,7 +336,7 @@ export namespace ChatCompletion {
                         message.content = reader.readString();
                         break;
                     case 3:
-                        reader.readMessage(message.refusal, () => message.refusal = dependency_1.google.protobuf.Any.deserialize(reader));
+                        message.refusal = reader.readString();
                         break;
                     default: reader.skipField();
                 }
@@ -358,7 +355,6 @@ export namespace ChatCompletion {
         constructor(data?: any[] | {
             index?: number;
             message?: ChatCompletion.Message;
-            logprobs?: dependency_1.google.protobuf.Any;
             finish_reason?: string;
         }) {
             super();
@@ -369,9 +365,6 @@ export namespace ChatCompletion {
                 }
                 if ("message" in data && data.message != undefined) {
                     this.message = data.message;
-                }
-                if ("logprobs" in data && data.logprobs != undefined) {
-                    this.logprobs = data.logprobs;
                 }
                 if ("finish_reason" in data && data.finish_reason != undefined) {
                     this.finish_reason = data.finish_reason;
@@ -393,25 +386,15 @@ export namespace ChatCompletion {
         get has_message() {
             return pb_1.Message.getField(this, 2) != null;
         }
-        get logprobs() {
-            return pb_1.Message.getWrapperField(this, dependency_1.google.protobuf.Any, 3) as dependency_1.google.protobuf.Any;
-        }
-        set logprobs(value: dependency_1.google.protobuf.Any) {
-            pb_1.Message.setWrapperField(this, 3, value);
-        }
-        get has_logprobs() {
-            return pb_1.Message.getField(this, 3) != null;
-        }
         get finish_reason() {
-            return pb_1.Message.getFieldWithDefault(this, 4, "") as string;
+            return pb_1.Message.getFieldWithDefault(this, 3, "") as string;
         }
         set finish_reason(value: string) {
-            pb_1.Message.setField(this, 4, value);
+            pb_1.Message.setField(this, 3, value);
         }
         static fromObject(data: {
             index?: number;
             message?: ReturnType<typeof ChatCompletion.Message.prototype.toObject>;
-            logprobs?: ReturnType<typeof dependency_1.google.protobuf.Any.prototype.toObject>;
             finish_reason?: string;
         }): Choices {
             const message = new Choices({});
@@ -420,9 +403,6 @@ export namespace ChatCompletion {
             }
             if (data.message != null) {
                 message.message = ChatCompletion.Message.fromObject(data.message);
-            }
-            if (data.logprobs != null) {
-                message.logprobs = dependency_1.google.protobuf.Any.fromObject(data.logprobs);
             }
             if (data.finish_reason != null) {
                 message.finish_reason = data.finish_reason;
@@ -433,7 +413,6 @@ export namespace ChatCompletion {
             const data: {
                 index?: number;
                 message?: ReturnType<typeof ChatCompletion.Message.prototype.toObject>;
-                logprobs?: ReturnType<typeof dependency_1.google.protobuf.Any.prototype.toObject>;
                 finish_reason?: string;
             } = {};
             if (this.index != null) {
@@ -441,9 +420,6 @@ export namespace ChatCompletion {
             }
             if (this.message != null) {
                 data.message = this.message.toObject();
-            }
-            if (this.logprobs != null) {
-                data.logprobs = this.logprobs.toObject();
             }
             if (this.finish_reason != null) {
                 data.finish_reason = this.finish_reason;
@@ -458,10 +434,8 @@ export namespace ChatCompletion {
                 writer.writeUint32(1, this.index);
             if (this.has_message)
                 writer.writeMessage(2, this.message, () => this.message.serialize(writer));
-            if (this.has_logprobs)
-                writer.writeMessage(3, this.logprobs, () => this.logprobs.serialize(writer));
             if (this.finish_reason.length)
-                writer.writeString(4, this.finish_reason);
+                writer.writeString(3, this.finish_reason);
             if (!w)
                 return writer.getResultBuffer();
         }
@@ -478,9 +452,6 @@ export namespace ChatCompletion {
                         reader.readMessage(message.message, () => message.message = ChatCompletion.Message.deserialize(reader));
                         break;
                     case 3:
-                        reader.readMessage(message.logprobs, () => message.logprobs = dependency_1.google.protobuf.Any.deserialize(reader));
-                        break;
-                    case 4:
                         message.finish_reason = reader.readString();
                         break;
                     default: reader.skipField();
@@ -884,6 +855,355 @@ export namespace ChatCompletion {
         }
         static deserializeBinary(bytes: Uint8Array): Usage {
             return Usage.deserialize(bytes);
+        }
+    }
+}
+export class ChatCompletionChunk extends pb_1.Message {
+    #one_of_decls: number[][] = [];
+    constructor(data?: any[] | {
+        id?: string;
+        object?: string;
+        created?: number;
+        model?: string;
+        choices?: ChatCompletionChunk.Choices[];
+        usage?: ChatCompletion.Usage;
+        service_tier?: string;
+        system_fingerprint?: string;
+    }) {
+        super();
+        pb_1.Message.initialize(this, Array.isArray(data) ? data : [], 0, -1, [5], this.#one_of_decls);
+        if (!Array.isArray(data) && typeof data == "object") {
+            if ("id" in data && data.id != undefined) {
+                this.id = data.id;
+            }
+            if ("object" in data && data.object != undefined) {
+                this.object = data.object;
+            }
+            if ("created" in data && data.created != undefined) {
+                this.created = data.created;
+            }
+            if ("model" in data && data.model != undefined) {
+                this.model = data.model;
+            }
+            if ("choices" in data && data.choices != undefined) {
+                this.choices = data.choices;
+            }
+            if ("usage" in data && data.usage != undefined) {
+                this.usage = data.usage;
+            }
+            if ("service_tier" in data && data.service_tier != undefined) {
+                this.service_tier = data.service_tier;
+            }
+            if ("system_fingerprint" in data && data.system_fingerprint != undefined) {
+                this.system_fingerprint = data.system_fingerprint;
+            }
+        }
+    }
+    get id() {
+        return pb_1.Message.getFieldWithDefault(this, 1, "") as string;
+    }
+    set id(value: string) {
+        pb_1.Message.setField(this, 1, value);
+    }
+    get object() {
+        return pb_1.Message.getFieldWithDefault(this, 2, "") as string;
+    }
+    set object(value: string) {
+        pb_1.Message.setField(this, 2, value);
+    }
+    get created() {
+        return pb_1.Message.getFieldWithDefault(this, 3, 0) as number;
+    }
+    set created(value: number) {
+        pb_1.Message.setField(this, 3, value);
+    }
+    get model() {
+        return pb_1.Message.getFieldWithDefault(this, 4, "") as string;
+    }
+    set model(value: string) {
+        pb_1.Message.setField(this, 4, value);
+    }
+    get choices() {
+        return pb_1.Message.getRepeatedWrapperField(this, ChatCompletionChunk.Choices, 5) as ChatCompletionChunk.Choices[];
+    }
+    set choices(value: ChatCompletionChunk.Choices[]) {
+        pb_1.Message.setRepeatedWrapperField(this, 5, value);
+    }
+    get usage() {
+        return pb_1.Message.getWrapperField(this, ChatCompletion.Usage, 6) as ChatCompletion.Usage;
+    }
+    set usage(value: ChatCompletion.Usage) {
+        pb_1.Message.setWrapperField(this, 6, value);
+    }
+    get has_usage() {
+        return pb_1.Message.getField(this, 6) != null;
+    }
+    get service_tier() {
+        return pb_1.Message.getFieldWithDefault(this, 7, "") as string;
+    }
+    set service_tier(value: string) {
+        pb_1.Message.setField(this, 7, value);
+    }
+    get system_fingerprint() {
+        return pb_1.Message.getFieldWithDefault(this, 8, "") as string;
+    }
+    set system_fingerprint(value: string) {
+        pb_1.Message.setField(this, 8, value);
+    }
+    static fromObject(data: {
+        id?: string;
+        object?: string;
+        created?: number;
+        model?: string;
+        choices?: ReturnType<typeof ChatCompletionChunk.Choices.prototype.toObject>[];
+        usage?: ReturnType<typeof ChatCompletion.Usage.prototype.toObject>;
+        service_tier?: string;
+        system_fingerprint?: string;
+    }): ChatCompletionChunk {
+        const message = new ChatCompletionChunk({});
+        if (data.id != null) {
+            message.id = data.id;
+        }
+        if (data.object != null) {
+            message.object = data.object;
+        }
+        if (data.created != null) {
+            message.created = data.created;
+        }
+        if (data.model != null) {
+            message.model = data.model;
+        }
+        if (data.choices != null) {
+            message.choices = data.choices.map(item => ChatCompletionChunk.Choices.fromObject(item));
+        }
+        if (data.usage != null) {
+            message.usage = ChatCompletion.Usage.fromObject(data.usage);
+        }
+        if (data.service_tier != null) {
+            message.service_tier = data.service_tier;
+        }
+        if (data.system_fingerprint != null) {
+            message.system_fingerprint = data.system_fingerprint;
+        }
+        return message;
+    }
+    toObject() {
+        const data: {
+            id?: string;
+            object?: string;
+            created?: number;
+            model?: string;
+            choices?: ReturnType<typeof ChatCompletionChunk.Choices.prototype.toObject>[];
+            usage?: ReturnType<typeof ChatCompletion.Usage.prototype.toObject>;
+            service_tier?: string;
+            system_fingerprint?: string;
+        } = {};
+        if (this.id != null) {
+            data.id = this.id;
+        }
+        if (this.object != null) {
+            data.object = this.object;
+        }
+        if (this.created != null) {
+            data.created = this.created;
+        }
+        if (this.model != null) {
+            data.model = this.model;
+        }
+        if (this.choices != null) {
+            data.choices = this.choices.map((item: ChatCompletionChunk.Choices) => item.toObject());
+        }
+        if (this.usage != null) {
+            data.usage = this.usage.toObject();
+        }
+        if (this.service_tier != null) {
+            data.service_tier = this.service_tier;
+        }
+        if (this.system_fingerprint != null) {
+            data.system_fingerprint = this.system_fingerprint;
+        }
+        return data;
+    }
+    serialize(): Uint8Array;
+    serialize(w: pb_1.BinaryWriter): void;
+    serialize(w?: pb_1.BinaryWriter): Uint8Array | void {
+        const writer = w || new pb_1.BinaryWriter();
+        if (this.id.length)
+            writer.writeString(1, this.id);
+        if (this.object.length)
+            writer.writeString(2, this.object);
+        if (this.created != 0)
+            writer.writeUint32(3, this.created);
+        if (this.model.length)
+            writer.writeString(4, this.model);
+        if (this.choices.length)
+            writer.writeRepeatedMessage(5, this.choices, (item: ChatCompletionChunk.Choices) => item.serialize(writer));
+        if (this.has_usage)
+            writer.writeMessage(6, this.usage, () => this.usage.serialize(writer));
+        if (this.service_tier.length)
+            writer.writeString(7, this.service_tier);
+        if (this.system_fingerprint.length)
+            writer.writeString(8, this.system_fingerprint);
+        if (!w)
+            return writer.getResultBuffer();
+    }
+    static deserialize(bytes: Uint8Array | pb_1.BinaryReader): ChatCompletionChunk {
+        const reader = bytes instanceof pb_1.BinaryReader ? bytes : new pb_1.BinaryReader(bytes), message = new ChatCompletionChunk();
+        while (reader.nextField()) {
+            if (reader.isEndGroup())
+                break;
+            switch (reader.getFieldNumber()) {
+                case 1:
+                    message.id = reader.readString();
+                    break;
+                case 2:
+                    message.object = reader.readString();
+                    break;
+                case 3:
+                    message.created = reader.readUint32();
+                    break;
+                case 4:
+                    message.model = reader.readString();
+                    break;
+                case 5:
+                    reader.readMessage(message.choices, () => pb_1.Message.addToRepeatedWrapperField(message, 5, ChatCompletionChunk.Choices.deserialize(reader), ChatCompletionChunk.Choices));
+                    break;
+                case 6:
+                    reader.readMessage(message.usage, () => message.usage = ChatCompletion.Usage.deserialize(reader));
+                    break;
+                case 7:
+                    message.service_tier = reader.readString();
+                    break;
+                case 8:
+                    message.system_fingerprint = reader.readString();
+                    break;
+                default: reader.skipField();
+            }
+        }
+        return message;
+    }
+    serializeBinary(): Uint8Array {
+        return this.serialize();
+    }
+    static deserializeBinary(bytes: Uint8Array): ChatCompletionChunk {
+        return ChatCompletionChunk.deserialize(bytes);
+    }
+}
+export namespace ChatCompletionChunk {
+    export class Choices extends pb_1.Message {
+        #one_of_decls: number[][] = [];
+        constructor(data?: any[] | {
+            index?: number;
+            delta?: ChatCompletion.Message;
+            finish_reason?: string;
+        }) {
+            super();
+            pb_1.Message.initialize(this, Array.isArray(data) ? data : [], 0, -1, [], this.#one_of_decls);
+            if (!Array.isArray(data) && typeof data == "object") {
+                if ("index" in data && data.index != undefined) {
+                    this.index = data.index;
+                }
+                if ("delta" in data && data.delta != undefined) {
+                    this.delta = data.delta;
+                }
+                if ("finish_reason" in data && data.finish_reason != undefined) {
+                    this.finish_reason = data.finish_reason;
+                }
+            }
+        }
+        get index() {
+            return pb_1.Message.getFieldWithDefault(this, 1, 0) as number;
+        }
+        set index(value: number) {
+            pb_1.Message.setField(this, 1, value);
+        }
+        get delta() {
+            return pb_1.Message.getWrapperField(this, ChatCompletion.Message, 2) as ChatCompletion.Message;
+        }
+        set delta(value: ChatCompletion.Message) {
+            pb_1.Message.setWrapperField(this, 2, value);
+        }
+        get has_delta() {
+            return pb_1.Message.getField(this, 2) != null;
+        }
+        get finish_reason() {
+            return pb_1.Message.getFieldWithDefault(this, 3, "") as string;
+        }
+        set finish_reason(value: string) {
+            pb_1.Message.setField(this, 3, value);
+        }
+        static fromObject(data: {
+            index?: number;
+            delta?: ReturnType<typeof ChatCompletion.Message.prototype.toObject>;
+            finish_reason?: string;
+        }): Choices {
+            const message = new Choices({});
+            if (data.index != null) {
+                message.index = data.index;
+            }
+            if (data.delta != null) {
+                message.delta = ChatCompletion.Message.fromObject(data.delta);
+            }
+            if (data.finish_reason != null) {
+                message.finish_reason = data.finish_reason;
+            }
+            return message;
+        }
+        toObject() {
+            const data: {
+                index?: number;
+                delta?: ReturnType<typeof ChatCompletion.Message.prototype.toObject>;
+                finish_reason?: string;
+            } = {};
+            if (this.index != null) {
+                data.index = this.index;
+            }
+            if (this.delta != null) {
+                data.delta = this.delta.toObject();
+            }
+            if (this.finish_reason != null) {
+                data.finish_reason = this.finish_reason;
+            }
+            return data;
+        }
+        serialize(): Uint8Array;
+        serialize(w: pb_1.BinaryWriter): void;
+        serialize(w?: pb_1.BinaryWriter): Uint8Array | void {
+            const writer = w || new pb_1.BinaryWriter();
+            if (this.index != 0)
+                writer.writeUint32(1, this.index);
+            if (this.has_delta)
+                writer.writeMessage(2, this.delta, () => this.delta.serialize(writer));
+            if (this.finish_reason.length)
+                writer.writeString(3, this.finish_reason);
+            if (!w)
+                return writer.getResultBuffer();
+        }
+        static deserialize(bytes: Uint8Array | pb_1.BinaryReader): Choices {
+            const reader = bytes instanceof pb_1.BinaryReader ? bytes : new pb_1.BinaryReader(bytes), message = new Choices();
+            while (reader.nextField()) {
+                if (reader.isEndGroup())
+                    break;
+                switch (reader.getFieldNumber()) {
+                    case 1:
+                        message.index = reader.readUint32();
+                        break;
+                    case 2:
+                        reader.readMessage(message.delta, () => message.delta = ChatCompletion.Message.deserialize(reader));
+                        break;
+                    case 3:
+                        message.finish_reason = reader.readString();
+                        break;
+                    default: reader.skipField();
+                }
+            }
+            return message;
+        }
+        serializeBinary(): Uint8Array {
+            return this.serialize();
+        }
+        static deserializeBinary(bytes: Uint8Array): Choices {
+            return Choices.deserialize(bytes);
         }
     }
 }

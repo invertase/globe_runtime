@@ -67,13 +67,13 @@ final class GlobeAISdk {
     return completer.future;
   }
 
-  Stream<String> stream({
+  Stream<ChatCompletionChunk> stream({
     required String query,
     required String model,
   }) async* {
     await _registerModuleIfNotAlready();
 
-    final streamController = StreamController<String>();
+    final streamController = StreamController<ChatCompletionChunk>();
 
     _runtime.callFunction(
       _moduleName,
@@ -87,14 +87,10 @@ final class GlobeAISdk {
           return true;
         }
 
-        final decoded = data.data as Map<dynamic, dynamic>;
-        final chunk = decoded['choices'][0]['delta']['content'];
-        if (chunk == null) {
-          streamController.close();
-          return true;
+        if (data.hasData()) {
+          final chunk = ChatCompletionChunk.fromBuffer(data.data);
+          streamController.add(chunk);
         }
-
-        streamController.add(chunk);
 
         if (data.done) {
           streamController.close();
