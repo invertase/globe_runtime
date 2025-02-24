@@ -1,2 +1,2 @@
 export 'src/runtime.dart';
-export 'generated/dart_runtime_data.pbserver.dart';
+export 'generated/dart_runtime_entry.pbserver.dart';

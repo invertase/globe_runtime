@@ -1,4 +1,4 @@
-import { DartMessage } from "./dart_runtime_data.ts";
+import { DartMessage, DartJSService, RpcResponse, SendValueRequest } from "./dart_runtime_entry.ts";
 
 const { core } = Deno;
 
@@ -27,27 +27,32 @@ function register_js_module(moduleName: string, moduleFunctions) {
   });
 }
 
-const wrap_dart_send = (callbackId: number, value: DartMessage) => {
-  const writer = DartMessage.encode(value);
-  return core.ops.op_send_to_dart(callbackId, writer.finish());
-};
+class DartJSServiceImpl implements DartJSService {
+  SendValue(request: SendValueRequest): Promise<RpcResponse> {
+    const writer = request.message && DartMessage.encode(request.message);
+    const success = core.ops.op_send_to_dart(request.callbackId, writer?.finish());
+    return Promise.resolve({ success });
+  }
+}
+
+const _dartJSService = new DartJSServiceImpl();
 
 register_js_module("Dart", {
   send_value: (callbackId: number, data: Uint8Array) => {
     const message: DartMessage = { data, done: true };
-    return wrap_dart_send(callbackId, message);
+    return _dartJSService.SendValue({ callbackId, message });
   },
   stream_value: (callbackId: number, data: Uint8Array) => {
     const message: DartMessage = { data, done: false };
-    return wrap_dart_send(callbackId, message);
+    return _dartJSService.SendValue({ callbackId, message });
   },
   stream_value_end: (callbackId: number, data: Uint8Array | undefined) => {
     const message: DartMessage = { data, done: true };
-    return wrap_dart_send(callbackId, message);
+    return _dartJSService.SendValue({ callbackId, message });
   },
   send_error: (callbackId, error: string | undefined) => {
     const message: DartMessage = { error, done: true };
-    return wrap_dart_send(callbackId, message);
+    return _dartJSService.SendValue({ callbackId, message });
   },
 });
 

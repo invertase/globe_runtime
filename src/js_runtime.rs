@@ -35,7 +35,7 @@ pub fn get_runtime(send_port: i64) -> JsRuntime {
         deno_net::deno_net::init_ops_and_esm::<PermissionsContainer>(None, None),
         deno_fetch::deno_fetch::init_ops_and_esm::<PermissionsContainer>(Default::default()),
         js_runtime::init_ops_and_esm(),
-        bufbuild_protobuf::init_ops_and_esm(),
+        bufbuild::init_ops_and_esm(),
         dart_runtime::init_ops_and_esm::<i64>(send_port),
     ];
 
@@ -124,8 +124,8 @@ extension!(deno_permissions_worker,
 );
 
 extension!(
-    bufbuild_protobuf,
-    esm_entry_point = "ext:bufbuild_protobuf/index.js",
+    bufbuild,
+    esm_entry_point = "ext:bufbuild/index.js",
     esm = [
         dir "third_party/@bufbuild/protobuf/dist/esm/",
         "wire/text-format.js",
@@ -192,9 +192,6 @@ extension!(
         "wkt/gen/google/protobuf/wrappers_pb.js",
         "wkt/gen/google/protobuf/compiler/plugin_pb.js"
     ],
-    customizer = |ext: &mut deno_core::Extension| {
-        ext.name = "@bufbuild"; // Set the actual extension name
-    }
 );
 
 #[repr(i32)]

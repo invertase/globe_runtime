@@ -1,0 +1,30 @@
+syntax = "proto3";
+
+package globe.runtime;
+
+message DartMessage {
+  bool done = 2;
+
+  // Using `oneof` to make `data` and `error` nullable
+  oneof payload {
+    bytes data = 3;
+    string error = 4;
+  }
+}
+
+// Message structure for sending data to Dart
+message SendValueRequest {
+  int32 callback_id = 1;
+  DartMessage message = 2;
+}
+
+// Response message (boolean success indicator)
+message RpcResponse {
+  bool success = 1;
+}
+
+// Service definition for RPC
+service DartJSService {
+  // Send a single message to Dart
+  rpc SendValue(SendValueRequest) returns (RpcResponse);
+}
