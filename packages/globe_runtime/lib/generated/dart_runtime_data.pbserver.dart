@@ -1,6 +1,6 @@
 //
 //  Generated code. Do not modify.
-//  source: protos/runtime_data.proto
+//  source: dart_runtime_data.proto
 //
 // @dart = 2.12
 
@@ -10,5 +10,5 @@
 // ignore_for_file: non_constant_identifier_names, prefer_final_fields
 // ignore_for_file: unnecessary_import, unnecessary_this, unused_import
 
-export 'runtime_data.pb.dart';
+export 'dart_runtime_data.pb.dart';
 

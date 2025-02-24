@@ -1,67 +1,6 @@
-import { DartMessage, MessageType } from "./dart_runtime_data.ts";
+import { DartMessage } from "./dart_runtime_data.ts";
 
 const { core } = Deno;
-
-/// TODO(codekeyz): Remove this when other side implements ProtoBuf-ed messages
-function objectToUint8Array(obj: any): Uint8Array {
-  const jsonString = JSON.stringify(obj); // Convert object to string
-  const encoder = new TextEncoder();
-  return encoder.encode(jsonString); // Convert string to Uint8Array
-}
-
-const wrap_dart_send = (callbackId: number, value: DartMessage) => {
-  const writer = DartMessage.encode(value);
-  return core.ops.op_send_to_dart(callbackId, writer.finish());
-};
-
-Object.defineProperty(globalThis, "send_error_to_dart", {
-  value: (callbackId, data) => {
-    const message = { type: MessageType.ERROR, data: objectToUint8Array(data) };
-    return wrap_dart_send(callbackId, message);
-  },
-  enumerable: true,
-  configurable: true,
-  writable: true,
-});
-
-Object.defineProperty(globalThis, "send_value_to_dart", {
-  value: (callbackId: number, data: any) => {
-    const message = {
-      type: MessageType.VALUE,
-      data: objectToUint8Array(data),
-    };
-    return wrap_dart_send(callbackId, message);
-  },
-  enumerable: true,
-  configurable: true,
-  writable: true,
-});
-
-Object.defineProperty(globalThis, "stream_value_to_dart", {
-  value: (callbackId: number, data: any) => {
-    const message: DartMessage = {
-      type: MessageType.STREAM_START,
-      data: objectToUint8Array(data),
-    };
-    return wrap_dart_send(callbackId, message);
-  },
-  enumerable: true,
-  configurable: true,
-  writable: true,
-});
-
-Object.defineProperty(globalThis, "stream_end_to_dart", {
-  value: (callbackId: number, data: any) => {
-    const message = {
-      type: MessageType.STREAM_END,
-      data: objectToUint8Array(data),
-    };
-    return wrap_dart_send(callbackId, message);
-  },
-  enumerable: true,
-  configurable: true,
-  writable: true,
-});
 
 function register_js_module(moduleName: string, moduleFunctions) {
   if (globalThis[moduleName]) {
@@ -87,6 +26,31 @@ function register_js_module(moduleName: string, moduleFunctions) {
     });
   });
 }
+
+const wrap_dart_send = (callbackId: number, value: DartMessage) => {
+  const writer = DartMessage.encode(value);
+  return core.ops.op_send_to_dart(callbackId, writer.finish());
+};
+
+register_js_module("Dart", {
+  send_value: (callbackId: number, data: Uint8Array) => {
+    const message: DartMessage = { data, done: true };
+    return wrap_dart_send(callbackId, message);
+  },
+  stream_value: (callbackId: number, data: Uint8Array) => {
+    const message: DartMessage = { data, done: false };
+    return wrap_dart_send(callbackId, message);
+  },
+  stream_value_end: (callbackId: number, data: Uint8Array | undefined) => {
+    const message: DartMessage = { data, done: true };
+    return wrap_dart_send(callbackId, message);
+  },
+  send_error: (callbackId, error: string | undefined) => {
+    const message: DartMessage = { error, done: true };
+    return wrap_dart_send(callbackId, message);
+  },
+});
+
 
 Object.defineProperty(globalThis, "registerJSModule", {
   value: register_js_module,

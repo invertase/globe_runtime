@@ -12,96 +12,59 @@ import {
 
 export const protobufPackage = "globe_runtime";
 
-export enum MessageType {
-  VALUE = 0,
-  ERROR = 1,
-  STREAM_START = 2,
-  STREAM_END = 3,
-  UNRECOGNIZED = -1,
-}
-
-export function messageTypeFromJSON(object: any): MessageType {
-  switch (object) {
-    case 0:
-    case "VALUE":
-      return MessageType.VALUE;
-    case 1:
-    case "ERROR":
-      return MessageType.ERROR;
-    case 2:
-    case "STREAM_START":
-      return MessageType.STREAM_START;
-    case 3:
-    case "STREAM_END":
-      return MessageType.STREAM_END;
-    case -1:
-    case "UNRECOGNIZED":
-    default:
-      return MessageType.UNRECOGNIZED;
-  }
-}
-
-export function messageTypeToJSON(object: MessageType): string {
-  switch (object) {
-    case MessageType.VALUE:
-      return "VALUE";
-    case MessageType.ERROR:
-      return "ERROR";
-    case MessageType.STREAM_START:
-      return "STREAM_START";
-    case MessageType.STREAM_END:
-      return "STREAM_END";
-    case MessageType.UNRECOGNIZED:
-    default:
-      return "UNRECOGNIZED";
-  }
-}
-
 export interface DartMessage {
-  type: MessageType;
-  data: Uint8Array;
+  done: boolean;
+  data?: Uint8Array | undefined;
+  error?: string | undefined;
 }
 
 function createBaseDartMessage(): DartMessage {
-  return { type: 0, data: new Uint8Array(0) };
+  return { done: false, data: undefined, error: undefined };
 }
 
 export const DartMessage: MessageFns<DartMessage> = {
-  encode(
-    message: DartMessage,
-    writer: BinaryWriter = new BinaryWriter()
-  ): BinaryWriter {
-    if (message.type !== 0) {
-      writer.uint32(8).int32(message.type);
+  encode(message: DartMessage, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.done !== false) {
+      writer.uint32(16).bool(message.done);
     }
-    if (message.data.length !== 0) {
-      writer.uint32(18).bytes(message.data);
+    if (message.data !== undefined) {
+      writer.uint32(26).bytes(message.data);
+    }
+    if (message.error !== undefined) {
+      writer.uint32(34).string(message.error);
     }
     return writer;
   },
 
   decode(input: BinaryReader | Uint8Array, length?: number): DartMessage {
-    const reader =
-      input instanceof BinaryReader ? input : new BinaryReader(input);
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
     let end = length === undefined ? reader.len : reader.pos + length;
     const message = createBaseDartMessage();
     while (reader.pos < end) {
       const tag = reader.uint32();
       switch (tag >>> 3) {
-        case 1: {
-          if (tag !== 8) {
+        case 2: {
+          if (tag !== 16) {
             break;
           }
 
-          message.type = reader.int32() as any;
+          message.done = reader.bool();
           continue;
         }
-        case 2: {
-          if (tag !== 18) {
+        case 3: {
+          if (tag !== 26) {
             break;
           }
 
           message.data = reader.bytes();
+          continue;
+        }
+        case 4: {
+          if (tag !== 34) {
+            break;
+          }
+
+          message.error = reader.string();
           continue;
         }
       }
@@ -115,20 +78,22 @@ export const DartMessage: MessageFns<DartMessage> = {
 
   fromJSON(object: any): DartMessage {
     return {
-      type: isSet(object.type) ? messageTypeFromJSON(object.type) : 0,
-      data: isSet(object.data)
-        ? bytesFromBase64(object.data)
-        : new Uint8Array(0),
+      done: isSet(object.done) ? globalThis.Boolean(object.done) : false,
+      data: isSet(object.data) ? bytesFromBase64(object.data) : undefined,
+      error: isSet(object.error) ? globalThis.String(object.error) : undefined,
     };
   },
 
   toJSON(message: DartMessage): unknown {
     const obj: any = {};
-    if (message.type !== 0) {
-      obj.type = messageTypeToJSON(message.type);
+    if (message.done !== false) {
+      obj.done = message.done;
     }
-    if (message.data.length !== 0) {
+    if (message.data !== undefined) {
       obj.data = base64FromBytes(message.data);
+    }
+    if (message.error !== undefined) {
+      obj.error = message.error;
     }
     return obj;
   },
@@ -136,12 +101,11 @@ export const DartMessage: MessageFns<DartMessage> = {
   create<I extends Exact<DeepPartial<DartMessage>, I>>(base?: I): DartMessage {
     return DartMessage.fromPartial(base ?? ({} as any));
   },
-  fromPartial<I extends Exact<DeepPartial<DartMessage>, I>>(
-    object: I
-  ): DartMessage {
+  fromPartial<I extends Exact<DeepPartial<DartMessage>, I>>(object: I): DartMessage {
     const message = createBaseDartMessage();
-    message.type = object.type ?? 0;
-    message.data = object.data ?? new Uint8Array(0);
+    message.done = object.done ?? false;
+    message.data = object.data ?? undefined;
+    message.error = object.error ?? undefined;
     return message;
   },
 };
@@ -171,31 +135,17 @@ function base64FromBytes(arr: Uint8Array): string {
   }
 }
 
-type Builtin =
-  | Date
-  | Function
-  | Uint8Array
-  | string
-  | number
-  | boolean
-  | undefined;
+type Builtin = Date | Function | Uint8Array | string | number | boolean | undefined;
 
-export type DeepPartial<T> = T extends Builtin
-  ? T
-  : T extends globalThis.Array<infer U>
-  ? globalThis.Array<DeepPartial<U>>
-  : T extends ReadonlyArray<infer U>
-  ? ReadonlyArray<DeepPartial<U>>
-  : T extends {}
-  ? { [K in keyof T]?: DeepPartial<T[K]> }
+export type DeepPartial<T> = T extends Builtin ? T
+  : T extends globalThis.Array<infer U> ? globalThis.Array<DeepPartial<U>>
+  : T extends ReadonlyArray<infer U> ? ReadonlyArray<DeepPartial<U>>
+  : T extends {} ? { [K in keyof T]?: DeepPartial<T[K]> }
   : Partial<T>;
 
 type KeysOfUnion<T> = T extends T ? keyof T : never;
-export type Exact<P, I extends P> = P extends Builtin
-  ? P
-  : P & { [K in keyof P]: Exact<P[K], I[K]> } & {
-      [K in Exclude<keyof I, KeysOfUnion<P>>]: never;
-    };
+export type Exact<P, I extends P> = P extends Builtin ? P
+  : P & { [K in keyof P]: Exact<P[K], I[K]> } & { [K in Exclude<keyof I, KeysOfUnion<P>>]: never };
 
 function isSet(value: any): boolean {
   return value !== null && value !== undefined;

@@ -5,11 +5,10 @@ import 'dart:ffi' as dart_ffi;
 import 'dart:io';
 import 'dart:isolate';
 import 'dart:typed_data';
+import 'package:globe_runtime/generated/dart_runtime_data.pbserver.dart';
 import 'package:http/http.dart' as http;
 import 'package:ffi/ffi.dart';
 import 'package:path/path.dart' as path;
-
-import 'protos/runtime_data.pbserver.dart';
 
 part 'runtime_impl.dart';
 part 'runtime_data.dart';

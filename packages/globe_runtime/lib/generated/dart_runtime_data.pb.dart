@@ -1,6 +1,6 @@
 //
 //  Generated code. Do not modify.
-//  source: protos/runtime_data.proto
+//  source: dart_runtime_data.proto
 //
 // @dart = 2.12
 
@@ -13,21 +13,27 @@ import 'dart:core' as $core;
 
 import 'package:protobuf/protobuf.dart' as $pb;
 
-import 'runtime_data.pbenum.dart';
-
-export 'runtime_data.pbenum.dart';
+enum DartMessage_Payload {
+  data, 
+  error, 
+  notSet
+}
 
 class DartMessage extends $pb.GeneratedMessage {
   factory DartMessage({
-    MessageType? type,
+    $core.bool? done,
     $core.List<$core.int>? data,
+    $core.String? error,
   }) {
     final $result = create();
-    if (type != null) {
-      $result.type = type;
+    if (done != null) {
+      $result.done = done;
     }
     if (data != null) {
       $result.data = data;
+    }
+    if (error != null) {
+      $result.error = error;
     }
     return $result;
   }
@@ -35,9 +41,16 @@ class DartMessage extends $pb.GeneratedMessage {
   factory DartMessage.fromBuffer($core.List<$core.int> i, [$pb.ExtensionRegistry r = $pb.ExtensionRegistry.EMPTY]) => create()..mergeFromBuffer(i, r);
   factory DartMessage.fromJson($core.String i, [$pb.ExtensionRegistry r = $pb.ExtensionRegistry.EMPTY]) => create()..mergeFromJson(i, r);
 
+  static const $core.Map<$core.int, DartMessage_Payload> _DartMessage_PayloadByTag = {
+    3 : DartMessage_Payload.data,
+    4 : DartMessage_Payload.error,
+    0 : DartMessage_Payload.notSet
+  };
   static final $pb.BuilderInfo _i = $pb.BuilderInfo(_omitMessageNames ? '' : 'DartMessage', package: const $pb.PackageName(_omitMessageNames ? '' : 'globe_runtime'), createEmptyInstance: create)
-    ..e<MessageType>(1, _omitFieldNames ? '' : 'type', $pb.PbFieldType.OE, defaultOrMaker: MessageType.VALUE, valueOf: MessageType.valueOf, enumValues: MessageType.values)
-    ..a<$core.List<$core.int>>(2, _omitFieldNames ? '' : 'data', $pb.PbFieldType.OY)
+    ..oo(0, [3, 4])
+    ..aOB(2, _omitFieldNames ? '' : 'done')
+    ..a<$core.List<$core.int>>(3, _omitFieldNames ? '' : 'data', $pb.PbFieldType.OY)
+    ..aOS(4, _omitFieldNames ? '' : 'error')
     ..hasRequiredFields = false
   ;
 
@@ -62,23 +75,35 @@ class DartMessage extends $pb.GeneratedMessage {
   static DartMessage getDefault() => _defaultInstance ??= $pb.GeneratedMessage.$_defaultFor<DartMessage>(create);
   static DartMessage? _defaultInstance;
 
-  @$pb.TagNumber(1)
-  MessageType get type => $_getN(0);
-  @$pb.TagNumber(1)
-  set type(MessageType v) { setField(1, v); }
-  @$pb.TagNumber(1)
-  $core.bool hasType() => $_has(0);
-  @$pb.TagNumber(1)
-  void clearType() => clearField(1);
+  DartMessage_Payload whichPayload() => _DartMessage_PayloadByTag[$_whichOneof(0)]!;
+  void clearPayload() => clearField($_whichOneof(0));
 
   @$pb.TagNumber(2)
+  $core.bool get done => $_getBF(0);
+  @$pb.TagNumber(2)
+  set done($core.bool v) { $_setBool(0, v); }
+  @$pb.TagNumber(2)
+  $core.bool hasDone() => $_has(0);
+  @$pb.TagNumber(2)
+  void clearDone() => clearField(2);
+
+  @$pb.TagNumber(3)
   $core.List<$core.int> get data => $_getN(1);
-  @$pb.TagNumber(2)
+  @$pb.TagNumber(3)
   set data($core.List<$core.int> v) { $_setBytes(1, v); }
-  @$pb.TagNumber(2)
+  @$pb.TagNumber(3)
   $core.bool hasData() => $_has(1);
-  @$pb.TagNumber(2)
-  void clearData() => clearField(2);
+  @$pb.TagNumber(3)
+  void clearData() => clearField(3);
+
+  @$pb.TagNumber(4)
+  $core.String get error => $_getSZ(2);
+  @$pb.TagNumber(4)
+  set error($core.String v) { $_setString(2, v); }
+  @$pb.TagNumber(4)
+  $core.bool hasError() => $_has(2);
+  @$pb.TagNumber(4)
+  void clearError() => clearField(4);
 }
 
 

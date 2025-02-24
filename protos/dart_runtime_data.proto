@@ -2,14 +2,12 @@ syntax = "proto3";
 
 package globe_runtime;
 
-enum MessageType {
-  VALUE = 0;
-  ERROR = 1;
-  STREAM_START = 2;
-  STREAM_END = 3;
-}
-
 message DartMessage {
-  MessageType type = 1;
-  bytes data = 2;
+  bool done = 2;
+
+    // Using `oneof` to make `data` and `error` nullable
+  oneof payload {
+    bytes data = 3;
+    string error = 4;
+  }
 }
