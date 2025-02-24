@@ -1,0 +1,18 @@
+{
+  "name": "globe_ai",
+  "version": "1.0.0",
+  "description": "<!--  This README describes the package. If you publish this package to pub.dev, this README's contents appear on the landing page for your package.",
+  "license": "ISC",
+  "author": "",
+  "type": "module",
+  "directories": {
+    "lib": "lib"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "google-protobuf": "^3.21.4",
+    "openai": "^4.85.4"
+  }
+}

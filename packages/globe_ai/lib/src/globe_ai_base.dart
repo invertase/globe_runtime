@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:globe_ai/generated/openai.pbserver.dart';
 import 'package:globe_runtime/globe_runtime.dart';
 
 abstract class AiProvider {
@@ -21,7 +22,7 @@ class GeminiAIProvider extends AiProvider {
 
 final class GlobeAISdk {
   static const String _moduleName = 'GlobeAISdk';
-  static const String _codeURL = "packages/globe_ai/dist/globe_ai_v1.mjs";
+  static const String _codeURL = "packages/globe_ai/dist/globe_ai.js";
 
   final GlobeRuntime _runtime;
   final AiProvider provider;
@@ -39,27 +40,26 @@ final class GlobeAISdk {
         GlobeRuntime.instance,
       );
 
-  Future<String?> generate({
+  Future<ChatCompletion> complete({
     required String query,
     required String model,
   }) async {
     await _registerModuleIfNotAlready();
 
-    final completer = Completer<String?>();
+    final completer = Completer<ChatCompletion>();
 
     _runtime.callFunction(
       _moduleName,
-      function: "${provider.name.toLowerCase()}_generate",
+      function: "${provider.name.toLowerCase()}_chat_complete",
       args: [provider.apiKey.toFFIType, model.toFFIType, query.toFFIType],
       onData: (data) {
-        if (data.type == MessageType.ERROR) {
-          completer.completeError(data.data);
+        if (data.hasError()) {
+          completer.completeError(data.error);
           return true;
         }
 
-        final decoded = data.data as Map<dynamic, dynamic>;
-        final message = decoded['choices'][0]['message']['content'];
-        completer.complete(message);
+        final response = ChatCompletion.fromBuffer(data.data);
+        completer.complete(response);
         return true;
       },
     );
@@ -77,18 +77,13 @@ final class GlobeAISdk {
 
     _runtime.callFunction(
       _moduleName,
-      function: "${provider.name.toLowerCase()}_stream",
+      function: "${provider.name.toLowerCase()}_chat_complete_stream",
       args: [provider.apiKey.toFFIType, model.toFFIType, query.toFFIType],
       onData: (data) {
-        if (data.type == MessageType.ERROR) {
+        if (data.hasError()) {
           streamController
-            ..addError(data.data)
+            ..addError(data.error)
             ..close();
-          return true;
-        }
-
-        if (data.type == MessageType.STREAM_END) {
-          streamController.close();
           return true;
         }
 
@@ -100,6 +95,12 @@ final class GlobeAISdk {
         }
 
         streamController.add(chunk);
+
+        if (data.done) {
+          streamController.close();
+          return true;
+        }
+
         return false;
       },
     );

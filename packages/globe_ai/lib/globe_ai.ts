@@ -1,10 +1,11 @@
 import { OpenAI } from "openai";
+import { ChatCompletion } from './generated/openai';
 
 type GlobeAISdkState = {
   openAI?: OpenAI;
 };
 
-const openai_generate = async (
+const openai_chat_complete = async (
   state: GlobeAISdkState,
   apiKey: string,
   model: string,
@@ -18,10 +19,22 @@ const openai_generate = async (
     messages: [{ role: "user", content }],
   });
 
-  send_value_to_dart(callbackId, completion);
+
+  const choise: ChatCompletion.Choices[] = [];
+
+  const response = new ChatCompletion({
+    id: completion.id,
+    model: completion.model,
+    created: completion.created,
+    system_fingerprint: completion.system_fingerprint,
+    object: completion.object,
+    service_tier: completion.service_tier?.toString(),
+  });
+
+  send_value_to_dart(callbackId, response.serializeBinary());
 };
 
-const openai_stream = async (
+const openai_chat_complete_stream = async (
   state: GlobeAISdkState,
   apiKey: string,
   model: string,
@@ -44,6 +57,6 @@ const openai_stream = async (
 };
 
 registerJSModule("GlobeAISdk", {
-  openai_generate,
-  openai_stream,
+  openai_chat_complete,
+  openai_chat_complete_stream
 });

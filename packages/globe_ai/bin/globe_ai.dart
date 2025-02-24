@@ -9,22 +9,20 @@ const OpenAIKey =
 void main() async {
   final globeAI = GlobeAISdk.create(OpenAIProvider(apiKey: OpenAIKey));
 
-  final result = await globeAI.generate(
+  final result = await globeAI.complete(
     model: 'gpt-4o',
     query: 'Who is the president of the United States?',
   );
   stdout.writeln(result);
 
-  stdout.writeln('\n');
-
-  // stream
-  final stream = globeAI.stream(
-    model: 'gpt-4o',
-    query: 'Tell me short 5 line story',
-  );
-  await for (final data in stream) {
-    stdout.write(data);
-  }
+  // // stream
+  // final stream = globeAI.stream(
+  //   model: 'gpt-4o',
+  //   query: 'Tell me short 5 line story',
+  // );
+  // await for (final data in stream) {
+  //   stdout.write(data);
+  // }
 
   exit(0);
 }
