@@ -30,11 +30,17 @@ interface class GlobeRuntime {
     return _cachedInstance = GlobeRuntime._(_$GlobeRuntimeImpl());
   }
 
-  FutureOr<void> registerModule(String entryFile, {String? workingDir}) {
+  FutureOr<void> registerModule(
+    String moduleName,
+    String modulePath, {
+    String? workingDir,
+    List<FFIConvertible?> args = const [],
+  }) {
     workingDir ??= Directory.current.path;
     return _instance!.registerModule(
-      entryFile,
-      workingDir,
+      moduleName,
+      path.join(workingDir, modulePath),
+      args: args,
     );
   }
 

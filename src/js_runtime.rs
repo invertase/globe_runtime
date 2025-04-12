@@ -16,6 +16,14 @@ use deno_runtime::{
 
 use crate::{dart_runtime::dart_runtime, js_resolver::NpmFsModuleLoader};
 
+#[derive(Debug)]
+pub struct JsFunctionArgs {
+    pub args: *const *const c_void,
+    pub type_ids: *const i32,
+    pub sizes: *const isize,
+    pub count: i32,
+}
+
 pub fn get_runtime(send_port: i64) -> JsRuntime {
     let permission_desc_parser = Arc::new(RuntimePermissionDescriptorParser::new(
         sys_traits::impls::RealSys,
@@ -39,12 +47,15 @@ pub fn get_runtime(send_port: i64) -> JsRuntime {
         dart_runtime::init_ops_and_esm::<i64>(send_port),
     ];
 
+    let platform = v8::new_default_platform(0, false).make_shared();
+
     JsRuntime::new(RuntimeOptions {
         module_loader: Some(Rc::new(NpmFsModuleLoader)),
         extension_transpiler: Some(Rc::new(|specifier, source| {
             deno_runtime::transpile::maybe_transpile_source(specifier, source)
         })),
         extensions,
+        v8_platform: Some(platform),
         ..Default::default()
     })
 }
@@ -56,12 +67,11 @@ pub fn get_js_function(
 ) -> Result<(v8::Global<v8::Function>, v8::Global<v8::Value>), String> {
     let module_obj = get_js_module(scope, module)?;
 
-    let data_key = v8::String::new(scope, "data")
-        .ok_or_else(|| "Error: Failed to create V8 string for 'data' property".to_string())?;
-    let data_value = module_obj
-        .get(scope, data_key.into())
-        .ok_or_else(|| format!("Error: 'data' property not found in module '{}'", module))?;
-    let data_global = v8::Global::new(scope, data_value);
+    let state_key = v8::String::new(scope, "state").unwrap();
+    let state_value = module_obj
+        .get(scope, state_key.into())
+        .ok_or_else(|| format!("Error: 'state' property not found in module '{}'", module))?;
+    let state_global = v8::Global::new(scope, state_value);
 
     let function_key = v8::String::new(scope, function).ok_or_else(|| {
         format!(
@@ -77,7 +87,7 @@ pub fn get_js_function(
                 .map_err(|_| format!("Error: '{}' is not a valid function", function))?;
             let function_global = v8::Global::new(scope, function);
 
-            Ok((function_global, data_global))
+            Ok((function_global, state_global))
         }
         _ => Err(format!("Error: Function '{}' not found", function)),
     }
@@ -220,7 +230,7 @@ impl FFITypeId {
     }
 }
 
-pub fn c_args_to_v8_args(
+pub fn c_args_to_v8_args_global(
     scope: &mut v8::HandleScope,
     args: *const *const c_void,
     type_ids: *const i32,
@@ -251,7 +261,7 @@ pub fn c_args_to_v8_args(
                 }
             }
             Some(FFITypeId::Integer) => {
-                let int_value = arg_ptr as i32;
+                let int_value = unsafe { *(arg_ptr as *const i32) };
                 v8::Integer::new(scope, int_value).into()
             }
             Some(FFITypeId::Double) => {
@@ -281,4 +291,116 @@ pub fn c_args_to_v8_args(
     }
 
     v8_args
+}
+
+pub fn c_args_to_v8_args_local<'s>(
+    scope: &mut v8::HandleScope<'s>,
+    args: *const *const c_void,
+    type_ids: *const i32,
+    sizes: *const isize,
+    count: i32,
+) -> Vec<v8::Local<'s, v8::Value>> {
+    let mut v8_args = Vec::new();
+
+    for i in 0..count as usize {
+        let arg_ptr = unsafe { *args.add(i) };
+        let type_id = unsafe { *type_ids.add(i) };
+        let size = unsafe { *sizes.add(i) };
+
+        if arg_ptr.is_null() {
+            continue;
+        }
+
+        let ffi_type = FFITypeId::from_i32(type_id);
+
+        let v8_value: v8::Local<v8::Value> = match ffi_type {
+            Some(FFITypeId::String) => {
+                // ✅ String (Pointer to UTF-8)
+                let c_str = unsafe { CStr::from_ptr(arg_ptr as *const c_char) };
+                match c_str.to_str() {
+                    Ok(string) => v8::String::new(scope, string).unwrap().into(),
+                    Err(_) => v8::undefined(scope).into(),
+                }
+            }
+            Some(FFITypeId::Integer) => {
+                let int_value = unsafe { *(arg_ptr as *const i32) };
+                v8::Integer::new(scope, int_value).into()
+            }
+            Some(FFITypeId::Double) => {
+                let float_value = unsafe { *(arg_ptr as *const f64) };
+                v8::Number::new(scope, float_value).into()
+            }
+            Some(FFITypeId::Bool) => {
+                let bool_value = arg_ptr as usize != 0;
+                v8::Boolean::new(scope, bool_value).into()
+            }
+            Some(FFITypeId::Bytes) => {
+                let byte_array =
+                    unsafe { std::slice::from_raw_parts(arg_ptr as *const u8, size as usize) };
+
+                let v8_array = v8::ArrayBuffer::new_backing_store_from_boxed_slice(
+                    byte_array.to_vec().into_boxed_slice(),
+                );
+                let v8_shared_array = v8_array.make_shared();
+                let v8_buffer = v8::ArrayBuffer::with_backing_store(scope, &v8_shared_array);
+                v8_buffer.into()
+            }
+            _ => v8::undefined(scope).into(),
+        };
+
+        v8_args.push(v8_value);
+    }
+
+    v8_args
+}
+
+pub fn register_js_module<'s>(
+    scope: &mut v8::HandleScope<'s>,
+    module_name: v8::Local<'s, v8::String>,
+    init_function: v8::Local<'s, v8::Function>,
+    functions_object: v8::Local<'s, v8::Object>,
+    module_init_args: JsFunctionArgs,
+) -> u8 {
+    let mut v8_args = c_args_to_v8_args_local(
+        scope,
+        module_init_args.args,
+        module_init_args.type_ids,
+        module_init_args.sizes,
+        module_init_args.count,
+    );
+    v8_args.insert(0, v8::Object::new(scope).into());
+
+    let receiver = v8::undefined(scope).into();
+    let module_state_value = init_function.call(scope, receiver, &v8_args).unwrap();
+
+    // Create module object and set the state
+    let module_object = v8::Object::new(scope);
+    let state_key = v8::String::new(scope, "state").unwrap();
+    module_object.set(scope, state_key.into(), module_state_value);
+
+    let args = v8::GetPropertyNamesArgs {
+        mode: v8::KeyCollectionMode::OwnOnly,
+        property_filter: v8::PropertyFilter::ALL_PROPERTIES,
+        index_filter: v8::IndexFilter::IncludeIndices,
+        key_conversion: v8::KeyConversionMode::KeepNumbers,
+    };
+
+    let props_array = functions_object
+        .get_own_property_names(scope, args)
+        .unwrap();
+
+    // Loop over module properties and register functions
+    for i in 0..props_array.length() {
+        let key = props_array.get_index(scope, i).unwrap();
+        let value = functions_object.get(scope, key).unwrap();
+        if value.is_function() {
+            module_object.set(scope, key, value.into());
+        }
+    }
+
+    // Put module on globalThis
+    let global = scope.get_current_context().global(scope);
+    global.set(scope, module_name.into(), module_object.into());
+
+    0
 }

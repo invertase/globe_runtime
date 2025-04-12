@@ -97,3 +97,46 @@ class FFIBytes implements FFIConvertible {
   @override
   FFITypeId get typeId => FFITypeId.bytes;
 }
+
+typedef GetTypeArguments = ({
+  Pointer<Pointer<Void>> argPointers,
+  Pointer<Int32> typeIds,
+  Pointer<IntPtr> sizes,
+  int length,
+});
+
+extension GetTypeArgumentsExtension on GetTypeArguments {
+  void free() {
+    calloc.free(argPointers);
+    calloc.free(typeIds);
+    calloc.free(sizes);
+  }
+}
+
+GetTypeArguments getTypeArguments(List<FFIConvertible?> args) {
+  final Pointer<Pointer<Void>> argPointers = calloc(args.length);
+  final Pointer<Int32> typeIds = calloc(args.length);
+  final Pointer<IntPtr> sizes = calloc(args.length);
+
+  for (int i = 0; i < args.length; i++) {
+    final objectAtIndex = args[i];
+
+    argPointers[i] = objectAtIndex == null ? nullptr : objectAtIndex.toFFI();
+    typeIds[i] = objectAtIndex == null
+        ? FFITypeId.none.value
+        : objectAtIndex.typeId.value;
+
+    if (objectAtIndex is FFIBytes) {
+      sizes[i] = objectAtIndex.value.length;
+    } else {
+      sizes[i] = 0;
+    }
+  }
+
+  return (
+    argPointers: argPointers,
+    typeIds: typeIds,
+    sizes: sizes,
+    length: args.length,
+  );
+}

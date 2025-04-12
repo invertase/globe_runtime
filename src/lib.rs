@@ -9,6 +9,7 @@ use deno_runtime::deno_core::{self};
 use std::{
     cell::RefCell,
     ffi::{c_char, c_void, CStr, CString},
+    fs,
     path::PathBuf,
     rc::Rc,
 };
@@ -54,91 +55,101 @@ pub unsafe extern "C" fn init_runtime(
 
 #[no_mangle]
 pub unsafe extern "C" fn register_module(
-    module: *const c_char,
-    working_dir: *const c_char,
+    module_name: *const c_char,
+    module_full_path: *const c_char,
     error: *mut *const c_char,
+    //
+    args: *const *const c_void, // Arguments pointer
+    arg_type_ids: *const i32,   // Argument type IDs
+    arg_sizes: *const isize,    // Argument sizes (for List<String>, Uint8List)
+    args_count: i32,            // Number of arguments
 ) -> u8 {
     if !error.is_null() {
         *error = std::ptr::null();
     }
 
-    // Convert module name
-    let module_name = if module.is_null() {
-        set_error(error, "Module name pointer is null");
-        return 1;
-    } else {
-        match CStr::from_ptr(module).to_str() {
-            Ok(name) => name,
-            Err(_) => {
-                set_error(error, "Failed to convert module name");
-                return 1;
-            }
-        }
+    let module_init_args = js_runtime::JsFunctionArgs {
+        args,
+        sizes: arg_sizes,
+        count: args_count,
+        type_ids: arg_type_ids,
     };
 
-    // Convert working directory
-    let working_dir_name = if working_dir.is_null() {
-        set_error(error, "Working directory pointer is null");
-        return 1;
-    } else {
-        match CStr::from_ptr(working_dir).to_str() {
-            Ok(name) => name,
-            Err(_) => {
-                set_error(error, "Failed to convert working directory name");
-                return 1;
-            }
-        }
-    };
-
-    // Resolve the JS module path
-    let main_module = match deno_core::resolve_path(module_name, &PathBuf::from(working_dir_name)) {
-        Ok(path) => path,
+    let module_name_str = match check_and_get_cstr(module_name) {
+        Ok(name) => name,
         Err(e) => {
-            set_error(
-                error,
-                format!("Failed to resolve module path: {}", e).as_str(),
-            );
+            set_error(error, e);
+            return 1;
+        }
+    };
+
+    let module_path_str = match check_and_get_cstr(module_full_path) {
+        Ok(path) => PathBuf::from(path),
+        Err(e) => {
+            set_error(error, e);
+            return 1;
+        }
+    };
+
+    let source_code = match fs::read_to_string(&module_path_str) {
+        Ok(code) => code,
+        Err(e) => {
+            set_error(error, &format!("Failed to read JS module: {}", e));
             return 1;
         }
     };
 
     let runtime_ref = get_runtime_instance();
+    let mut javascript_runtime = runtime_ref.borrow_mut();
 
-    utils::tokio_runtime().block_on(async move {
-        let local_set = tokio::task::LocalSet::new();
+    let module_object = {
+        let result = javascript_runtime.lazy_load_es_module_with_code(
+            format!("file://{}", module_path_str.to_string_lossy()),
+            source_code,
+        );
+        if let Err(e) = result {
+            set_error(
+                error,
+                &format!("Error loading module: {}, {}", module_name_str, e),
+            );
+            return 1;
+        }
 
-        local_set
-            .run_until(async move {
-                let mut javascript_runtime = runtime_ref.borrow_mut();
+        result.unwrap()
+    };
 
-                let mod_id = match javascript_runtime.load_main_es_module(&main_module).await {
-                    Ok(id) => id,
-                    Err(e) => {
-                        set_error(
-                            error,
-                            format!("Failed to load module into runtime: {}", e).as_str(),
-                        );
-                        return 1;
-                    }
-                };
+    let mut handle_scope = javascript_runtime.handle_scope();
+    let scope = &mut handle_scope;
 
-                let result = javascript_runtime.mod_evaluate(mod_id);
+    let local = v8::Local::new(scope, module_object);
+    let obj = local.to_object(scope).unwrap();
+    let key = v8::String::new(scope, "default").unwrap();
 
-                // Wait for module execution
-                if let Err(e) = javascript_runtime.run_event_loop(Default::default()).await {
-                    set_error(error, format!("Error running event loop: {}", e).as_str());
-                    return 1;
-                }
+    // Check if the module exports a default function
+    let value = obj.get(scope, key.into()).unwrap();
+    if !value.is_object() {
+        set_error(error, "Module does not export a default function");
+        return 1;
+    }
 
-                if let Err(e) = result.await {
-                    set_error(error, format!("Error evaluating module: {}", e).as_str());
-                    return 1;
-                }
+    let module_name = v8::String::new(scope, module_name_str).unwrap();
+    let default_object = value.to_object(scope).unwrap();
 
-                0
-            })
-            .await
-    })
+    let init_key = v8::String::new(scope, "init").unwrap();
+    let init_fnc_value = default_object.get(scope, init_key.into()).unwrap();
+    let init_function = v8::Local::<v8::Function>::try_from(init_fnc_value).unwrap();
+
+    let functions_key = v8::String::new(scope, "functions").unwrap();
+    let functions_value = default_object.get(scope, functions_key.into()).unwrap();
+    let functions_object = v8::Local::<v8::Object>::try_from(functions_value).unwrap();
+
+    js_runtime::register_js_module(
+        scope,
+        module_name,
+        init_function,
+        functions_object,
+        module_init_args,
+    )
 }
 
 #[no_mangle]
@@ -165,7 +176,7 @@ pub unsafe extern "C" fn is_module_registered(module_name: *const c_char) -> u8 
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn call_globe_function(
+pub unsafe extern "C" fn call_js_function(
     module_name: *const c_char,   // Module name
     function_name: *const c_char, // Function name
     message_identifier: i32,      // Message identifier
@@ -196,7 +207,7 @@ pub unsafe extern "C" fn call_globe_function(
                     // Prepare arguments
                     let v8_args = {
                         let scope = &mut javascript_runtime.handle_scope();
-                        let mut args = js_runtime::c_args_to_v8_args(
+                        let mut args = js_runtime::c_args_to_v8_args_global(
                             scope,
                             args,
                             arg_type_ids,
@@ -253,5 +264,17 @@ pub unsafe extern "C" fn dispose_runtime() -> u8 {
 unsafe fn set_error(error: *mut *const c_char, msg: &str) {
     if !error.is_null() {
         *error = CString::new(msg).unwrap().into_raw();
+    }
+}
+
+// Helper to safely convert a *const c_char into a Rust &str
+unsafe fn check_and_get_cstr(ptr: *const c_char) -> Result<&'static str, &'static str> {
+    if ptr.is_null() {
+        return Err("Received null pointer");
+    }
+
+    match CStr::from_ptr(ptr).to_str() {
+        Ok(val) => Ok(val),
+        Err(_) => Err("Invalid UTF-8 in pointer string"),
     }
 }
