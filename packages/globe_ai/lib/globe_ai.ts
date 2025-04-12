@@ -57,12 +57,12 @@ const openai_chat_complete = async (
 const openai_chat_complete_stream = async (
   state: GlobeAISdkState,
   model: string,
-  content: string,
+  query: string,
   callbackId: number
 ) => {
   const completion = await state.openAI.chat.completions.create({
     model,
-    messages: [{ role: "user", content }],
+    messages: [{ role: "user", content: query }],
     stream: true,
   });
 
