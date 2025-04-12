@@ -11,8 +11,6 @@ const openai_chat_complete = async (
   query: string,
   callbackId: number
 ) => {
-  console.log(`${model} ${query} ${callbackId}`);
-
   const completion = await state.openAI.chat.completions.create({
     model,
     messages: [{ role: "user", content: query }],
