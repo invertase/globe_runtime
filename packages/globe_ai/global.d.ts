@@ -29,20 +29,6 @@ declare global {
     }
 
     const Dart: DartGlobal;
-
-    /**
-    * Registers a JavaScript module under a given name.
-    * Throws an error if the module is already registered.
-    *
-    * @param moduleName - The name of the module to register.
-    * @param moduleFunctions - An object containing functions to be registered.
-    *
-    * @throws {Error} If the module is already registered.
-    */
-    function registerJSModule(
-        moduleName: string,
-        moduleFunctions: Record<string, Function>
-    ): void;
 }
 
 export { };
