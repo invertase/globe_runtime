@@ -1,22 +1,19 @@
-import { OpenAI, } from "openai";
+import { OpenAI } from "openai";
 import { ChatCompletion, ChatCompletionChunk } from "./generated/openai";
 
 type GlobeAISdkState = {
-  openAI?: OpenAI;
+  openAI: OpenAI;
 };
 
 const openai_chat_complete = async (
   state: GlobeAISdkState,
-  apiKey: string,
   model: string,
-  content: string,
+  query: string,
   callbackId: number
 ) => {
-  const client = (state.openAI ??= new OpenAI({ apiKey }));
-
-  const completion = await client.chat.completions.create({
+  const completion = await state.openAI.chat.completions.create({
     model,
-    messages: [{ role: "user", content }],
+    messages: [{ role: "user", content: query }],
   });
 
   const choices: ChatCompletion.Choices[] = completion.choices.map((choice) => {
@@ -59,34 +56,30 @@ const openai_chat_complete = async (
 
 const openai_chat_complete_stream = async (
   state: GlobeAISdkState,
-  apiKey: string,
   model: string,
-  content: string,
+  query: string,
   callbackId: number
 ) => {
-  const client = (state.openAI ??= new OpenAI({ apiKey }));
-
-  const completion = await client.chat.completions.create({
+  const completion = await state.openAI.chat.completions.create({
     model,
-    messages: [{ role: "user", content }],
+    messages: [{ role: "user", content: query }],
     stream: true,
   });
 
   for await (const chunk of completion) {
-
-    const choices: ChatCompletionChunk.Choices[] = chunk.choices.map((choice) => {
-      return new ChatCompletionChunk.Choices({
-        index: choice.index,
-        finish_reason: choice.finish_reason?.toString(),
-        delta: new ChatCompletion.Message({
-          role: choice.delta.role?.toString(),
-          content: choice.delta.content?.toString(),
-          refusal: choice.delta.refusal?.toString(),
-        }),
-
-
-      });
-    });
+    const choices: ChatCompletionChunk.Choices[] = chunk.choices.map(
+      (choice) => {
+        return new ChatCompletionChunk.Choices({
+          index: choice.index,
+          finish_reason: choice.finish_reason?.toString(),
+          delta: new ChatCompletion.Message({
+            role: choice.delta.role?.toString(),
+            content: choice.delta.content?.toString(),
+            refusal: choice.delta.refusal?.toString(),
+          }),
+        });
+      }
+    );
 
     const usage = new ChatCompletion.Usage({
       total_tokens: chunk.usage?.total_tokens,
@@ -117,7 +110,10 @@ const openai_chat_complete_stream = async (
   Dart.stream_value_end(callbackId);
 };
 
-registerJSModule("GlobeAISdk", {
-  openai_chat_complete,
-  openai_chat_complete_stream,
-});
+export default {
+  init: (state: GlobeAISdkState, apiKey: string): GlobeAISdkState => {
+    state.openAI = new OpenAI({ apiKey });
+    return state;
+  },
+  functions: { openai_chat_complete, openai_chat_complete_stream },
+};

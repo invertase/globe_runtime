@@ -41,11 +41,21 @@ typedef _RegisterModuleFnNative = NativeFunction<
       Pointer<Utf8>,
       Pointer<Utf8>,
       Pointer<Pointer<Utf8>>,
+      //
+      Pointer<Pointer<Void>>, // Arguments pointer
+      Pointer<Int32>, // Argument type IDs
+      Pointer<IntPtr>, // Argument sizes (for List<String>, Uint8List)
+      Int, // Number of arguments
     )>;
 typedef _RegisterModuleFnDart = int Function(
   Pointer<Utf8>,
   Pointer<Utf8>,
   Pointer<Pointer<Utf8>>,
+  //
+  Pointer<Pointer<Void>>,
+  Pointer<Int32>,
+  Pointer<IntPtr>,
+  int,
 );
 
 typedef _IsModuleRegisteredFnNative
@@ -91,7 +101,7 @@ class _$GlobeRuntimeImpl {
       .asFunction<_IsModuleRegisteredFnDart>();
 
   final _callGlobeFunction = dylib
-      .lookup<_CallGlobeFunctionNative>('call_globe_function')
+      .lookup<_CallGlobeFunctionNative>('call_js_function')
       .asFunction<_CallGlobeFunctionFnDart>();
 
   final _disposeRuntimeFn = dylib
@@ -150,26 +160,9 @@ class _$GlobeRuntimeImpl {
   }) {
     final moduleNamePtr = moduleName.toNativeUtf8();
     final functionNamePtr = function.toNativeUtf8();
+    final arguments = getTypeArguments(args);
 
     final Pointer<Pointer<Utf8>> errorPtr = calloc();
-    final Pointer<Pointer<Void>> argPointers = calloc(args.length);
-    final Pointer<Int32> typeIds = calloc(args.length);
-    final Pointer<IntPtr> sizes = calloc(args.length);
-
-    for (int i = 0; i < args.length; i++) {
-      final objectAtIndex = args[i];
-
-      argPointers[i] = objectAtIndex == null ? nullptr : objectAtIndex.toFFI();
-      typeIds[i] = objectAtIndex == null
-          ? FFITypeId.none.value
-          : objectAtIndex.typeId.value;
-
-      if (objectAtIndex is FFIBytes) {
-        sizes[i] = objectAtIndex.value.length;
-      } else {
-        sizes[i] = 0;
-      }
-    }
 
     _messageCount += 1;
     final int messageIdentifier = _messageCount;
@@ -179,17 +172,16 @@ class _$GlobeRuntimeImpl {
       moduleNamePtr,
       functionNamePtr,
       messageIdentifier,
-      argPointers,
-      typeIds,
-      sizes,
+      arguments.argPointers,
+      arguments.typeIds,
+      arguments.sizes,
       args.length,
       errorPtr,
     );
 
     malloc.free(functionNamePtr);
     malloc.free(moduleNamePtr);
-    calloc.free(argPointers);
-    calloc.free(typeIds);
+    arguments.free();
 
     if (callResult != 0) {
       final Pointer<Utf8> errorMsgPtr = errorPtr.value;
@@ -204,24 +196,37 @@ class _$GlobeRuntimeImpl {
   }
 
   FutureOr<void> registerModule(
-    String modulePath,
-    String workingDirectory,
-  ) async {
-    final (file, workdir) = await _resolveModule(modulePath, workingDirectory);
-    final modulePathPtr = file.toNativeUtf8();
-    final workingDirPtr = workdir.toNativeUtf8();
+    String moduleName,
+    String modulePath, {
+    List<FFIConvertible?> args = const [],
+  }) async {
+    final fullModulePath = await _resolveModule(modulePath);
+    final arguments = getTypeArguments(args);
+
+    final moduleNamePtr = moduleName.toNativeUtf8();
+    final modulePathPtr = fullModulePath.toNativeUtf8();
+
     final Pointer<Pointer<Utf8>> errorPtr = calloc();
 
-    if (_registerModuleFn(modulePathPtr, workingDirPtr, errorPtr) != 0) {
+    if (_registerModuleFn(
+          moduleNamePtr,
+          modulePathPtr,
+          errorPtr,
+          arguments.argPointers,
+          arguments.typeIds,
+          arguments.sizes,
+          args.length,
+        ) !=
+        0) {
       final Pointer<Utf8> errorMsgPtr = errorPtr.value;
       final errorMgs = errorMsgPtr.address == 0
-          ? "Failed to register module"
+          ? "Failed to register `$moduleName` module"
           : errorMsgPtr.toDartString();
 
       throw StateError(errorMgs);
     }
 
-    malloc.free(workingDirPtr);
+    malloc.free(moduleNamePtr);
     malloc.free(modulePathPtr);
     calloc.free(errorPtr);
   }
@@ -233,23 +238,16 @@ class _$GlobeRuntimeImpl {
     return result == 0;
   }
 
-  Future<(String, String)> _resolveModule(
-    String modulePath,
-    String workingDirectory,
-  ) async {
-    if (!modulePath.startsWith('https://')) {
-      return (modulePath, workingDirectory);
-    }
+  Future<String> _resolveModule(String modulePath) async {
+    if (!modulePath.startsWith('https://')) return modulePath;
 
     final dir = Directory(path.join(_getUserHomeDirectory, '.globe/runtime/'));
-    if (!dir.existsSync()) await dir.create(recursive: true);
+    if (!dir.existsSync()) dir.createSync(recursive: true);
 
     final fileName = path.basename(modulePath);
-    final runtimeFile = File(path.join(dir.path, fileName));
-
-    if (runtimeFile.existsSync()) {
-      return (fileName, dir.path);
-    }
+    final fullFilePath = path.join(dir.path, fileName);
+    final runtimeFile = File(fullFilePath);
+    if (runtimeFile.existsSync()) return fullFilePath;
 
     try {
       final response = await http.get(Uri.parse(modulePath));
@@ -259,7 +257,7 @@ class _$GlobeRuntimeImpl {
 
       await runtimeFile.create(recursive: true);
       await runtimeFile.writeAsBytes(response.bodyBytes);
-      return (fileName, dir.path);
+      return fullFilePath;
     } catch (e) {
       rethrow;
     }

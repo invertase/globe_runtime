@@ -32,7 +32,11 @@ final class GlobeAISdk {
   Future<void> _registerModuleIfNotAlready() async {
     final instance = GlobeRuntime.instance;
     if (instance.isModuleRegistered(_moduleName)) return;
-    return GlobeRuntime.instance.registerModule(_codeURL);
+    return GlobeRuntime.instance.registerModule(
+      _moduleName,
+      _codeURL,
+      args: [provider.apiKey.toFFIType],
+    );
   }
 
   static GlobeAISdk create(AiProvider provider) => GlobeAISdk._(
@@ -51,7 +55,7 @@ final class GlobeAISdk {
     _runtime.callFunction(
       _moduleName,
       function: "${provider.name.toLowerCase()}_chat_complete",
-      args: [provider.apiKey.toFFIType, model.toFFIType, query.toFFIType],
+      args: [model.toFFIType, query.toFFIType],
       onData: (data) {
         if (data.hasError()) {
           completer.completeError(data.error);
@@ -78,7 +82,7 @@ final class GlobeAISdk {
     _runtime.callFunction(
       _moduleName,
       function: "${provider.name.toLowerCase()}_chat_complete_stream",
-      args: [provider.apiKey.toFFIType, model.toFFIType, query.toFFIType],
+      args: [model.toFFIType, query.toFFIType],
       onData: (data) {
         if (data.hasError()) {
           streamController
