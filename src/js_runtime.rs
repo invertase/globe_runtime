@@ -361,14 +361,13 @@ pub fn register_js_module<'s>(
     functions_object: v8::Local<'s, v8::Object>,
     module_init_args: JsFunctionArgs,
 ) -> u8 {
-    let mut v8_args = c_args_to_v8_args_local(
+    let v8_args = c_args_to_v8_args_local(
         scope,
         module_init_args.args,
         module_init_args.type_ids,
         module_init_args.sizes,
         module_init_args.count,
     );
-    v8_args.insert(0, v8::Object::new(scope).into());
 
     let receiver = v8::undefined(scope).into();
     let module_state_value = init_function.call(scope, receiver, &v8_args).unwrap();
