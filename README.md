@@ -27,3 +27,26 @@ Globe Runtime does **not** use the full Deno runtime. Instead, it takes advantag
 Since Globe Runtime is **not a full JavaScript runtime**, it is optimized to provide **only the necessary features** to facilitate Dart-JavaScript interaction and integration with JavaScript tooling.
 
 Globe Runtime is designed to be **lean, efficient, and purpose-driven**, focusing on **interoperability and leveraging JavaScript tools to accelerate Dart development**.
+
+## TODO
+
+MVP
+
+- 2x models, openai + google-vertex: apiKey + model name
+- generate text + stream text
+
+void main() {
+  await ai.generateText();
+  await ai.streamText();
+}
+
+CI Job -> Maxtrix -> Windows/Mac/Linux -> GitHub Release / Arifact 
+
+Nice TO have: CLI -> `globe runtime install` / `update` checks the registry
+
+Versioned:
+
+Runtime 
+Package -> dart (pub), assets (js)
+
+runtime.globe.dev/packages/globe_ai/0.1.2.js
