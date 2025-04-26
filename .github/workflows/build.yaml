@@ -81,7 +81,6 @@ jobs:
           echo "artifact_path=$NEW_NAME" >> $GITHUB_OUTPUT
           echo "Renamed artifact: $NEW_NAME"
 
-
       - name: Publish artifacts and release
         uses: softprops/action-gh-release@v2
         if: github.ref_type == 'tag'
