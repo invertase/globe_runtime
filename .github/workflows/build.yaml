@@ -44,8 +44,9 @@ jobs:
           target: ${{ matrix.platform.target }}
           args: "--locked --release"
           strip: true
-      # - name: Publish artifacts and release
-      #   uses: houseabsolute/actions-rust-release@v0
-      #   with:
-      #     executable-name: globe_runtime
-      #     target: ${{ matrix.platform.target }}
+      - name: Publish artifacts and release
+        uses: softprops/action-gh-release@v2
+        with:
+          target: ${{ matrix.platform.target }}
+          make_latest: ${{ github.ref_type == 'tag'}}
+          files: Release.txt
