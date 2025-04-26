@@ -40,6 +40,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           submodules: true
+
       - name: Build Shared Library
         uses: houseabsolute/actions-rust-cross@v1
         with:
@@ -47,10 +48,27 @@ jobs:
           target: ${{ matrix.platform.target }}
           args: "--locked --release"
           strip: true
+
+      - name: Find built shared library
+        id: find_artifact
+        run: |
+          echo "Searching for built library..."
+          if [[ "${{ matrix.platform.target }}" == *"windows"* ]]; then
+            EXT="dll"
+          elif [[ "${{ matrix.platform.target }}" == *"apple"* ]]; then
+            EXT="dylib"
+          else
+            EXT="so"
+          fi
+
+          # Adjust the path according to your crate layout if needed
+          ARTIFACT_PATH="target/${{ matrix.platform.target }}/release/*.${EXT}"
+          echo "artifact_path=${ARTIFACT_PATH}" >> $GITHUB_OUTPUT
+
       - name: Publish artifacts and release
         uses: softprops/action-gh-release@v2
         if: github.ref_type == 'tag'
         with:
-          files: Release.txt
+          files: ${{ steps.find_artifact.outputs.artifact_path }}
 
         
