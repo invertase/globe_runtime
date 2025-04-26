@@ -52,7 +52,7 @@ jobs:
       - name: Find built shared library
         id: find_artifact
         run: |
-          echo "Searching for built library..."
+          echo "Locating build artifact..."
           if [[ "${{ matrix.platform.target }}" == *"windows"* ]]; then
             EXT="dll"
           elif [[ "${{ matrix.platform.target }}" == *"apple"* ]]; then
@@ -61,9 +61,17 @@ jobs:
             EXT="so"
           fi
 
-          # Adjust the path according to your crate layout if needed
-          ARTIFACT_PATH="target/${{ matrix.platform.target }}/release/*.${EXT}"
-          echo "artifact_path=${ARTIFACT_PATH}" >> $GITHUB_OUTPUT
+          ARTIFACT_GLOB="target/${{ matrix.platform.target }}/release/*.${EXT}"
+          ARTIFACT_FILE=$(ls $ARTIFACT_GLOB 2>/dev/null || true)
+
+          if [[ -z "$ARTIFACT_FILE" ]]; then
+            echo "Error: No built library found at $ARTIFACT_GLOB"
+            exit 1
+          fi
+
+          echo "artifact_path=$ARTIFACT_FILE" >> $GITHUB_OUTPUT
+          echo "Found artifact: $ARTIFACT_FILE"
+
 
       - name: Publish artifacts and release
         uses: softprops/action-gh-release@v2
