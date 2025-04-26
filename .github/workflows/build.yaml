@@ -47,6 +47,6 @@ jobs:
       - name: Publish artifacts and release
         uses: softprops/action-gh-release@v2
         with:
-          target: ${{ matrix.platform.target }}
-          make_latest: ${{ github.ref_type == 'tag'}}
           files: Release.txt
+          make_latest: ${{ github.ref_type == 'tag'}}
+        
