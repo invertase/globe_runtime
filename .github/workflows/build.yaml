@@ -1,6 +1,6 @@
 name: Build Globe Runtime Shared Library
+
 on:
-  
   push:
     branches:
       - main
