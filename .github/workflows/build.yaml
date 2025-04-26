@@ -72,6 +72,15 @@ jobs:
           echo "artifact_path=$ARTIFACT_FILE" >> $GITHUB_OUTPUT
           echo "Found artifact: $ARTIFACT_FILE"
 
+          # Prepare new filename
+          BASENAME=$(basename "$ARTIFACT_FILE")
+          NEW_NAME="${BASENAME%.*}-${{ matrix.platform.target }}.${EXT}"
+
+          mv "$ARTIFACT_FILE" "$NEW_NAME"
+
+          echo "artifact_path=$NEW_NAME" >> $GITHUB_OUTPUT
+          echo "Renamed artifact: $NEW_NAME"
+
 
       - name: Publish artifacts and release
         uses: softprops/action-gh-release@v2
