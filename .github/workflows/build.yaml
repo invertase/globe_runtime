@@ -9,8 +9,8 @@ on:
   pull_request:
 
 jobs:
-  release:
-    name: Release - ${{ matrix.platform.os-name }}
+  build:
+    name: Build - ${{ matrix.platform.os-name }}
     strategy:
       matrix:
         platform:
@@ -78,13 +78,32 @@ jobs:
 
           mv "$ARTIFACT_FILE" "$NEW_NAME"
 
-          echo "artifact_path=$NEW_NAME" >> $GITHUB_OUTPUT
-          echo "Renamed artifact: $NEW_NAME"
-
-      - name: Publish artifacts and release
-        uses: softprops/action-gh-release@v2
-        if: github.ref_type == 'tag'
+          echo "artifact_path=$NEW_NAME" >> $GITHUB_ENV
+          
+      - name: Upload built library as artifact
+        uses: actions/upload-artifact@v4
         with:
-          files: ${{ steps.find_artifact.outputs.artifact_path }}
+          name: ${{ env.artifact_path }}
+          path: ${{ env.artifact_path }}
+
+  release:
+    name: Publish Release
+    if: github.ref_type == 'tag'
+    needs: build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: dist/
+
+      - name: List downloaded artifacts
+        run: ls -R dist/
+
+      - name: Publish all artifacts to GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/**/*
 
         
