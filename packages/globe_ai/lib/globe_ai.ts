@@ -111,9 +111,9 @@ const openai_chat_complete_stream = async (
 };
 
 export default {
-  init: (state: GlobeAISdkState, apiKey: string): GlobeAISdkState => {
-    state.openAI = new OpenAI({ apiKey });
-    return state;
+  init: (apiKey: string): GlobeAISdkState => {
+    const openAI = new OpenAI({ apiKey });
+    return { openAI };
   },
   functions: { openai_chat_complete, openai_chat_complete_stream },
 };

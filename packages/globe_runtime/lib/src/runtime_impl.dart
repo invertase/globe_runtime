@@ -1,7 +1,5 @@
 part of 'runtime.dart';
 
-final class NativeGlobeRuntime extends dart_ffi.Opaque {}
-
 typedef _CallGlobeRuntimeInitFnNative = NativeFunction<
     Int Function(
       Pointer<Void>, // dart API-DL

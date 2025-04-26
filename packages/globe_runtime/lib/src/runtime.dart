@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'dart:collection';
 import 'dart:ffi';
-import 'dart:ffi' as dart_ffi;
 import 'dart:io';
 import 'dart:isolate';
 import 'dart:typed_data';
