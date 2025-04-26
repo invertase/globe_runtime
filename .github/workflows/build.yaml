@@ -49,4 +49,5 @@ jobs:
         with:
           files: Release.txt
           make_latest: ${{ github.ref_type == 'tag'}}
+          fail_on_unmatched_files: true
         
