@@ -1,8 +1,11 @@
 name: Build Globe Runtime Shared Library
 on:
+  
   push:
     branches:
       - main
+    tags:
+      - '*'
   pull_request:
 
 jobs:
@@ -46,8 +49,8 @@ jobs:
           strip: true
       - name: Publish artifacts and release
         uses: softprops/action-gh-release@v2
+        if: github.ref_type == 'tag'
         with:
           files: Release.txt
-          make_latest: ${{ github.ref_type == 'tag'}}
-          fail_on_unmatched_files: true
+
         
