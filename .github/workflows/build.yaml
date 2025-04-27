@@ -30,9 +30,9 @@ jobs:
             runs-on: ubuntu-latest
             target: aarch64-unknown-linux-gnu	
 
-          - os-name: Windows-aarch64
-            runs-on: windows-latest
-            target: aarch64-pc-windows-msvc
+          # - os-name: Windows-aarch64
+          #   runs-on: windows-latest
+          #   target: aarch64-pc-windows-msvc
 
           # - os-name: Windows-x86_64
           #   runs-on: windows-latest
