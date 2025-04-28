@@ -1,0 +1,110 @@
+name: Build Globe Runtime Shared Library
+
+on:
+  push:
+    branches:
+      - main
+    tags:
+      - '*'
+  pull_request:
+
+jobs:
+  build:
+    name: Build - ${{ matrix.platform.os-name }}
+    strategy:
+      matrix:
+        platform:
+          - os-name: MacOS-x86_64
+            runs-on: macOS-latest
+            target: x86_64-apple-darwin
+          
+          - os-name: MacOS-aarch64
+            runs-on: macOS-latest
+            target: aarch64-apple-darwin
+
+          - os-name: Linux-x86_64
+            runs-on: ubuntu-24.04
+            target: x86_64-unknown-linux-gnu
+
+          - os-name: Linux-aarch64
+            runs-on: ubuntu-24.04-arm
+            target: aarch64-unknown-linux-gnu	
+
+          - os-name: Windows-x86_64
+            runs-on: windows-latest
+            target: x86_64-pc-windows-msvc
+          
+    runs-on: ${{ matrix.platform.runs-on }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: true
+
+      - name: Build Shared Library
+        uses: houseabsolute/actions-rust-cross@v1
+        with:
+          command: build
+          target: ${{ matrix.platform.target }}
+          args: "--locked --release"
+          strip: true
+
+      - name: Find built shared library
+        id: find_artifact
+        shell: bash
+        run: |
+          echo "Locating build artifact..."
+          if [[ "${{ matrix.platform.target }}" == *"windows"* ]]; then
+            EXT="dll"
+          elif [[ "${{ matrix.platform.target }}" == *"apple"* ]]; then
+            EXT="dylib"
+          else
+            EXT="so"
+          fi
+
+          ARTIFACT_GLOB="target/${{ matrix.platform.target }}/release/*.${EXT}"
+          ARTIFACT_FILE=$(ls $ARTIFACT_GLOB 2>/dev/null || true)
+
+          if [[ -z "$ARTIFACT_FILE" ]]; then
+            echo "Error: No built library found at $ARTIFACT_GLOB"
+            exit 1
+          fi
+
+          echo "artifact_path=$ARTIFACT_FILE" >> $GITHUB_OUTPUT
+          echo "Found artifact: $ARTIFACT_FILE"
+
+          # Prepare new filename
+          BASENAME=$(basename "$ARTIFACT_FILE")
+          NEW_NAME="${BASENAME%.*}-${{ matrix.platform.target }}.${EXT}"
+
+          mv "$ARTIFACT_FILE" "$NEW_NAME"
+
+          echo "artifact_path=$NEW_NAME" >> $GITHUB_ENV
+          
+      - name: Upload built library as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.artifact_path }}
+          path: ${{ env.artifact_path }}
+
+  release:
+    name: Publish Release
+    if: github.ref_type == 'tag'
+    needs: build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: dist/
+
+      - name: List downloaded artifacts
+        run: ls -R dist/
+
+      - name: Publish all artifacts to GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/**/*
+
+        
