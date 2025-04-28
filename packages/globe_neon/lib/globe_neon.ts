@@ -52,8 +52,3 @@ const neon_transaction = async (
 
   send_value_to_dart(callbackId, rows);
 };
-
-registerJSModule("GlobeNeonSdk", {
-  neon_execute,
-  neon_transaction,
-});

@@ -1,4 +1,9 @@
-import { DartMessage, DartJSService, RpcResponse, SendValueRequest } from "./dart_runtime_entry.ts";
+import {
+  DartMessage,
+  DartJSService,
+  RpcResponse,
+  SendValueRequest,
+} from "./dart_runtime_entry.ts";
 
 const { core } = Deno;
 
@@ -30,7 +35,10 @@ function register_js_module(moduleName: string, moduleFunctions) {
 class DartJSServiceImpl implements DartJSService {
   SendValue(request: SendValueRequest): Promise<RpcResponse> {
     const writer = request.message && DartMessage.encode(request.message);
-    const success = core.ops.op_send_to_dart(request.callbackId, writer?.finish());
+    const success = core.ops.op_send_to_dart(
+      request.callbackId,
+      writer?.finish()
+    );
     return Promise.resolve({ success });
   }
 }
@@ -54,12 +62,4 @@ register_js_module("Dart", {
     const message: DartMessage = { error, done: true };
     return _dartJSService.SendValue({ callbackId, message });
   },
-});
-
-
-Object.defineProperty(globalThis, "registerJSModule", {
-  value: register_js_module,
-  enumerable: true,
-  configurable: true,
-  writable: true,
 });
