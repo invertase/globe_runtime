@@ -105,7 +105,7 @@ final class GlobeNeonSdk {
   Future<void> _registerModuleIfNotAlready() async {
     final instance = GlobeRuntime.instance;
     if (instance.isModuleRegistered(_moduleName)) return;
-    return GlobeRuntime.instance.registerModule(_codeURL);
+    return GlobeRuntime.instance.registerModule(_moduleName, _codeURL);
   }
 
   static GlobeNeonSdk create(String databaseUrl) => GlobeNeonSdk._(
@@ -129,8 +129,8 @@ final class GlobeNeonSdk {
       function: "neon_execute",
       args: [_databaseUrl.toFFIType, sql.toFFIType, encodedOptions.toFFIType],
       onData: (data) {
-        if (data.type == MessageType.ERROR) {
-          completer.completeError(data.data);
+        if (data.hasError()) {
+          completer.completeError(data.error);
           return true;
         }
 
@@ -162,8 +162,8 @@ final class GlobeNeonSdk {
         encodedOptions.toFFIType,
       ],
       onData: (data) {
-        if (data.type == MessageType.ERROR) {
-          completer.completeError(data.data);
+        if (data.hasError()) {
+          completer.completeError(data.error);
           return true;
         }
 
