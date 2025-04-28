@@ -6,16 +6,20 @@ fn main() {
     let include_path = PathBuf::from(format!("{}/third_party/dart/include", project_dir));
     let dart_binding_file = PathBuf::from(format!("{}/src/dart_api.rs", project_dir));
 
-    // Compile the C code
-    cc::Build::new()
+    let mut build = cc::Build::new();
+    build
         .file("third_party/dart/include/dart_api_dl.c")
-        .include(include_path)
-        .flag("-std=c11")
-        .flag("-fPIC")
-        .compile("dart_api_dl");
+        .include(&include_path);
 
-    // Add linker argument to allow undefined symbols
-    println!("cargo:rustc-link-arg=-Wl,-undefined,dynamic_lookup");
+    if cfg!(target_os = "windows") {
+        // MSVC doesn't understand these flags
+    } else {
+        build.flag("-std=c11").flag("-fPIC");
+        // Allow undefined symbols on Unix
+        println!("cargo:rustc-link-arg=-Wl,-undefined,dynamic_lookup");
+    }
+
+    build.compile("dart_api_dl");
 
     println!("cargo:rerun-if-changed=third_party/dart/internal/dart_api_dl.c");
     println!("cargo:rerun-if-changed=third_party/dart/include/dart_api.h");
