@@ -50,9 +50,11 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y \
-            gcc-aarch64-linux-gnu \
-            llvm-14-dev \
-            libclang-14-dev \
+            gcc-aarch64-linux-gnu \ 
+            g++-aarch64-linux-gnu \ 
+            libc6-dev-arm64-cross \ 
+            llvm-14-dev \ 
+            libclang-14-dev \ 
             clang
           export LIBCLANG_PATH=/usr/lib/llvm-14/lib
           export CLANG_PATH=/usr/bin/clang-14
