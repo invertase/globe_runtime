@@ -1,39 +1,23 @@
-<!-- 
-This README describes the package. If you publish this package to pub.dev,
-this README's contents appear on the landing page for your package.
+# Globe Runtime
 
-For information about how to write a good package README, see the guide for
-[writing package pages](https://dart.dev/tools/pub/writing-package-pages). 
+## Overview
 
-For general information about developing packages, see the Dart guide for
-[creating packages](https://dart.dev/guides/libraries/create-packages)
-and the Flutter guide for
-[developing packages and plugins](https://flutter.dev/to/develop-packages). 
--->
+Globe Runtime is a **minimalist runtime** designed to leverage the JavaScript ecosystem and its tools to accelerate development in **Dart**. It enables seamless **communication between Dart and JavaScript** by utilizing Dart FFI, V8, Rust, and Deno extensions.
 
-TODO: Put a short description of the package here that helps potential users
-know whether this package might be useful for them.
+## Why Globe Runtime?
 
-## Features
+Unlike full-fledged JavaScript runtimes like **Deno** or **Node.js**, Globe Runtime is specifically designed to **integrate Dart with JavaScript tools and libraries** efficiently. It provides **just enough JavaScript capabilities** to support essential operations such as:
 
-TODO: List what your package can do. Maybe include images, gifs, or videos.
+- **`fetch` API** for network requests
+- Encoding and decoding utilities
+- Readable and Writable Streams
+- Interfacing with JavaScript libraries and frameworks
 
-## Getting started
+## How It Works
 
-TODO: List prerequisites and provide or point to information on how to
-start using the package.
+Globe Runtime does **not** use the full Deno runtime. Instead, it takes advantage of **Deno's Rust-based tooling & packages** around V8 to extend JavaScript capabilities efficiently. By embedding **V8 within Rust** and exposing key APIs, it provides:
 
-## Usage
-
-TODO: Include short and useful examples for package users. Add longer examples
-to `/example` folder. 
-
-```dart
-const like = 'sample';
-```
-
-## Additional information
-
-TODO: Tell users more about the package: where to find more information, how to 
-contribute to the package, how to file issues, what response they can expect 
-from the package authors, and more.
+- **Fast and lightweight execution** of JavaScript within a Dart ecosystem
+- **Interop between Dart and JavaScript** through FFI and V8
+- **Access to JavaScript libraries and tooling** to enhance Dart's capabilities
+- **Customizable Module registration** for expanding functionality as needed
