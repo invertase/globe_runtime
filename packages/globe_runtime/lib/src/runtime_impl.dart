@@ -1,7 +1,5 @@
 part of 'runtime.dart';
 
-const kReleaseMode = bool.fromEnvironment('dart.vm.product');
-
 typedef _CallGlobeRuntimeInitFnNative = NativeFunction<
     Int Function(
       Pointer<Void>, // dart API-DL
