@@ -3,11 +3,11 @@ import 'dart:io';
 import 'package:globe_ai/globe_ai.dart';
 
 // ignore: constant_identifier_names
-const OpenAIKey =
-    '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';
+final String openAIKey = (throw StateError(
+    'Please set your OpenAI API key in the OpenAIKey constant.'));
 
 void main() async {
-  final globeAI = GlobeAISdk.create(OpenAIProvider(apiKey: OpenAIKey));
+  final globeAI = GlobeAISdk.create(OpenAIProvider(apiKey: openAIKey));
 
   final result = await globeAI.complete(
     model: 'gpt-4o',

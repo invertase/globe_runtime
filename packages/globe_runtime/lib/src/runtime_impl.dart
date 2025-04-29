@@ -1,5 +1,7 @@
 part of 'runtime.dart';
 
+const kReleaseMode = bool.fromEnvironment('dart.vm.product');
+
 typedef _CallGlobeRuntimeInitFnNative = NativeFunction<
     Int Function(
       Pointer<Void>, // dart API-DL
@@ -63,19 +65,29 @@ typedef _IsModuleRegisteredFnDart = int Function(Pointer<Utf8>);
 typedef _DisposeAiFnNative = NativeFunction<Uint8 Function()>;
 typedef _DisposeAiFnDart = int Function();
 
+String? _dylibPathCache;
 String get _dylibPath {
-  const libName = 'lib_globe_runtime';
+  if (_dylibPathCache != null) return _dylibPathCache!;
 
   if (Platform.environment['GLOBE'] != null) {
-    return 'usr/lib/$libName.so';
+    return _dylibPathCache = '/usr/lib/$dylibName';
   }
 
-  return path.join(
-    Directory.current.path,
-    'target',
-    'debug',
-    Platform.isMacOS ? '$libName.dylib' : '$libName.so',
-  );
+  var filePath =
+      path.join(Directory.current.path, 'target', 'debug', dylibName);
+  if (File(filePath).existsSync()) return _dylibPathCache = filePath;
+
+  final directory = Directory(globeRuntimeInstallDirectory);
+  return _dylibPathCache = directory.listSync().firstWhere(
+    (e) {
+      final baseName = path.basename(e.path);
+      final fileName = path.basenameWithoutExtension(dylibName);
+      return baseName.contains(fileName);
+    },
+    orElse: () => throw StateError(
+      'Globe Runtime not found. Please run `globe runtime install` to install it.',
+    ),
+  ).path;
 }
 
 class _$GlobeRuntimeImpl {
@@ -239,7 +251,7 @@ class _$GlobeRuntimeImpl {
   Future<String> _resolveModule(String modulePath) async {
     if (!modulePath.startsWith('https://')) return modulePath;
 
-    final dir = Directory(path.join(_getUserHomeDirectory, '.globe/runtime/'));
+    final dir = Directory(path.join(globeRuntimeInstallDirectory, 'modules'));
     if (!dir.existsSync()) dir.createSync(recursive: true);
 
     final fileName = path.basename(modulePath);
@@ -260,12 +272,29 @@ class _$GlobeRuntimeImpl {
       rethrow;
     }
   }
+}
 
-  String get _getUserHomeDirectory {
-    if (Platform.isWindows) {
-      return Platform.environment['USERPROFILE'] ?? 'C:\\Users\\Default';
-    } else {
-      return Platform.environment['HOME'] ?? '/';
-    }
+String get globeRuntimeInstallDirectory {
+  return path.join(userHomeDirectory, '.globe', 'runtime');
+}
+
+String get userHomeDirectory {
+  if (Platform.isWindows) {
+    return Platform.environment['USERPROFILE'] ?? r'C:\Users\Default';
+  } else {
+    return Platform.environment['HOME'] ?? '/';
   }
+}
+
+String get dylibName {
+  final currentAbi = Abi.current();
+
+  return switch (currentAbi) {
+    Abi.macosX64 => 'libglobe_runtime-x86_64-apple-darwin.dylib',
+    Abi.macosArm64 => 'libglobe_runtime-aarch64-apple-darwin.dylib',
+    Abi.linuxX64 => 'libglobe_runtime-x86_64-unknown-linux-gnu.so',
+    Abi.linuxArm64 => 'libglobe_runtime-aarch64-unknown-linux-gnu.so',
+    Abi.windowsX64 => 'globe_runtime-x86_64-pc-windows-msvc.dll',
+    _ => throw UnsupportedError('Unsupported ABI: $currentAbi'),
+  };
 }
