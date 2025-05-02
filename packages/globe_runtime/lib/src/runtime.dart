@@ -33,7 +33,7 @@ interface class GlobeRuntime {
     String moduleName,
     String modulePath, {
     String? workingDir,
-    List<FFIConvertible> args = const [],
+    List<FFIConvertible?> args = const [],
   }) {
     workingDir ??= Directory.current.path;
     return _instance!.registerModule(
@@ -50,7 +50,7 @@ interface class GlobeRuntime {
   void callFunction(
     String moduleName, {
     required String function,
-    List<FFIConvertible> args = const [],
+    List<FFIConvertible?> args = const [],
     required OnFunctionData onData,
   }) {
     return _instance!.callFunction(
