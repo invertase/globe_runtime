@@ -64,6 +64,13 @@ Object.defineProperty(globalThis, "ReadableStream", {
   writable: true,
 });
 
+Object.defineProperty(globalThis, "TransformStream", {
+  value: streams.TransformStream,
+  enumerable: false,
+  configurable: true,
+  writable: true,
+});
+
 Object.defineProperty(globalThis, "TextEncoder", {
   value: encoding.TextEncoder,
   enumerable: false,
@@ -164,6 +171,20 @@ Object.defineProperty(globalThis, "MessageChannel", {
 
 Object.defineProperty(globalThis, "MessagePort", {
   value: messagePort.MessagePort,
+  enumerable: false,
+  configurable: true,
+  writable: true,
+});
+
+Object.defineProperty(globalThis, "MessagePort", {
+  value: messagePort.structuredClone,
+  enumerable: false,
+  configurable: true,
+  writable: true,
+});
+
+Object.defineProperty(globalThis, "structuredClone", {
+  value: messagePort.structuredClone,
   enumerable: false,
   configurable: true,
   writable: true,
