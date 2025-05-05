@@ -139,6 +139,7 @@ class _$GlobeRuntimeImpl {
 
       // callbackId will always be the first element
       final callbackId = data[0] as int;
+
       final callbackData = DartMessage.fromBuffer(data[1]);
 
       final callback = _callbacks[callbackId];

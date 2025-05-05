@@ -71,6 +71,13 @@ Object.defineProperty(globalThis, "TransformStream", {
   writable: true,
 });
 
+Object.defineProperty(globalThis, "WritableStream", {
+  value: streams.WritableStream,
+  enumerable: false,
+  configurable: true,
+  writable: true,
+});
+
 Object.defineProperty(globalThis, "TextEncoder", {
   value: encoding.TextEncoder,
   enumerable: false,
@@ -80,6 +87,20 @@ Object.defineProperty(globalThis, "TextEncoder", {
 
 Object.defineProperty(globalThis, "TextDecoder", {
   value: encoding.TextDecoder,
+  enumerable: false,
+  configurable: true,
+  writable: true,
+});
+
+Object.defineProperty(globalThis, "TextDecoderStream", {
+  value: encoding.TextDecoderStream,
+  enumerable: false,
+  configurable: true,
+  writable: true,
+});
+
+Object.defineProperty(globalThis, "TextEncoderStream", {
+  value: encoding.TextEncoderStream,
   enumerable: false,
   configurable: true,
   writable: true,
