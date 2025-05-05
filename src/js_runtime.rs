@@ -44,6 +44,7 @@ pub fn get_runtime(send_port: i64) -> JsRuntime {
         deno_fetch::deno_fetch::init_ops_and_esm::<PermissionsContainer>(Default::default()),
         js_runtime::init_ops_and_esm(),
         bufbuild::init_ops_and_esm(),
+        js_msg_packr::init_ops_and_esm(),
         dart_runtime::init_ops_and_esm::<i64>(send_port),
     ];
 
@@ -201,6 +202,18 @@ extension!(
         "wkt/gen/google/protobuf/type_pb.js",
         "wkt/gen/google/protobuf/wrappers_pb.js",
         "wkt/gen/google/protobuf/compiler/plugin_pb.js"
+    ],
+);
+
+extension!(
+    js_msg_packr,
+    esm_entry_point = "ext:js_msg_packr/index.js",
+    esm = [
+        dir "third_party/msgpackr",
+        "index.js",
+        "pack.js",
+        "unpack.js",
+        "iterators.js",
     ],
 );
 
