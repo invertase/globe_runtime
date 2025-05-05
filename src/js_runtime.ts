@@ -26,7 +26,6 @@ import * as messagePort from "ext:deno_web/13_message_port.js";
 import * as compression from "ext:deno_web/14_compression.js";
 import * as performance from "ext:deno_web/15_performance.js";
 import * as imageData from "ext:deno_web/16_image_data.js";
-import * as msgPackr from "ext:js_msg_packr/index.js";
 
 import { core } from "ext:core/mod.js";
 
@@ -67,13 +66,6 @@ Object.defineProperty(globalThis, "ReadableStream", {
 
 Object.defineProperty(globalThis, "TransformStream", {
   value: streams.TransformStream,
-  enumerable: false,
-  configurable: true,
-  writable: true,
-});
-
-Object.defineProperty(globalThis, "MessagePackr", {
-  value: msgPackr,
   enumerable: false,
   configurable: true,
   writable: true,

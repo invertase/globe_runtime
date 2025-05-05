@@ -4,8 +4,16 @@ import {
   RpcResponse,
   SendValueRequest,
 } from "./dart_runtime_entry.ts";
+import * as msgPackr from "ext:js_msg_packr/index.js";
 
 const { core } = Deno;
+
+Object.defineProperty(globalThis, "MessagePackr", {
+  value: msgPackr,
+  enumerable: false,
+  configurable: true,
+  writable: true,
+});
 
 function register_js_module(moduleName: string, moduleFunctions) {
   if (globalThis[moduleName]) {
