@@ -14,6 +14,59 @@ import 'dart:core' as $core;
 
 import 'package:protobuf/protobuf.dart' as $pb;
 
+/// *
+///  A generic JSON-like payload transmitted as MessagePack-encoded bytes.
+///  The actual data structure is unpacked by the runtime using MessagePack.
+class JsonPayload extends $pb.GeneratedMessage {
+  factory JsonPayload({
+    $core.List<$core.int>? data,
+  }) {
+    final $result = create();
+    if (data != null) {
+      $result.data = data;
+    }
+    return $result;
+  }
+  JsonPayload._() : super();
+  factory JsonPayload.fromBuffer($core.List<$core.int> i, [$pb.ExtensionRegistry r = $pb.ExtensionRegistry.EMPTY]) => create()..mergeFromBuffer(i, r);
+  factory JsonPayload.fromJson($core.String i, [$pb.ExtensionRegistry r = $pb.ExtensionRegistry.EMPTY]) => create()..mergeFromJson(i, r);
+
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(_omitMessageNames ? '' : 'JsonPayload', package: const $pb.PackageName(_omitMessageNames ? '' : 'globe.runtime'), createEmptyInstance: create)
+    ..a<$core.List<$core.int>>(1, _omitFieldNames ? '' : 'data', $pb.PbFieldType.OY)
+    ..hasRequiredFields = false
+  ;
+
+  @$core.Deprecated(
+  'Using this can add significant overhead to your binary. '
+  'Use [GeneratedMessageGenericExtensions.deepCopy] instead. '
+  'Will be removed in next major version')
+  JsonPayload clone() => JsonPayload()..mergeFromMessage(this);
+  @$core.Deprecated(
+  'Using this can add significant overhead to your binary. '
+  'Use [GeneratedMessageGenericExtensions.rebuild] instead. '
+  'Will be removed in next major version')
+  JsonPayload copyWith(void Function(JsonPayload) updates) => super.copyWith((message) => updates(message as JsonPayload)) as JsonPayload;
+
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  static JsonPayload create() => JsonPayload._();
+  JsonPayload createEmptyInstance() => create();
+  static $pb.PbList<JsonPayload> createRepeated() => $pb.PbList<JsonPayload>();
+  @$core.pragma('dart2js:noInline')
+  static JsonPayload getDefault() => _defaultInstance ??= $pb.GeneratedMessage.$_defaultFor<JsonPayload>(create);
+  static JsonPayload? _defaultInstance;
+
+  @$pb.TagNumber(1)
+  $core.List<$core.int> get data => $_getN(0);
+  @$pb.TagNumber(1)
+  set data($core.List<$core.int> v) { $_setBytes(0, v); }
+  @$pb.TagNumber(1)
+  $core.bool hasData() => $_has(0);
+  @$pb.TagNumber(1)
+  void clearData() => clearField(1);
+}
+
 enum DartMessage_Payload {
   data, 
   error, 
@@ -43,15 +96,15 @@ class DartMessage extends $pb.GeneratedMessage {
   factory DartMessage.fromJson($core.String i, [$pb.ExtensionRegistry r = $pb.ExtensionRegistry.EMPTY]) => create()..mergeFromJson(i, r);
 
   static const $core.Map<$core.int, DartMessage_Payload> _DartMessage_PayloadByTag = {
-    3 : DartMessage_Payload.data,
-    4 : DartMessage_Payload.error,
+    2 : DartMessage_Payload.data,
+    3 : DartMessage_Payload.error,
     0 : DartMessage_Payload.notSet
   };
   static final $pb.BuilderInfo _i = $pb.BuilderInfo(_omitMessageNames ? '' : 'DartMessage', package: const $pb.PackageName(_omitMessageNames ? '' : 'globe.runtime'), createEmptyInstance: create)
-    ..oo(0, [3, 4])
-    ..aOB(2, _omitFieldNames ? '' : 'done')
-    ..a<$core.List<$core.int>>(3, _omitFieldNames ? '' : 'data', $pb.PbFieldType.OY)
-    ..aOS(4, _omitFieldNames ? '' : 'error')
+    ..oo(0, [2, 3])
+    ..aOB(1, _omitFieldNames ? '' : 'done')
+    ..a<$core.List<$core.int>>(2, _omitFieldNames ? '' : 'data', $pb.PbFieldType.OY)
+    ..aOS(3, _omitFieldNames ? '' : 'error')
     ..hasRequiredFields = false
   ;
 
@@ -79,32 +132,32 @@ class DartMessage extends $pb.GeneratedMessage {
   DartMessage_Payload whichPayload() => _DartMessage_PayloadByTag[$_whichOneof(0)]!;
   void clearPayload() => clearField($_whichOneof(0));
 
-  @$pb.TagNumber(2)
+  @$pb.TagNumber(1)
   $core.bool get done => $_getBF(0);
-  @$pb.TagNumber(2)
+  @$pb.TagNumber(1)
   set done($core.bool v) { $_setBool(0, v); }
-  @$pb.TagNumber(2)
+  @$pb.TagNumber(1)
   $core.bool hasDone() => $_has(0);
+  @$pb.TagNumber(1)
+  void clearDone() => clearField(1);
+
   @$pb.TagNumber(2)
-  void clearDone() => clearField(2);
-
-  @$pb.TagNumber(3)
   $core.List<$core.int> get data => $_getN(1);
-  @$pb.TagNumber(3)
+  @$pb.TagNumber(2)
   set data($core.List<$core.int> v) { $_setBytes(1, v); }
-  @$pb.TagNumber(3)
+  @$pb.TagNumber(2)
   $core.bool hasData() => $_has(1);
-  @$pb.TagNumber(3)
-  void clearData() => clearField(3);
+  @$pb.TagNumber(2)
+  void clearData() => clearField(2);
 
-  @$pb.TagNumber(4)
+  @$pb.TagNumber(3)
   $core.String get error => $_getSZ(2);
-  @$pb.TagNumber(4)
+  @$pb.TagNumber(3)
   set error($core.String v) { $_setString(2, v); }
-  @$pb.TagNumber(4)
+  @$pb.TagNumber(3)
   $core.bool hasError() => $_has(2);
-  @$pb.TagNumber(4)
-  void clearError() => clearField(4);
+  @$pb.TagNumber(3)
+  void clearError() => clearField(3);
 }
 
 /// Message structure for sending data to Dart

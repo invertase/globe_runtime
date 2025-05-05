@@ -176,13 +176,6 @@ Object.defineProperty(globalThis, "MessagePort", {
   writable: true,
 });
 
-Object.defineProperty(globalThis, "MessagePort", {
-  value: messagePort.structuredClone,
-  enumerable: false,
-  configurable: true,
-  writable: true,
-});
-
 Object.defineProperty(globalThis, "structuredClone", {
   value: messagePort.structuredClone,
   enumerable: false,

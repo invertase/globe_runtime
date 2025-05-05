@@ -7,6 +7,7 @@ import 'dart:typed_data';
 import 'package:http/http.dart' as http;
 import 'package:ffi/ffi.dart';
 import 'package:path/path.dart' as path;
+import 'package:msgpack_dart/msgpack_dart.dart' as msg_parkr;
 
 import '../generated/dart_runtime_entry.pbserver.dart';
 

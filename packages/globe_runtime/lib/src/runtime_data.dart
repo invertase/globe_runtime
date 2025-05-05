@@ -29,9 +29,9 @@ extension FFITypeExtension on Object {
         int() => FFIInt(this as int),
         double() => FFIDouble(this as double),
         bool() => FFIBool(this as bool),
-        Uint8List() => FFIBytes(this as Uint8List),
-        _ =>
-          throw UnimplementedError('FFIConvertible not found for $runtimeType'),
+        List<int>() => FFIBytes(this as List<int>),
+        JsonPayload() => FFIBytes((this as JsonPayload).data),
+        _ => throw UnimplementedError('FFIConvertible not found for $runtimeType'),
       };
 }
 
@@ -83,7 +83,7 @@ class FFIBool extends FFIInt {
 }
 
 class FFIBytes implements FFIConvertible {
-  final Uint8List value;
+  final List<int> value;
   FFIBytes(this.value);
 
   @override
@@ -122,9 +122,7 @@ GetTypeArguments getTypeArguments(List<FFIConvertible?> args) {
     final objectAtIndex = args[i];
 
     argPointers[i] = objectAtIndex == null ? nullptr : objectAtIndex.toFFI();
-    typeIds[i] = objectAtIndex == null
-        ? FFITypeId.none.value
-        : objectAtIndex.typeId.value;
+    typeIds[i] = objectAtIndex == null ? FFITypeId.none.value : objectAtIndex.typeId.value;
 
     if (objectAtIndex is FFIBytes) {
       sizes[i] = objectAtIndex.value.length;
@@ -139,4 +137,18 @@ GetTypeArguments getTypeArguments(List<FFIConvertible?> args) {
     sizes: sizes,
     length: args.length,
   );
+}
+
+extension MessagePackrExtensionForJsonPayload on JsonPayload {
+  T unpack<T>() {
+    final bytes = Uint8List.fromList(data);
+    return msg_parkr.deserialize(bytes) as T;
+  }
+}
+
+extension MessagePackrExtensionForObject<T> on T {
+  JsonPayload pack() {
+    final bytes = msg_parkr.serialize(this);
+    return JsonPayload(data: bytes);
+  }
 }

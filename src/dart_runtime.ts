@@ -3,9 +3,28 @@ import {
   DartJSService,
   RpcResponse,
   SendValueRequest,
+  JsonPayload,
 } from "./dart_runtime_entry.ts";
+import * as msgPackr from "ext:js_msg_packr/index.js";
 
 const { core } = Deno;
+
+// Expose the `JsonPayload` interface to the global scope
+Object.defineProperty(globalThis, "JsonPayload", {
+  value: {
+    encode: (value: unknown): Uint8Array | undefined => {
+      if (value === undefined) return undefined;
+      return msgPackr.pack(value);
+    },
+    decode: (value: Uint8Array | undefined): any => {
+      if (value === undefined) return undefined;
+      return msgPackr.unpack(value);
+    },
+  },
+  enumerable: false,
+  writable: true,
+  configurable: true,
+});
 
 function register_js_module(moduleName: string, moduleFunctions) {
   if (globalThis[moduleName]) {
@@ -58,7 +77,7 @@ register_js_module("Dart", {
     const message: DartMessage = { data, done: true };
     return _dartJSService.SendValue({ callbackId, message });
   },
-  send_error: (callbackId, error: string | undefined) => {
+  send_error: (callbackId, error: string) => {
     const message: DartMessage = { error, done: true };
     return _dartJSService.SendValue({ callbackId, message });
   },

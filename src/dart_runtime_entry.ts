@@ -5,12 +5,18 @@
 // source: dart_runtime_entry.proto
 
 /* eslint-disable */
-import {
-  BinaryReader,
-  BinaryWriter,
-} from "ext:bufbuild/wire/index.js";
+import { BinaryReader, BinaryWriter } from "ext:bufbuild/wire/index.js";
 
 export const protobufPackage = "globe.runtime";
+
+/**
+ * A generic JSON-like payload transmitted as MessagePack-encoded bytes.
+ * The actual data structure is unpacked by the runtime using MessagePack.
+ */
+export interface JsonPayload {
+  /** MessagePack-encoded content */
+  data: Uint8Array;
+}
 
 export interface DartMessage {
   done: boolean;
@@ -29,49 +35,121 @@ export interface RpcResponse {
   success: boolean;
 }
 
-function createBaseDartMessage(): DartMessage {
-  return { done: false, data: undefined, error: undefined };
+function createBaseJsonPayload(): JsonPayload {
+  return { data: new Uint8Array(0) };
 }
 
-export const DartMessage: MessageFns<DartMessage> = {
-  encode(message: DartMessage, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
-    if (message.done !== false) {
-      writer.uint32(16).bool(message.done);
-    }
-    if (message.data !== undefined) {
-      writer.uint32(26).bytes(message.data);
-    }
-    if (message.error !== undefined) {
-      writer.uint32(34).string(message.error);
+export const JsonPayload: MessageFns<JsonPayload> = {
+  encode(
+    message: JsonPayload,
+    writer: BinaryWriter = new BinaryWriter()
+  ): BinaryWriter {
+    if (message.data.length !== 0) {
+      writer.uint32(10).bytes(message.data);
     }
     return writer;
   },
 
-  decode(input: BinaryReader | Uint8Array, length?: number): DartMessage {
-    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+  decode(input: BinaryReader | Uint8Array, length?: number): JsonPayload {
+    const reader =
+      input instanceof BinaryReader ? input : new BinaryReader(input);
     let end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBaseDartMessage();
+    const message = createBaseJsonPayload();
     while (reader.pos < end) {
       const tag = reader.uint32();
       switch (tag >>> 3) {
-        case 2: {
-          if (tag !== 16) {
-            break;
-          }
-
-          message.done = reader.bool();
-          continue;
-        }
-        case 3: {
-          if (tag !== 26) {
+        case 1: {
+          if (tag !== 10) {
             break;
           }
 
           message.data = reader.bytes();
           continue;
         }
-        case 4: {
-          if (tag !== 34) {
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): JsonPayload {
+    return {
+      data: isSet(object.data)
+        ? bytesFromBase64(object.data)
+        : new Uint8Array(0),
+    };
+  },
+
+  toJSON(message: JsonPayload): unknown {
+    const obj: any = {};
+    if (message.data.length !== 0) {
+      obj.data = base64FromBytes(message.data);
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<JsonPayload>, I>>(base?: I): JsonPayload {
+    return JsonPayload.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<JsonPayload>, I>>(
+    object: I
+  ): JsonPayload {
+    const message = createBaseJsonPayload();
+    message.data = object.data ?? new Uint8Array(0);
+    return message;
+  },
+};
+
+function createBaseDartMessage(): DartMessage {
+  return { done: false, data: undefined, error: undefined };
+}
+
+export const DartMessage: MessageFns<DartMessage> = {
+  encode(
+    message: DartMessage,
+    writer: BinaryWriter = new BinaryWriter()
+  ): BinaryWriter {
+    if (message.done !== false) {
+      writer.uint32(8).bool(message.done);
+    }
+    if (message.data !== undefined) {
+      writer.uint32(18).bytes(message.data);
+    }
+    if (message.error !== undefined) {
+      writer.uint32(26).string(message.error);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): DartMessage {
+    const reader =
+      input instanceof BinaryReader ? input : new BinaryReader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseDartMessage();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1: {
+          if (tag !== 8) {
+            break;
+          }
+
+          message.done = reader.bool();
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.data = reader.bytes();
+          continue;
+        }
+        case 3: {
+          if (tag !== 26) {
             break;
           }
 
@@ -112,7 +190,9 @@ export const DartMessage: MessageFns<DartMessage> = {
   create<I extends Exact<DeepPartial<DartMessage>, I>>(base?: I): DartMessage {
     return DartMessage.fromPartial(base ?? ({} as any));
   },
-  fromPartial<I extends Exact<DeepPartial<DartMessage>, I>>(object: I): DartMessage {
+  fromPartial<I extends Exact<DeepPartial<DartMessage>, I>>(
+    object: I
+  ): DartMessage {
     const message = createBaseDartMessage();
     message.done = object.done ?? false;
     message.data = object.data ?? undefined;
@@ -126,7 +206,10 @@ function createBaseSendValueRequest(): SendValueRequest {
 }
 
 export const SendValueRequest: MessageFns<SendValueRequest> = {
-  encode(message: SendValueRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+  encode(
+    message: SendValueRequest,
+    writer: BinaryWriter = new BinaryWriter()
+  ): BinaryWriter {
     if (message.callbackId !== 0) {
       writer.uint32(8).int32(message.callbackId);
     }
@@ -137,7 +220,8 @@ export const SendValueRequest: MessageFns<SendValueRequest> = {
   },
 
   decode(input: BinaryReader | Uint8Array, length?: number): SendValueRequest {
-    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const reader =
+      input instanceof BinaryReader ? input : new BinaryReader(input);
     let end = length === undefined ? reader.len : reader.pos + length;
     const message = createBaseSendValueRequest();
     while (reader.pos < end) {
@@ -170,8 +254,12 @@ export const SendValueRequest: MessageFns<SendValueRequest> = {
 
   fromJSON(object: any): SendValueRequest {
     return {
-      callbackId: isSet(object.callbackId) ? globalThis.Number(object.callbackId) : 0,
-      message: isSet(object.message) ? DartMessage.fromJSON(object.message) : undefined,
+      callbackId: isSet(object.callbackId)
+        ? globalThis.Number(object.callbackId)
+        : 0,
+      message: isSet(object.message)
+        ? DartMessage.fromJSON(object.message)
+        : undefined,
     };
   },
 
@@ -186,15 +274,20 @@ export const SendValueRequest: MessageFns<SendValueRequest> = {
     return obj;
   },
 
-  create<I extends Exact<DeepPartial<SendValueRequest>, I>>(base?: I): SendValueRequest {
+  create<I extends Exact<DeepPartial<SendValueRequest>, I>>(
+    base?: I
+  ): SendValueRequest {
     return SendValueRequest.fromPartial(base ?? ({} as any));
   },
-  fromPartial<I extends Exact<DeepPartial<SendValueRequest>, I>>(object: I): SendValueRequest {
+  fromPartial<I extends Exact<DeepPartial<SendValueRequest>, I>>(
+    object: I
+  ): SendValueRequest {
     const message = createBaseSendValueRequest();
     message.callbackId = object.callbackId ?? 0;
-    message.message = (object.message !== undefined && object.message !== null)
-      ? DartMessage.fromPartial(object.message)
-      : undefined;
+    message.message =
+      object.message !== undefined && object.message !== null
+        ? DartMessage.fromPartial(object.message)
+        : undefined;
     return message;
   },
 };
@@ -204,7 +297,10 @@ function createBaseRpcResponse(): RpcResponse {
 }
 
 export const RpcResponse: MessageFns<RpcResponse> = {
-  encode(message: RpcResponse, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+  encode(
+    message: RpcResponse,
+    writer: BinaryWriter = new BinaryWriter()
+  ): BinaryWriter {
     if (message.success !== false) {
       writer.uint32(8).bool(message.success);
     }
@@ -212,7 +308,8 @@ export const RpcResponse: MessageFns<RpcResponse> = {
   },
 
   decode(input: BinaryReader | Uint8Array, length?: number): RpcResponse {
-    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    const reader =
+      input instanceof BinaryReader ? input : new BinaryReader(input);
     let end = length === undefined ? reader.len : reader.pos + length;
     const message = createBaseRpcResponse();
     while (reader.pos < end) {
@@ -236,7 +333,11 @@ export const RpcResponse: MessageFns<RpcResponse> = {
   },
 
   fromJSON(object: any): RpcResponse {
-    return { success: isSet(object.success) ? globalThis.Boolean(object.success) : false };
+    return {
+      success: isSet(object.success)
+        ? globalThis.Boolean(object.success)
+        : false,
+    };
   },
 
   toJSON(message: RpcResponse): unknown {
@@ -250,7 +351,9 @@ export const RpcResponse: MessageFns<RpcResponse> = {
   create<I extends Exact<DeepPartial<RpcResponse>, I>>(base?: I): RpcResponse {
     return RpcResponse.fromPartial(base ?? ({} as any));
   },
-  fromPartial<I extends Exact<DeepPartial<RpcResponse>, I>>(object: I): RpcResponse {
+  fromPartial<I extends Exact<DeepPartial<RpcResponse>, I>>(
+    object: I
+  ): RpcResponse {
     const message = createBaseRpcResponse();
     message.success = object.success ?? false;
     return message;
@@ -280,7 +383,11 @@ export class DartJSServiceClientImpl implements DartJSService {
 }
 
 interface Rpc {
-  request(service: string, method: string, data: Uint8Array): Promise<Uint8Array>;
+  request(
+    service: string,
+    method: string,
+    data: Uint8Array
+  ): Promise<Uint8Array>;
 }
 
 function bytesFromBase64(b64: string): Uint8Array {
@@ -308,17 +415,31 @@ function base64FromBytes(arr: Uint8Array): string {
   }
 }
 
-type Builtin = Date | Function | Uint8Array | string | number | boolean | undefined;
+type Builtin =
+  | Date
+  | Function
+  | Uint8Array
+  | string
+  | number
+  | boolean
+  | undefined;
 
-export type DeepPartial<T> = T extends Builtin ? T
-  : T extends globalThis.Array<infer U> ? globalThis.Array<DeepPartial<U>>
-  : T extends ReadonlyArray<infer U> ? ReadonlyArray<DeepPartial<U>>
-  : T extends {} ? { [K in keyof T]?: DeepPartial<T[K]> }
+export type DeepPartial<T> = T extends Builtin
+  ? T
+  : T extends globalThis.Array<infer U>
+  ? globalThis.Array<DeepPartial<U>>
+  : T extends ReadonlyArray<infer U>
+  ? ReadonlyArray<DeepPartial<U>>
+  : T extends {}
+  ? { [K in keyof T]?: DeepPartial<T[K]> }
   : Partial<T>;
 
 type KeysOfUnion<T> = T extends T ? keyof T : never;
-export type Exact<P, I extends P> = P extends Builtin ? P
-  : P & { [K in keyof P]: Exact<P[K], I[K]> } & { [K in Exclude<keyof I, KeysOfUnion<P>>]: never };
+export type Exact<P, I extends P> = P extends Builtin
+  ? P
+  : P & { [K in keyof P]: Exact<P[K], I[K]> } & {
+      [K in Exclude<keyof I, KeysOfUnion<P>>]: never;
+    };
 
 function isSet(value: any): boolean {
   return value !== null && value !== undefined;

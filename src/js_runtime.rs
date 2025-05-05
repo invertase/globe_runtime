@@ -44,6 +44,7 @@ pub fn get_runtime(send_port: i64) -> JsRuntime {
         deno_fetch::deno_fetch::init_ops_and_esm::<PermissionsContainer>(Default::default()),
         js_runtime::init_ops_and_esm(),
         bufbuild::init_ops_and_esm(),
+        js_msg_packr::init_ops_and_esm(),
         dart_runtime::init_ops_and_esm::<i64>(send_port),
     ];
 
@@ -204,6 +205,18 @@ extension!(
     ],
 );
 
+extension!(
+    js_msg_packr,
+    esm_entry_point = "ext:js_msg_packr/index.js",
+    esm = [
+        dir "third_party/msgpackr",
+        "index.js",
+        "pack.js",
+        "unpack.js",
+        "iterators.js",
+    ],
+);
+
 #[repr(i32)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum FFITypeId {
@@ -245,7 +258,8 @@ pub fn c_args_to_v8_args_global(
         let size = unsafe { *sizes.add(i) };
 
         if arg_ptr.is_null() {
-            println!("❌ Arg[{}] is NULL", i);
+            let null_value: v8::Local<v8::Value> = v8::null(scope).into();
+            v8_args.push(v8::Global::new(scope, null_value));
             continue;
         }
 
@@ -308,6 +322,8 @@ pub fn c_args_to_v8_args_local<'s>(
         let size = unsafe { *sizes.add(i) };
 
         if arg_ptr.is_null() {
+            let null_value: v8::Local<v8::Value> = v8::null(scope).into();
+            v8_args.push(null_value);
             continue;
         }
 
@@ -315,7 +331,6 @@ pub fn c_args_to_v8_args_local<'s>(
 
         let v8_value: v8::Local<v8::Value> = match ffi_type {
             Some(FFITypeId::String) => {
-                // ✅ String (Pointer to UTF-8)
                 let c_str = unsafe { CStr::from_ptr(arg_ptr as *const c_char) };
                 match c_str.to_str() {
                     Ok(string) => v8::String::new(scope, string).unwrap().into(),

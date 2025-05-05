@@ -13,13 +13,25 @@ import 'dart:convert' as $convert;
 import 'dart:core' as $core;
 import 'dart:typed_data' as $typed_data;
 
+@$core.Deprecated('Use jsonPayloadDescriptor instead')
+const JsonPayload$json = {
+  '1': 'JsonPayload',
+  '2': [
+    {'1': 'data', '3': 1, '4': 1, '5': 12, '10': 'data'},
+  ],
+};
+
+/// Descriptor for `JsonPayload`. Decode as a `google.protobuf.DescriptorProto`.
+final $typed_data.Uint8List jsonPayloadDescriptor = $convert.base64Decode(
+    'CgtKc29uUGF5bG9hZBISCgRkYXRhGAEgASgMUgRkYXRh');
+
 @$core.Deprecated('Use dartMessageDescriptor instead')
 const DartMessage$json = {
   '1': 'DartMessage',
   '2': [
-    {'1': 'done', '3': 2, '4': 1, '5': 8, '10': 'done'},
-    {'1': 'data', '3': 3, '4': 1, '5': 12, '9': 0, '10': 'data'},
-    {'1': 'error', '3': 4, '4': 1, '5': 9, '9': 0, '10': 'error'},
+    {'1': 'done', '3': 1, '4': 1, '5': 8, '10': 'done'},
+    {'1': 'data', '3': 2, '4': 1, '5': 12, '9': 0, '10': 'data'},
+    {'1': 'error', '3': 3, '4': 1, '5': 9, '9': 0, '10': 'error'},
   ],
   '8': [
     {'1': 'payload'},
@@ -28,8 +40,8 @@ const DartMessage$json = {
 
 /// Descriptor for `DartMessage`. Decode as a `google.protobuf.DescriptorProto`.
 final $typed_data.Uint8List dartMessageDescriptor = $convert.base64Decode(
-    'CgtEYXJ0TWVzc2FnZRISCgRkb25lGAIgASgIUgRkb25lEhQKBGRhdGEYAyABKAxIAFIEZGF0YR'
-    'IWCgVlcnJvchgEIAEoCUgAUgVlcnJvckIJCgdwYXlsb2Fk');
+    'CgtEYXJ0TWVzc2FnZRISCgRkb25lGAEgASgIUgRkb25lEhQKBGRhdGEYAiABKAxIAFIEZGF0YR'
+    'IWCgVlcnJvchgDIAEoCUgAUgVlcnJvckIJCgdwYXlsb2Fk');
 
 @$core.Deprecated('Use sendValueRequestDescriptor instead')
 const SendValueRequest$json = {
