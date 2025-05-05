@@ -2,13 +2,21 @@ syntax = "proto3";
 
 package globe.runtime;
 
+/**
+ * A generic JSON-like payload transmitted as MessagePack-encoded bytes.
+ * The actual data structure is unpacked by the runtime using MessagePack.
+ */
+message JsonPayload {
+  bytes data = 1;// MessagePack-encoded content
+}
+
 message DartMessage {
-  bool done = 2;
+  bool done = 1;
 
   // Using `oneof` to make `data` and `error` nullable
   oneof payload {
-    bytes data = 3;
-    string error = 4;
+    bytes data = 2;
+    string error = 3;
   }
 }
 

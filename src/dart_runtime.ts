@@ -3,16 +3,27 @@ import {
   DartJSService,
   RpcResponse,
   SendValueRequest,
+  JsonPayload,
 } from "./dart_runtime_entry.ts";
 import * as msgPackr from "ext:js_msg_packr/index.js";
 
 const { core } = Deno;
 
-Object.defineProperty(globalThis, "MessagePackr", {
-  value: msgPackr,
+// Expose the `JsonPayload` interface to the global scope
+Object.defineProperty(globalThis, "JsonPayload", {
+  value: {
+    encode: (value: unknown): JsonPayload | undefined => {
+      if (value === undefined) return undefined;
+      return { data: msgPackr.pack(value) };
+    },
+    decode: (value: JsonPayload | undefined): unknown => {
+      if (value === undefined) return undefined;
+      return msgPackr.unpack(value.data);
+    },
+  },
   enumerable: false,
-  configurable: true,
   writable: true,
+  configurable: true,
 });
 
 function register_js_module(moduleName: string, moduleFunctions) {

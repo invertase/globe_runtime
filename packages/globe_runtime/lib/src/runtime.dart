@@ -7,6 +7,7 @@ import 'dart:typed_data';
 import 'package:http/http.dart' as http;
 import 'package:ffi/ffi.dart';
 import 'package:path/path.dart' as path;
+import 'package:msgpack_dart/msgpack_dart.dart' as msg_parkr;
 
 import '../generated/dart_runtime_entry.pbserver.dart';
 
@@ -62,4 +63,18 @@ interface class GlobeRuntime {
   }
 
   void dispose() => _instance!.dispose();
+}
+
+extension MessagePackrExtensionForJsonPayload<T> on JsonPayload {
+  T unpack() {
+    final bytes = Uint8List.fromList(data);
+    return msg_parkr.deserialize(bytes);
+  }
+}
+
+extension MessagePackrExtensionForObject<T> on T {
+  JsonPayload pack() {
+    final bytes = msg_parkr.serialize(this);
+    return JsonPayload(data: bytes);
+  }
 }
