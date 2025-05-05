@@ -36,7 +36,14 @@ const SendValueRequest$json = {
   '1': 'SendValueRequest',
   '2': [
     {'1': 'callback_id', '3': 1, '4': 1, '5': 5, '10': 'callbackId'},
-    {'1': 'message', '3': 2, '4': 1, '5': 11, '6': '.globe.runtime.DartMessage', '10': 'message'},
+    {
+      '1': 'message',
+      '3': 2,
+      '4': 1,
+      '5': 11,
+      '6': '.globe.runtime.DartMessage',
+      '10': 'message'
+    },
   ],
 };
 
@@ -54,18 +61,23 @@ const RpcResponse$json = {
 };
 
 /// Descriptor for `RpcResponse`. Decode as a `google.protobuf.DescriptorProto`.
-final $typed_data.Uint8List rpcResponseDescriptor = $convert.base64Decode(
-    'CgtScGNSZXNwb25zZRIYCgdzdWNjZXNzGAEgASgIUgdzdWNjZXNz');
+final $typed_data.Uint8List rpcResponseDescriptor = $convert
+    .base64Decode('CgtScGNSZXNwb25zZRIYCgdzdWNjZXNzGAEgASgIUgdzdWNjZXNz');
 
 const $core.Map<$core.String, $core.dynamic> DartJSServiceBase$json = {
   '1': 'DartJSService',
   '2': [
-    {'1': 'SendValue', '2': '.globe.runtime.SendValueRequest', '3': '.globe.runtime.RpcResponse'},
+    {
+      '1': 'SendValue',
+      '2': '.globe.runtime.SendValueRequest',
+      '3': '.globe.runtime.RpcResponse'
+    },
   ],
 };
 
 @$core.Deprecated('Use dartJSServiceDescriptor instead')
-const $core.Map<$core.String, $core.Map<$core.String, $core.dynamic>> DartJSServiceBase$messageJson = {
+const $core.Map<$core.String, $core.Map<$core.String, $core.dynamic>>
+    DartJSServiceBase$messageJson = {
   '.globe.runtime.SendValueRequest': SendValueRequest$json,
   '.globe.runtime.DartMessage': DartMessage$json,
   '.globe.runtime.RpcResponse': RpcResponse$json,
@@ -75,4 +87,3 @@ const $core.Map<$core.String, $core.Map<$core.String, $core.dynamic>> DartJSServ
 final $typed_data.Uint8List dartJSServiceDescriptor = $convert.base64Decode(
     'Cg1EYXJ0SlNTZXJ2aWNlEkgKCVNlbmRWYWx1ZRIfLmdsb2JlLnJ1bnRpbWUuU2VuZFZhbHVlUm'
     'VxdWVzdBoaLmdsb2JlLnJ1bnRpbWUuUnBjUmVzcG9uc2U=');
-

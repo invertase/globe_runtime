@@ -21,23 +21,29 @@ import 'dart_runtime_entry.pbjson.dart';
 export 'dart_runtime_entry.pb.dart';
 
 abstract class DartJSServiceBase extends $pb.GeneratedService {
-  $async.Future<$0.RpcResponse> sendValue($pb.ServerContext ctx, $0.SendValueRequest request);
+  $async.Future<$0.RpcResponse> sendValue(
+      $pb.ServerContext ctx, $0.SendValueRequest request);
 
   $pb.GeneratedMessage createRequest($core.String methodName) {
     switch (methodName) {
-      case 'SendValue': return $0.SendValueRequest();
-      default: throw $core.ArgumentError('Unknown method: $methodName');
+      case 'SendValue':
+        return $0.SendValueRequest();
+      default:
+        throw $core.ArgumentError('Unknown method: $methodName');
     }
   }
 
-  $async.Future<$pb.GeneratedMessage> handleCall($pb.ServerContext ctx, $core.String methodName, $pb.GeneratedMessage request) {
+  $async.Future<$pb.GeneratedMessage> handleCall($pb.ServerContext ctx,
+      $core.String methodName, $pb.GeneratedMessage request) {
     switch (methodName) {
-      case 'SendValue': return this.sendValue(ctx, request as $0.SendValueRequest);
-      default: throw $core.ArgumentError('Unknown method: $methodName');
+      case 'SendValue':
+        return this.sendValue(ctx, request as $0.SendValueRequest);
+      default:
+        throw $core.ArgumentError('Unknown method: $methodName');
     }
   }
 
   $core.Map<$core.String, $core.dynamic> get $json => DartJSServiceBase$json;
-  $core.Map<$core.String, $core.Map<$core.String, $core.dynamic>> get $messageJson => DartJSServiceBase$messageJson;
+  $core.Map<$core.String, $core.Map<$core.String, $core.dynamic>>
+      get $messageJson => DartJSServiceBase$messageJson;
 }
-

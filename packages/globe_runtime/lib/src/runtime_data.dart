@@ -30,7 +30,8 @@ extension FFITypeExtension on Object {
         double() => FFIDouble(this as double),
         bool() => FFIBool(this as bool),
         List<int>() => FFIBytes(this as List<int>),
-        _ => throw UnimplementedError('FFIConvertible not found for $runtimeType'),
+        _ =>
+          throw UnimplementedError('FFIConvertible not found for $runtimeType'),
       };
 }
 
@@ -121,7 +122,9 @@ GetTypeArguments getTypeArguments(List<FFIConvertible?> args) {
     final objectAtIndex = args[i];
 
     argPointers[i] = objectAtIndex == null ? nullptr : objectAtIndex.toFFI();
-    typeIds[i] = objectAtIndex == null ? FFITypeId.none.value : objectAtIndex.typeId.value;
+    typeIds[i] = objectAtIndex == null
+        ? FFITypeId.none.value
+        : objectAtIndex.typeId.value;
 
     if (objectAtIndex is FFIBytes) {
       sizes[i] = objectAtIndex.value.length;

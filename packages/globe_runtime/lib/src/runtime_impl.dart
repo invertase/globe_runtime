@@ -56,7 +56,8 @@ typedef _RegisterModuleFnDart = int Function(
   int,
 );
 
-typedef _IsModuleRegisteredFnNative = NativeFunction<Uint8 Function(Pointer<Utf8>)>;
+typedef _IsModuleRegisteredFnNative
+    = NativeFunction<Uint8 Function(Pointer<Utf8>)>;
 typedef _IsModuleRegisteredFnDart = int Function(Pointer<Utf8>);
 
 typedef _DisposeAiFnNative = NativeFunction<Uint8 Function()>;
@@ -70,7 +71,8 @@ String get _dylibPath {
     return _dylibPathCache = '/usr/lib/$dylibName';
   }
 
-  var filePath = path.join(Directory.current.path, 'target', 'debug', dylibName);
+  var filePath =
+      path.join(Directory.current.path, 'target', 'debug', dylibName);
   if (File(filePath).existsSync()) return _dylibPathCache = filePath;
 
   final directory = Directory(globeRuntimeInstallDirectory);
@@ -94,19 +96,25 @@ class _$GlobeRuntimeImpl {
 
   static final dylib = DynamicLibrary.open(_dylibPath);
 
-  final _globeRuntimeInitFn =
-      dylib.lookup<_CallGlobeRuntimeInitFnNative>('init_runtime').asFunction<_CallGlobeRuntimeInitFnDart>();
+  final _globeRuntimeInitFn = dylib
+      .lookup<_CallGlobeRuntimeInitFnNative>('init_runtime')
+      .asFunction<_CallGlobeRuntimeInitFnDart>();
 
-  final _registerModuleFn =
-      dylib.lookup<_RegisterModuleFnNative>('register_module').asFunction<_RegisterModuleFnDart>();
+  final _registerModuleFn = dylib
+      .lookup<_RegisterModuleFnNative>('register_module')
+      .asFunction<_RegisterModuleFnDart>();
 
-  final _isModuleRegisteredFn =
-      dylib.lookup<_IsModuleRegisteredFnNative>('is_module_registered').asFunction<_IsModuleRegisteredFnDart>();
+  final _isModuleRegisteredFn = dylib
+      .lookup<_IsModuleRegisteredFnNative>('is_module_registered')
+      .asFunction<_IsModuleRegisteredFnDart>();
 
-  final _callGlobeFunction =
-      dylib.lookup<_CallGlobeFunctionNative>('call_js_function').asFunction<_CallGlobeFunctionFnDart>();
+  final _callGlobeFunction = dylib
+      .lookup<_CallGlobeFunctionNative>('call_js_function')
+      .asFunction<_CallGlobeFunctionFnDart>();
 
-  final _disposeRuntimeFn = dylib.lookup<_DisposeAiFnNative>('dispose_runtime').asFunction<_DisposeAiFnDart>();
+  final _disposeRuntimeFn = dylib
+      .lookup<_DisposeAiFnNative>('dispose_runtime')
+      .asFunction<_DisposeAiFnDart>();
 
   _$GlobeRuntimeImpl() : _receivePort = ReceivePort("globe_runtime") {
     final Pointer<Pointer<Utf8>> errorPtr = calloc();
@@ -117,7 +125,9 @@ class _$GlobeRuntimeImpl {
     );
     if (initialized != 0) {
       final Pointer<Utf8> errorMsgPtr = errorPtr.value;
-      final errorMgs = errorMsgPtr.address == 0 ? "Failed to initialize Globe Runtime" : errorMsgPtr.toDartString();
+      final errorMgs = errorMsgPtr.address == 0
+          ? "Failed to initialize Globe Runtime"
+          : errorMsgPtr.toDartString();
 
       throw StateError(errorMgs);
     }
@@ -183,7 +193,9 @@ class _$GlobeRuntimeImpl {
 
     if (callResult != 0) {
       final Pointer<Utf8> errorMsgPtr = errorPtr.value;
-      final errorMgs = errorMsgPtr.address == 0 ? "Failed to call Globe Function" : errorMsgPtr.toDartString();
+      final errorMgs = errorMsgPtr.address == 0
+          ? "Failed to call Globe Function"
+          : errorMsgPtr.toDartString();
 
       throw StateError(errorMgs);
     }
@@ -215,8 +227,9 @@ class _$GlobeRuntimeImpl {
         ) !=
         0) {
       final Pointer<Utf8> errorMsgPtr = errorPtr.value;
-      final errorMgs =
-          errorMsgPtr.address == 0 ? "Failed to register `$moduleName` module" : errorMsgPtr.toDartString();
+      final errorMgs = errorMsgPtr.address == 0
+          ? "Failed to register `$moduleName` module"
+          : errorMsgPtr.toDartString();
 
       throw StateError(errorMgs);
     }
