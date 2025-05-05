@@ -64,17 +64,3 @@ interface class GlobeRuntime {
 
   void dispose() => _instance!.dispose();
 }
-
-extension MessagePackrExtensionForJsonPayload<T> on JsonPayload {
-  T unpack() {
-    final bytes = Uint8List.fromList(data);
-    return msg_parkr.deserialize(bytes);
-  }
-}
-
-extension MessagePackrExtensionForObject<T> on T {
-  JsonPayload pack() {
-    final bytes = msg_parkr.serialize(this);
-    return JsonPayload(data: bytes);
-  }
-}

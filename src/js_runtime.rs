@@ -258,7 +258,8 @@ pub fn c_args_to_v8_args_global(
         let size = unsafe { *sizes.add(i) };
 
         if arg_ptr.is_null() {
-            println!("❌ Arg[{}] is NULL", i);
+            let null_value: v8::Local<v8::Value> = v8::null(scope).into();
+            v8_args.push(v8::Global::new(scope, null_value));
             continue;
         }
 
@@ -321,6 +322,8 @@ pub fn c_args_to_v8_args_local<'s>(
         let size = unsafe { *sizes.add(i) };
 
         if arg_ptr.is_null() {
+            let null_value: v8::Local<v8::Value> = v8::null(scope).into();
+            v8_args.push(null_value);
             continue;
         }
 
@@ -328,7 +331,6 @@ pub fn c_args_to_v8_args_local<'s>(
 
         let v8_value: v8::Local<v8::Value> = match ffi_type {
             Some(FFITypeId::String) => {
-                // ✅ String (Pointer to UTF-8)
                 let c_str = unsafe { CStr::from_ptr(arg_ptr as *const c_char) };
                 match c_str.to_str() {
                     Ok(string) => v8::String::new(scope, string).unwrap().into(),

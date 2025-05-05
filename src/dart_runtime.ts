@@ -12,13 +12,13 @@ const { core } = Deno;
 // Expose the `JsonPayload` interface to the global scope
 Object.defineProperty(globalThis, "JsonPayload", {
   value: {
-    encode: (value: unknown): JsonPayload | undefined => {
+    encode: (value: unknown): Uint8Array | undefined => {
       if (value === undefined) return undefined;
-      return { data: msgPackr.pack(value) };
+      return msgPackr.pack(value);
     },
-    decode: (value: JsonPayload | undefined): unknown => {
+    decode: (value: Uint8Array | undefined): any => {
       if (value === undefined) return undefined;
-      return msgPackr.unpack(value.data);
+      return msgPackr.unpack(value);
     },
   },
   enumerable: false,
@@ -77,7 +77,7 @@ register_js_module("Dart", {
     const message: DartMessage = { data, done: true };
     return _dartJSService.SendValue({ callbackId, message });
   },
-  send_error: (callbackId, error: string | undefined) => {
+  send_error: (callbackId, error: string) => {
     const message: DartMessage = { error, done: true };
     return _dartJSService.SendValue({ callbackId, message });
   },
