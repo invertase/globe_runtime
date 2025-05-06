@@ -4,6 +4,8 @@ mod js_resolver;
 mod js_runtime;
 mod utils;
 
+include!(concat!(env!("OUT_DIR"), "/version.rs"));
+
 use deno_runtime::deno_core::{self};
 
 use std::{
@@ -150,6 +152,11 @@ pub unsafe extern "C" fn register_module(
         functions_object,
         module_init_args,
     )
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn get_runtime_version() -> *const c_char {
+    CString::new(VERSION).unwrap().into_raw()
 }
 
 #[no_mangle]

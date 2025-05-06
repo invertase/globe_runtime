@@ -1,4 +1,6 @@
 use std::env;
+use std::fs;
+use std::path::Path;
 use std::path::PathBuf;
 
 fn main() {
@@ -23,6 +25,7 @@ fn main() {
 
     println!("cargo:rerun-if-changed=third_party/dart/internal/dart_api_dl.c");
     println!("cargo:rerun-if-changed=third_party/dart/include/dart_api.h");
+    println!("cargo:rerun-if-changed=Cargo.toml");
 
     // Generate Rust bindings for the Dart API
     let bindings = bindgen::Builder::default()
@@ -41,4 +44,13 @@ fn main() {
     bindings
         .write_to_file(dart_binding_file)
         .expect("Couldn't write bindings!");
+
+    let version = env::var("CARGO_PKG_VERSION").unwrap();
+    let out_dir = env::var("OUT_DIR").unwrap();
+    let dest_path = Path::new(&out_dir).join("version.rs");
+    fs::write(
+        &dest_path,
+        format!("pub const VERSION: &str = \"{}\";", version),
+    )
+    .expect("Could not write version file");
 }

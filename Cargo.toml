@@ -1,12 +1,11 @@
 [package]
 name = "globe_runtime"
-version = "0.1.0"
+version = "0.0.3"
 edition = "2021"
 
 [lib]
 name = "globe_runtime"
 crate-type = ["cdylib"]
-
 
 [dependencies]
 v8 = "130.0.7"

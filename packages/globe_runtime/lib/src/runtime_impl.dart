@@ -1,5 +1,8 @@
 part of 'runtime.dart';
 
+typedef GetRuntimeVersionC = NativeFunction<Pointer<Utf8> Function()>;
+typedef GetRuntimeVersionDart = Pointer<Utf8> Function();
+
 typedef _CallGlobeRuntimeInitFnNative = NativeFunction<
     Int Function(
       Pointer<Void>, // dart API-DL
@@ -63,6 +66,15 @@ typedef _IsModuleRegisteredFnDart = int Function(Pointer<Utf8>);
 typedef _DisposeAiFnNative = NativeFunction<Uint8 Function()>;
 typedef _DisposeAiFnDart = int Function();
 
+void validateRuntimeLibraryExists(String path) {
+  if (!File(path).existsSync()) {
+    throw StateError(
+      'Globe Runtime library not found at $path. '
+      'Please run `globe runtime install` to install it.',
+    );
+  }
+}
+
 String? _dylibPathCache;
 String get _dylibPath {
   if (_dylibPathCache != null) return _dylibPathCache!;
@@ -75,17 +87,7 @@ String get _dylibPath {
       path.join(Directory.current.path, 'target', 'debug', dylibName);
   if (File(filePath).existsSync()) return _dylibPathCache = filePath;
 
-  final directory = Directory(globeRuntimeInstallDirectory);
-  return _dylibPathCache = directory.listSync().firstWhere(
-    (e) {
-      final baseName = path.basename(e.path);
-      final fileName = path.basenameWithoutExtension(dylibName);
-      return baseName.contains(fileName);
-    },
-    orElse: () => throw StateError(
-      'Globe Runtime not found. Please run `globe runtime install` to install it.',
-    ),
-  ).path;
+  return _dylibPathCache = path.join(globeRuntimeInstallDirectory, dylibName);
 }
 
 class _$GlobeRuntimeImpl {
@@ -94,7 +96,11 @@ class _$GlobeRuntimeImpl {
 
   int _messageCount = 0;
 
-  static final dylib = DynamicLibrary.open(_dylibPath);
+  static final dylib = () {
+    final libraryPath = _dylibPath;
+    validateRuntimeLibraryExists(libraryPath);
+    return DynamicLibrary.open(libraryPath);
+  }();
 
   final _globeRuntimeInitFn = dylib
       .lookup<_CallGlobeRuntimeInitFnNative>('init_runtime')
@@ -115,6 +121,10 @@ class _$GlobeRuntimeImpl {
   final _disposeRuntimeFn = dylib
       .lookup<_DisposeAiFnNative>('dispose_runtime')
       .asFunction<_DisposeAiFnDart>();
+
+  // Lookup the symbol
+  final GetRuntimeVersionDart getRuntimeVersion =
+      dylib.lookup<GetRuntimeVersionC>('get_runtime_version').asFunction();
 
   _$GlobeRuntimeImpl() : _receivePort = ReceivePort("globe_runtime") {
     final Pointer<Pointer<Utf8>> errorPtr = calloc();
@@ -152,6 +162,11 @@ class _$GlobeRuntimeImpl {
     ProcessSignal.sigterm.watch().listen((_) {
       dispose();
     });
+  }
+
+  String getVersion() {
+    final versionPtr = getRuntimeVersion();
+    return versionPtr.toDartString();
   }
 
   void dispose() {

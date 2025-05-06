@@ -62,5 +62,7 @@ interface class GlobeRuntime {
     );
   }
 
+  String get version => _instance!.getVersion();
+
   void dispose() => _instance!.dispose();
 }
