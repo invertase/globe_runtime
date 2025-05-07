@@ -33,13 +33,11 @@ interface class GlobeRuntime {
   FutureOr<void> registerModule(
     String moduleName,
     String modulePath, {
-    String? workingDir,
     List<FFIConvertible?> args = const [],
   }) {
-    workingDir ??= Directory.current.path;
     return _instance!.registerModule(
       moduleName,
-      path.join(workingDir, modulePath),
+      modulePath,
       args: args,
     );
   }

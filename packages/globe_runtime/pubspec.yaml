@@ -1,10 +1,10 @@
 name: globe_runtime
 description: A minimalist runtime designed to leverage the JavaScript ecosystem and its tools to accelerate development in Dart.
-version: 1.0.3
+version: 1.0.3+1
 repository: https://github.com/invertase/globe_runtime
 
 environment:
-  sdk: ^3.5.0
+  sdk: ^3.4.0
 
 dev_dependencies:
   test: ^1.24.0

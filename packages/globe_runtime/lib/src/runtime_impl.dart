@@ -263,25 +263,33 @@ class _$GlobeRuntimeImpl {
   }
 
   Future<String> _resolveModule(String modulePath) async {
-    if (!modulePath.startsWith('https://')) return modulePath;
+    if (!modulePath.startsWith('http')) return modulePath;
+
+    final currentDir = Directory.current.path;
+    final moduleUri = Uri.parse(modulePath);
+    final libraryName = path.basename(moduleUri.path);
+
+    final maybeDevFile = File(path.join(currentDir, 'dist', libraryName));
+    if (maybeDevFile.existsSync()) {
+      final relativeFileName = path.relative(maybeDevFile.path);
+      stdout.writeln('[WARN]: Using local module from $relativeFileName');
+      return maybeDevFile.path;
+    }
 
     final dir = Directory(path.join(globeRuntimeInstallDirectory, 'modules'));
     if (!dir.existsSync()) dir.createSync(recursive: true);
 
     final fileName = path.basename(modulePath);
-    final fullFilePath = path.join(dir.path, fileName);
-    final runtimeFile = File(fullFilePath);
-    if (runtimeFile.existsSync()) return fullFilePath;
+    final runtimeFile = File(path.join(dir.path, fileName));
+    if (runtimeFile.existsSync()) return runtimeFile.path;
 
     try {
-      final response = await http.get(Uri.parse(modulePath));
-      if (response.statusCode != 200) {
-        throw HttpException(response.body);
-      }
-
+      final response = await http.readBytes(Uri.parse(modulePath));
       await runtimeFile.create(recursive: true);
-      await runtimeFile.writeAsBytes(response.bodyBytes);
-      return fullFilePath;
+      await runtimeFile.writeAsBytes(response);
+      return runtimeFile.path;
+    } on http.ClientException catch (e) {
+      throw StateError('Failed to download module: $e');
     } catch (e) {
       rethrow;
     }
