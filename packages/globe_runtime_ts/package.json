@@ -1,0 +1,16 @@
+{
+  "name": "@globe/runtime_types",
+  "version": "1.0.3",
+  "description": "Global type declarations for the Dart JS runtime interop",
+  "types": "globe.d.ts",
+  "sideEffects": false,
+  "keywords": [
+    "dart",
+    "ffi",
+    "v8",
+    "interop",
+    "globe",
+    "runtime"
+  ],
+  "license": "MIT"
+}
