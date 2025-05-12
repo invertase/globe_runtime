@@ -13,7 +13,7 @@ deno_core = "0.333.0"
 deno_error = "=0.5.5"
 deno_runtime = { version = "0.196.0", features = ["transpile"] }
 libc = "0.2.169"
-tokio = "1.43.0"
+tokio = "1.43.1"
 thiserror = "2.0.3"
 sys_traits = "=0.1.7"
 node-resolve = "2.2.0"
