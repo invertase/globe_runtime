@@ -58,7 +58,7 @@ pub unsafe extern "C" fn init_runtime(
 #[no_mangle]
 pub unsafe extern "C" fn register_module(
     module_name: *const c_char,
-    module_full_path: *const c_char,
+    module_source: *const c_char,
     error: *mut *const c_char,
     //
     args: *const *const c_void, // Arguments pointer
@@ -85,18 +85,23 @@ pub unsafe extern "C" fn register_module(
         }
     };
 
-    let module_path_str = match check_and_get_cstr(module_full_path) {
-        Ok(path) => PathBuf::from(path),
+    let source_code = match check_and_get_cstr(module_source) {
+        Ok(cstr) => {
+            let path = PathBuf::from(cstr);
+            if path.is_file() {
+                match fs::read_to_string(&path) {
+                    Ok(code) => (path.to_str().unwrap().to_string(), code),
+                    Err(e) => {
+                        set_error(error, &format!("Failed to read JS module from file: {}", e));
+                        return 1;
+                    }
+                }
+            } else {
+                (module_name_str.to_string() + ".js", cstr.to_string())
+            }
+        }
         Err(e) => {
             set_error(error, e);
-            return 1;
-        }
-    };
-
-    let source_code = match fs::read_to_string(&module_path_str) {
-        Ok(code) => code,
-        Err(e) => {
-            set_error(error, &format!("Failed to read JS module: {}", e));
             return 1;
         }
     };
@@ -105,10 +110,8 @@ pub unsafe extern "C" fn register_module(
     let mut javascript_runtime = runtime_ref.borrow_mut();
 
     let module_object = {
-        let result = javascript_runtime.lazy_load_es_module_with_code(
-            format!("file://{}", module_path_str.to_string_lossy()),
-            source_code,
-        );
+        let result = javascript_runtime
+            .lazy_load_es_module_with_code(format!("file://{}", source_code.0), source_code.1);
         if let Err(e) = result {
             set_error(
                 error,
