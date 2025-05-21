@@ -1,3 +1,7 @@
+## 1.0.4
+
+- `GlobeRuntime.registerModule` accepts `file-path` or `JS` source string.
+
 ## 1.0.3
 
 - Add `JsonPayload` support to runtime.
