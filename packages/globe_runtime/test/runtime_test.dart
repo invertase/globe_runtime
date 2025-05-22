@@ -103,7 +103,7 @@ void main() {
     });
   });
 
-  test('should call fetch from javascript', () async {
+  test('should call fetch from javascript (Promise)', () async {
     final result = await callJsFunction(
       'fetch_url',
       args: ['https://jsonplaceholder.typicode.com/posts/1'.toFFIType],
@@ -111,6 +111,41 @@ void main() {
 
     expect(
       result,
+      isA<Map<dynamic, dynamic>>().having((data) => data.keys, 'has keys', [
+        'userId',
+        'id',
+        'title',
+        'body',
+      ]),
+    );
+  });
+
+  test('should call fetch from javascript (Streamed)', () async {
+    final streamController = StreamController<List<int>>();
+
+    runtime.callFunction(
+      moduleName,
+      function: 'fetch_url_streamed',
+      args: ['https://jsonplaceholder.typicode.com/posts/1'.toFFIType],
+      onData: (data) {
+        if (data.hasError()) {
+          streamController.addError(data.error);
+        } else {
+          streamController.add(data.data);
+        }
+
+        if (data.done) {
+          streamController.close();
+        }
+        return data.done;
+      },
+    );
+
+    final response =
+        await utf8.decodeStream(streamController.stream).then(jsonDecode);
+
+    expect(
+      response,
       isA<Map<dynamic, dynamic>>().having((data) => data.keys, 'has keys', [
         'userId',
         'id',

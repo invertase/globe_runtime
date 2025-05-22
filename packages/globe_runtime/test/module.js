@@ -47,6 +47,19 @@ const sdk = {
         Dart.send_error(DartCallbackId, `Fetch failed: ${err.message}`);
       }
     },
+    fetch_url_streamed: async function (_, url, DartCallbackId) {
+      try {
+        const response = await fetch(url);
+
+        for await (const chunk of response.body.values()) {
+          Dart.stream_value(DartCallbackId, chunk);
+        }
+
+        Dart.stream_value_end(DartCallbackId);
+      } catch (err) {
+        Dart.send_error(DartCallbackId, `Fetch failed: ${err.message}`);
+      }
+    },
   },
 };
 
