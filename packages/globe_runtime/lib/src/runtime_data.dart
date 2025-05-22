@@ -142,16 +142,16 @@ GetTypeArguments getTypeArguments(List<FFIConvertible?> args) {
   );
 }
 
-extension MessagePackrExtensionForJsonPayload on JsonPayload {
-  T unpack<T>() {
-    final bytes = Uint8List.fromList(data);
-    return msg_parkr.deserialize(bytes) as T;
+extension MessagePackrExtensionForListInt on List<int> {
+  dynamic unpack() {
+    final bytes = Uint8List.fromList(this);
+    return msg_parkr.deserialize(bytes);
   }
 }
 
 extension MessagePackrExtensionForObject<T> on T {
-  JsonPayload pack() {
+  FFIBytes pack() {
     final bytes = msg_parkr.serialize(this);
-    return JsonPayload(data: bytes);
+    return FFIBytes(bytes);
   }
 }
