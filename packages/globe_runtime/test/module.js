@@ -25,7 +25,7 @@ const sdk = {
 
       Dart.send_value(DartCallbackId, JsonPayload.encode(mapKeys));
     },
-    say_hello: function (state, name, DartCallbackId) {
+    say_hello: function (_, name, DartCallbackId) {
       const greeting = `Hello, ${name}`;
       const result = new TextEncoder().encode(greeting);
 
