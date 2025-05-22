@@ -25,7 +25,9 @@ jobs:
 
       - name: Run tests
         working-directory: packages/globe_runtime
-        run: dart test --reporter expanded --concurrency=1
+        run: |
+          ls
+          dart test --reporter expanded --concurrency=1
 
   Build:
     needs: Test
