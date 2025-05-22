@@ -12,7 +12,7 @@ void main() {
 
   test('should return runtime version', () {
     final version = runtime.version;
-    stdout.write('Runtime version: $version');
+    stdout.writeln('Runtime version: $version');
     expect(version, isNotNull);
   });
 }
