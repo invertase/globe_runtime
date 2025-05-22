@@ -26,8 +26,9 @@ jobs:
       - name: Run tests
         working-directory: packages/globe_runtime
         run: dart test --reporter expanded --concurrency=1
-        
+
   Build:
+    needs: Test
     name: Build - ${{ matrix.platform.os-name }}
     strategy:
       matrix:
@@ -108,7 +109,7 @@ jobs:
   Release:
     name: Publish Release
     if: github.ref_type == 'tag'
-    needs: build
+    needs: Build
     runs-on: ubuntu-latest
 
     steps:
