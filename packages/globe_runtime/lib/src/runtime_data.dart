@@ -162,7 +162,3 @@ extension MessagePackrExtensionForListInt on List<int> {
     return msg_parkr.deserialize(bytes);
   }
 }
-
-extension MessagePackrExtensionForObject<T> on T {
-  FFIJsonPayload pack() => FFIJsonPayload(this);
-}

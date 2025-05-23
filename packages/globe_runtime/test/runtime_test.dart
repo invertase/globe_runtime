@@ -88,8 +88,9 @@ void main() {
     });
 
     test('should decode object', () async {
-      final result = await callJsFunction('json_decode', args: [mapData.pack()])
-          .then((data) => data.unpack());
+      final result =
+          await callJsFunction('json_decode', args: [mapData.toFFIType])
+              .then((data) => data.unpack());
 
       expect(
         result,
