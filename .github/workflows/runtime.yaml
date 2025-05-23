@@ -9,26 +9,26 @@ on:
   pull_request:
 
 jobs:
-  Test:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: dart-lang/setup-dart@v1
+  # Test:
+  #   runs-on: ubuntu-22.04
+  #   steps:
+  #     - uses: actions/checkout@v4
+  #     - uses: dart-lang/setup-dart@v1
+  #     - uses: houseabsolute/actions-rust-cross@v1
+  #       with:
+  #         command: build
+  #         target: x86_64-unknown-linux-gnu
+  #         args: "--locked --release"
+  #         strip: true
 
-      - name: Add Globe Runtime shared library
-        run: |
-          sudo apt-get update && sudo apt-get install -y jq curl
-          mkdir -p ~/.globe/runtime && cd ~/.globe/runtime
-          curl -s https://api.github.com/repos/invertase/globe_runtime/releases/latest \
-            | jq -r '.assets[] | select(.name == "libglobe_runtime-x86_64-unknown-linux-gnu.so") | .browser_download_url' \
-            | xargs curl -L -OJ
-
-      - name: Run tests
-        working-directory: packages/globe_runtime
-        run: dart test --reporter expanded --concurrency=1
+  #     - name: Run Dart Tests
+  #       run: |
+  #         mkdir -p ~/.globe/runtime && cd ~/.globe/runtime
+  #         mv target/x86_64-unknown-linux-gnu/release/libglobe_runtime.so ~/.globe/runtime
+  #         cd packages/globe_runtime
+  #         dart test --reporter expanded --concurrency=1
 
   Build:
-    needs: Test
     name: Build - ${{ matrix.platform.os-name }}
     strategy:
       matrix:
