@@ -1,12 +1,13 @@
-name: pretty_node
+name: basic_example
 version: 1.0.0
-description: A Dart package that uses Node.js modules.
+description: A Dart package that uses dart v8 runtime.
 
 environment:
   sdk: ^3.4.0
 
 dependencies:
   globe_runtime: ^1.0.4
+  path: ^1.9.1
  
 
 dev_dependencies:
