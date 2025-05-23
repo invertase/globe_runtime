@@ -17,7 +17,8 @@ enum FFITypeId {
   integer(2),
   double(3),
   bool(4),
-  bytes(5);
+  bytes(5),
+  json_payload(6);
 
   final int value;
   const FFITypeId(this.value);
@@ -30,9 +31,10 @@ extension FFITypeExtension on Object {
         double() => FFIDouble(this as double),
         bool() => FFIBool(this as bool),
         List<int>() => FFIBytes(this as List<int>),
-        JsonPayload() => FFIBytes((this as JsonPayload).data),
-        _ =>
-          throw UnimplementedError('FFIConvertible not found for $runtimeType'),
+        Map() => FFIJsonPayload(this),
+        List() => FFIJsonPayload(this),
+        Set() => FFIJsonPayload(this),
+        _ => FFIJsonPayload(this),
       };
 }
 
@@ -52,10 +54,22 @@ class FFIInt implements FFIConvertible {
   FFIInt(this.value);
 
   @override
-  Pointer<Void> toFFI() => Pointer.fromAddress(value);
+  Pointer<Void> toFFI() {
+    final ptr = calloc<Int64>();
+    ptr.value = value;
+    return ptr.cast<Void>();
+  }
 
   @override
   FFITypeId get typeId => FFITypeId.integer;
+}
+
+class FFIJsonPayload<T> extends FFIBytes {
+  final T data;
+  FFIJsonPayload(this.data) : super(msg_parkr.serialize(data));
+
+  @override
+  FFITypeId get typeId => FFITypeId.json_payload;
 }
 
 class FFIDouble implements FFIConvertible {
@@ -146,12 +160,5 @@ extension MessagePackrExtensionForListInt on List<int> {
   dynamic unpack() {
     final bytes = Uint8List.fromList(this);
     return msg_parkr.deserialize(bytes);
-  }
-}
-
-extension MessagePackrExtensionForObject<T> on T {
-  FFIBytes pack() {
-    final bytes = msg_parkr.serialize(this);
-    return FFIBytes(bytes);
   }
 }

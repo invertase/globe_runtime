@@ -88,9 +88,9 @@ void main() {
     });
 
     test('should decode object', () async {
-      final mapDataAsArg = mapData.pack();
-      final result = await callJsFunction('json_decode', args: [mapDataAsArg])
-          .then((data) => data.unpack());
+      final result =
+          await callJsFunction('json_decode', args: [mapData.toFFIType])
+              .then((data) => data.unpack());
 
       expect(
         result,
@@ -153,5 +153,17 @@ void main() {
         'body',
       ]),
     );
+  });
+
+  test('should catch errors from Javascript', () async {
+    try {
+      runtime.callFunction(
+        moduleName,
+        function: 'throw_error',
+        onData: (data) => true,
+      );
+    } catch (e) {
+      expect(e, isA<StateError>());
+    }
   });
 }

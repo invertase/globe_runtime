@@ -3,7 +3,6 @@ import {
   DartJSService,
   RpcResponse,
   SendValueRequest,
-  JsonPayload,
 } from "./dart_runtime_entry.ts";
 import * as msgPackr from "ext:js_msg_packr/index.js";
 

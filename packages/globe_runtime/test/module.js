@@ -18,11 +18,8 @@ const sdk = {
         })
       );
     },
-    json_decode: function (_, encoded, DartCallbackId) {
-      const data = JsonPayload.decode(encoded);
-
-      const mapKeys = Object.keys(data);
-
+    json_decode: function (_, jsonData, DartCallbackId) {
+      const mapKeys = Object.keys(jsonData);
       Dart.send_value(DartCallbackId, JsonPayload.encode(mapKeys));
     },
     say_hello: function (_, name, DartCallbackId) {
@@ -59,6 +56,9 @@ const sdk = {
       } catch (err) {
         Dart.send_error(DartCallbackId, `Fetch failed: ${err.message}`);
       }
+    },
+    throw_error: function (_, DartCallbackId) {
+      throw new Error("This is a simulated error");
     },
   },
 };
