@@ -1,0 +1,22 @@
+{
+  "name": "pretty_node",
+  "version": "1.0.0",
+  "description": "",
+  "type": "module",
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "pretty-bytes": "^7.0.0",
+    "pretty-error": "^4.0.0",
+    "pretty-ms": "^9.2.0",
+    "random-questions": "^1.0.1"
+  },
+  "devDependencies": {
+    "@globe/runtime_types": "https://gitpkg.now.sh/invertase/globe_runtime/packages/globe_runtime_ts?main",
+    "fs": "^0.0.1-security",
+    "path": "^0.12.7",
+    "tsup": "^8.3.6",
+    "typescript": "^5.8.3"
+  }
+}
