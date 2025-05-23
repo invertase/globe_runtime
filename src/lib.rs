@@ -241,11 +241,11 @@ pub unsafe extern "C" fn call_js_function(
 
                 // Wait for module execution
                 if let Err(e) = javascript_runtime.run_event_loop(Default::default()).await {
-                    return Err(format!("Error running event loop: {}", e));
+                    return Err(e.to_string());
                 }
 
                 if let Err(e) = fnc_call.await {
-                    return Err(format!("Error running function: {}", e));
+                    return Err(e.to_string());
                 }
 
                 Ok(())

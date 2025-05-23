@@ -226,6 +226,7 @@ pub enum FFITypeId {
     Double = 3,
     Bool = 4,
     Bytes = 5,
+    JsonPayload = 6,
 }
 
 impl FFITypeId {
@@ -238,6 +239,7 @@ impl FFITypeId {
             3 => Some(FFITypeId::Double),
             4 => Some(FFITypeId::Bool),
             5 => Some(FFITypeId::Bytes),
+            6 => Some(FFITypeId::JsonPayload),
             _ => None,
         }
     }
@@ -287,15 +289,10 @@ pub fn c_args_to_v8_args_global(
                 v8::Boolean::new(scope, bool_value).into()
             }
             Some(FFITypeId::Bytes) => {
-                let byte_array =
-                    unsafe { std::slice::from_raw_parts(arg_ptr as *const u8, size as usize) };
-
-                let v8_array = v8::ArrayBuffer::new_backing_store_from_boxed_slice(
-                    byte_array.to_vec().into_boxed_slice(),
-                );
-                let v8_shared_array = v8_array.make_shared();
-                let v8_buffer = v8::ArrayBuffer::with_backing_store(scope, &v8_shared_array);
-                v8_buffer.into()
+                parse_byte_data(scope, arg_ptr as *const u8, size as usize).into()
+            }
+            Some(FFITypeId::JsonPayload) => {
+                parse_json_payload_bytes(scope, arg_ptr as *const u8, size as usize).into()
             }
             _ => v8::undefined(scope).into(),
         };
@@ -305,6 +302,50 @@ pub fn c_args_to_v8_args_global(
     }
 
     v8_args
+}
+
+fn parse_byte_data<'a>(
+    scope: &mut v8::HandleScope<'a>,
+    arg_ptr: *const u8,
+    size: usize,
+) -> v8::Local<'a, v8::ArrayBuffer> {
+    let byte_array = unsafe { std::slice::from_raw_parts(arg_ptr, size) };
+
+    let v8_array =
+        v8::ArrayBuffer::new_backing_store_from_boxed_slice(byte_array.to_vec().into_boxed_slice());
+    let v8_shared_array = v8_array.make_shared();
+    let v8_buffer = v8::ArrayBuffer::with_backing_store(scope, &v8_shared_array);
+    v8_buffer
+}
+
+fn parse_json_payload_bytes<'a>(
+    scope: &mut v8::HandleScope<'a>,
+    arg_ptr: *const u8,
+    size: usize,
+) -> v8::Local<'a, v8::Value> {
+    let v8_buffer = parse_byte_data(scope, arg_ptr, size);
+
+    // call JsonPayload.decode() from the runtime add pass the v8_buffer as an argument
+    let json_payload = v8::String::new(scope, "JsonPayload").unwrap();
+    let json_payload_value = scope
+        .get_current_context()
+        .global(scope)
+        .get(scope, json_payload.into())
+        .unwrap();
+
+    let decode_function = v8::String::new(scope, "decode").unwrap();
+    let decode_function_value = json_payload_value
+        .to_object(scope)
+        .unwrap()
+        .get(scope, decode_function.into())
+        .unwrap();
+    let decode_function = v8::Local::<v8::Function>::try_from(decode_function_value).unwrap();
+    let args = vec![v8_buffer.into()];
+    let result = decode_function
+        .call(scope, json_payload_value.into(), &args)
+        .unwrap();
+    let result = v8::Local::<v8::Value>::try_from(result).unwrap();
+    result
 }
 
 pub fn c_args_to_v8_args_local<'s>(
@@ -350,15 +391,10 @@ pub fn c_args_to_v8_args_local<'s>(
                 v8::Boolean::new(scope, bool_value).into()
             }
             Some(FFITypeId::Bytes) => {
-                let byte_array =
-                    unsafe { std::slice::from_raw_parts(arg_ptr as *const u8, size as usize) };
-
-                let v8_array = v8::ArrayBuffer::new_backing_store_from_boxed_slice(
-                    byte_array.to_vec().into_boxed_slice(),
-                );
-                let v8_shared_array = v8_array.make_shared();
-                let v8_buffer = v8::ArrayBuffer::with_backing_store(scope, &v8_shared_array);
-                v8_buffer.into()
+                parse_byte_data(scope, arg_ptr as *const u8, size as usize).into()
+            }
+            Some(FFITypeId::JsonPayload) => {
+                parse_json_payload_bytes(scope, arg_ptr as *const u8, size as usize).into()
             }
             _ => v8::undefined(scope).into(),
         };
