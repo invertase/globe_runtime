@@ -34,7 +34,7 @@ extension FFITypeExtension on Object {
         Map() => FFIJsonPayload(this),
         List() => FFIJsonPayload(this),
         Set() => FFIJsonPayload(this),
-        _ => FFIJsonPayload(this as Map),
+        _ => FFIJsonPayload(this),
       };
 }
 
