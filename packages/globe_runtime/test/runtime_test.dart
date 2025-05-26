@@ -42,6 +42,21 @@ void main() {
     expect(runtime.version, isNotNull);
   });
 
+  test('FileModule should add file path as first line in source', () async {
+    expect(module, isA<FileModule>());
+
+    final source = await module.source;
+
+    expect(
+      source,
+      isA<String>().having(
+        (source) => source.split('\n')[0].trim(),
+        'has first line',
+        '// @file: file://${module.filePath}',
+      ),
+    );
+  });
+
   test('should register module', () async {
     await module.register(args: ['Foobar'.toFFIType]);
 

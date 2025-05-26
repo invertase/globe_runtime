@@ -79,8 +79,17 @@ class RemoteModule extends Module {
   @override
   Future<String> get source async {
     try {
-      final response = await http.read(Uri.parse(url));
-      return response;
+      final uri = Uri.parse(url);
+      final response = await http.readBytes(uri);
+
+      // Write to a temp file
+      final tempDir = await Directory.systemTemp.createTemp('remote_module_');
+      final tempFile = File('${tempDir.path}/${uri.pathSegments.last}');
+      await tempFile.writeAsBytes(response);
+
+      // Delegate to FileModule
+      final fileModule = FileModule(name: name, filePath: tempFile.path);
+      return await fileModule.source;
     } on http.ClientException catch (e) {
       throw StateError('Failed to fetch module from URL: $e');
     }
