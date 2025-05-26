@@ -7,8 +7,10 @@ import 'package:test/test.dart';
 import 'package:path/path.dart' as path;
 
 void main() {
-  final modulePath = path.join(Directory.current.path, 'test', 'module.js');
-  const moduleName = 'TestModule';
+  final module = FileModule(
+    name: 'TestModule',
+    filePath: path.join(Directory.current.path, 'test', 'module.js'),
+  );
 
   final runtime = GlobeRuntime.instance;
 
@@ -17,9 +19,8 @@ void main() {
     List<FFIConvertible> args = const [],
   }) async {
     final completer = Completer<List<int>>();
-    runtime.callFunction(
-      moduleName,
-      function: functionName,
+    module.callFunction(
+      functionName,
       args: args,
       onData: (data) {
         if (data.hasError()) {
@@ -42,13 +43,9 @@ void main() {
   });
 
   test('should register module', () async {
-    await runtime.registerModule(
-      moduleName,
-      modulePath,
-      args: ['Foobar'.toFFIType],
-    );
+    await module.register(args: ['Foobar'.toFFIType]);
 
-    expect(runtime.isModuleRegistered(moduleName), isTrue);
+    expect(module.isReady, isTrue);
   });
 
   test('should call function from module', () async {
@@ -124,7 +121,7 @@ void main() {
     final streamController = StreamController<List<int>>();
 
     runtime.callFunction(
-      moduleName,
+      module.name,
       function: 'fetch_url_streamed',
       args: ['https://jsonplaceholder.typicode.com/posts/1'.toFFIType],
       onData: (data) {
@@ -158,7 +155,7 @@ void main() {
   test('should catch errors from Javascript', () async {
     try {
       runtime.callFunction(
-        moduleName,
+        module.name,
         function: 'throw_error',
         onData: (data) => true,
       );

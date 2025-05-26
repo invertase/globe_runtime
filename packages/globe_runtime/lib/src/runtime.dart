@@ -19,6 +19,84 @@ part 'runtime_data.dart';
 /// Return `true` to unregister the callback.
 typedef OnFunctionData = bool Function(DartMessage data);
 
+/// A base class for modules that can be registered with the runtime.
+sealed class Module {
+  final String name;
+  const Module(this.name);
+
+  FutureOr<String> get source;
+
+  GlobeRuntime get _runtime => GlobeRuntime.instance;
+
+  bool get isReady => _runtime.isModuleRegistered(name);
+
+  void callFunction(
+    String function, {
+    List<FFIConvertible?> args = const [],
+    required OnFunctionData onData,
+  }) {
+    return _runtime.callFunction(
+      name,
+      function: function,
+      args: args,
+      onData: onData,
+    );
+  }
+
+  FutureOr<void> register({List<FFIConvertible?> args = const []}) async {
+    if (isReady) return;
+    return _runtime.registerModule(this, args: args);
+  }
+}
+
+// A module that is loaded from a file.
+class FileModule extends Module {
+  final String filePath;
+
+  const FileModule({required String name, required this.filePath})
+      : super(name);
+
+  @override
+  Future<String> get source async {
+    final file = File(filePath);
+    if (!file.existsSync()) {
+      throw StateError('Module file not found: $filePath');
+    }
+    final buffer = StringBuffer();
+    buffer.writeln('// @file: file://$filePath');
+    buffer.write(await file.readAsString());
+
+    return buffer.toString();
+  }
+}
+
+// A module that is loaded from a remote URL.
+class RemoteModule extends Module {
+  final String url;
+
+  const RemoteModule({required String name, required this.url}) : super(name);
+
+  @override
+  Future<String> get source async {
+    try {
+      final response = await http.read(Uri.parse(url));
+      return response;
+    } on http.ClientException catch (e) {
+      throw StateError('Failed to fetch module from URL: $e');
+    }
+  }
+}
+
+// A module that is inlined as a string.
+class InlinedModule extends Module {
+  const InlinedModule({required String name, required this.sourceCode})
+      : super(name);
+  final String sourceCode;
+
+  @override
+  Future<String> get source async => sourceCode;
+}
+
 interface class GlobeRuntime {
   final _$GlobeRuntimeImpl? _instance;
 
@@ -31,15 +109,11 @@ interface class GlobeRuntime {
   }
 
   FutureOr<void> registerModule(
-    String moduleName,
-    String modulePath, {
+    Module module, {
     List<FFIConvertible?> args = const [],
-  }) {
-    return _instance!.registerModule(
-      moduleName,
-      modulePath,
-      args: args,
-    );
+  }) async {
+    final source = await module.source;
+    return _instance!.registerModule(module.name, source, args);
   }
 
   bool isModuleRegistered(String moduleName) {
