@@ -95,12 +95,6 @@ pub unsafe extern "C" fn register_module(
         }
     };
 
-    // log path
-    println!(
-        "Registering module: {} from source: {}",
-        source_code.0, module_name_str
-    );
-
     let runtime_ref = get_runtime_instance();
     let mut javascript_runtime = runtime_ref.borrow_mut();
 
