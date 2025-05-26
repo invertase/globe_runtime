@@ -220,21 +220,20 @@ class _$GlobeRuntimeImpl {
   }
 
   FutureOr<void> registerModule(
-    String moduleName,
-    String modulePath, {
-    List<FFIConvertible?> args = const [],
-  }) async {
-    final fullModulePath = await _resolveModule(modulePath);
+    String name,
+    String source,
+    List<FFIConvertible?> args,
+  ) async {
     final arguments = getTypeArguments(args);
 
-    final moduleNamePtr = moduleName.toNativeUtf8();
-    final modulePathPtr = fullModulePath.toNativeUtf8();
+    final moduleNamePtr = name.toNativeUtf8();
+    final moduleSrcPtr = source.toNativeUtf8();
 
     final Pointer<Pointer<Utf8>> errorPtr = calloc();
 
     if (_registerModuleFn(
           moduleNamePtr,
-          modulePathPtr,
+          moduleSrcPtr,
           errorPtr,
           arguments.argPointers,
           arguments.typeIds,
@@ -244,14 +243,14 @@ class _$GlobeRuntimeImpl {
         0) {
       final Pointer<Utf8> errorMsgPtr = errorPtr.value;
       final errorMgs = errorMsgPtr.address == 0
-          ? "Failed to register `$moduleName` module"
+          ? "Failed to register `$name` module"
           : errorMsgPtr.toDartString();
 
       throw StateError(errorMgs);
     }
 
     malloc.free(moduleNamePtr);
-    malloc.free(modulePathPtr);
+    malloc.free(moduleSrcPtr);
     calloc.free(errorPtr);
   }
 
@@ -260,39 +259,6 @@ class _$GlobeRuntimeImpl {
     final result = _isModuleRegisteredFn(moduleNamePtr);
     malloc.free(moduleNamePtr);
     return result == 0;
-  }
-
-  Future<String> _resolveModule(String modulePath) async {
-    if (!modulePath.startsWith('http')) return modulePath;
-
-    final currentDir = Directory.current.path;
-    final moduleUri = Uri.parse(modulePath);
-    final libraryName = path.basename(moduleUri.path);
-
-    final maybeDevFile = File(path.join(currentDir, 'dist', libraryName));
-    if (maybeDevFile.existsSync()) {
-      final relativeFileName = path.relative(maybeDevFile.path);
-      stdout.writeln('[WARN]: Using local module from $relativeFileName');
-      return maybeDevFile.path;
-    }
-
-    final dir = Directory(path.join(globeRuntimeInstallDirectory, 'modules'));
-    if (!dir.existsSync()) dir.createSync(recursive: true);
-
-    final fileName = path.basename(modulePath);
-    final runtimeFile = File(path.join(dir.path, fileName));
-    if (runtimeFile.existsSync()) return runtimeFile.path;
-
-    try {
-      final response = await http.readBytes(Uri.parse(modulePath));
-      await runtimeFile.create(recursive: true);
-      await runtimeFile.writeAsBytes(response);
-      return runtimeFile.path;
-    } on http.ClientException catch (e) {
-      throw StateError('Failed to download module: $e');
-    } catch (e) {
-      rethrow;
-    }
   }
 }
 

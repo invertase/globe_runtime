@@ -11,8 +11,6 @@ use deno_runtime::deno_core::{self};
 use std::{
     cell::RefCell,
     ffi::{c_char, c_void, CStr, CString},
-    fs,
-    path::PathBuf,
     rc::Rc,
 };
 
@@ -86,19 +84,10 @@ pub unsafe extern "C" fn register_module(
     };
 
     let source_code = match check_and_get_cstr(module_source) {
-        Ok(cstr) => {
-            let path = PathBuf::from(cstr);
-            if path.is_file() {
-                match fs::read_to_string(&path) {
-                    Ok(code) => (path.to_str().unwrap().to_string(), code),
-                    Err(e) => {
-                        set_error(error, &format!("Failed to read JS module from file: {}", e));
-                        return 1;
-                    }
-                }
-            } else {
-                (module_name_str.to_string() + ".js", cstr.to_string())
-            }
+        Ok(source) => {
+            let file_path = extract_filepath_from_source(&source)
+                .unwrap_or_else(|| format!("file://{}{}", module_name_str.to_lowercase(), ".js"));
+            (file_path, source.to_string())
         }
         Err(e) => {
             set_error(error, e);
@@ -110,8 +99,7 @@ pub unsafe extern "C" fn register_module(
     let mut javascript_runtime = runtime_ref.borrow_mut();
 
     let module_object = {
-        let result = javascript_runtime
-            .lazy_load_es_module_with_code(format!("file://{}", source_code.0), source_code.1);
+        let result = javascript_runtime.lazy_load_es_module_with_code(source_code.0, source_code.1);
         if let Err(e) = result {
             set_error(
                 error,
@@ -287,4 +275,13 @@ unsafe fn check_and_get_cstr(ptr: *const c_char) -> Result<&'static str, &'stati
         Ok(val) => Ok(val),
         Err(_) => Err("Invalid UTF-8 in pointer string"),
     }
+}
+
+fn extract_filepath_from_source(source: &str) -> Option<String> {
+    if let Some(first_line) = source.lines().next() {
+        if first_line.trim().starts_with("// @file:") {
+            return Some(first_line.trim()["// @file:".len()..].trim().to_string());
+        }
+    }
+    None
 }
