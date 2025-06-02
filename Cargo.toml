@@ -5,7 +5,7 @@ edition = "2021"
 
 [lib]
 name = "globe_runtime"
-crate-type = ["cdylib"]
+crate-type = ["cdylib", "staticlib"]
 
 [dependencies]
 v8 = "130.0.7"
