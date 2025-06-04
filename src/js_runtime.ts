@@ -134,6 +134,13 @@ Object.defineProperty(globalThis, "AbortController", {
   writable: true,
 });
 
+Object.defineProperty(globalThis, "AbortSignal", {
+  value: abortSignal.AbortSignal,
+  enumerable: false,
+  configurable: true,
+  writable: true,
+});
+
 Object.defineProperty(globalThis, "FileReader", {
   value: fileReader.FileReader,
   enumerable: false,
