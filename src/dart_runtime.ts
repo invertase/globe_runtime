@@ -8,23 +8,6 @@ import * as msgPackr from "ext:js_msg_packr/index.js";
 
 const { core } = Deno;
 
-// Expose the `JsonPayload` interface to the global scope
-Object.defineProperty(globalThis, "JsonPayload", {
-  value: {
-    encode: (value: unknown): Uint8Array | undefined => {
-      if (value === undefined) return undefined;
-      return msgPackr.pack(value);
-    },
-    decode: (value: Uint8Array | undefined): any => {
-      if (value === undefined) return undefined;
-      return msgPackr.unpack(value);
-    },
-  },
-  enumerable: false,
-  writable: true,
-  configurable: true,
-});
-
 function register_js_module(moduleName: string, moduleFunctions) {
   if (globalThis[moduleName]) {
     throw new Error(`Module "${moduleName}" is already registered.`);
@@ -79,5 +62,14 @@ register_js_module("Dart", {
   send_error: (callbackId, error: string) => {
     const message: DartMessage = { error, done: true };
     return _dartJSService.SendValue({ callbackId, message });
+  },
+});
+
+register_js_module("JsonPayload", {
+  encode: (value: unknown): Uint8Array => {
+    return msgPackr.pack(value);
+  },
+  decode: (value: Uint8Array): any => {
+    return msgPackr.unpack(value);
   },
 });

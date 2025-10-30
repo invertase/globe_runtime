@@ -42,7 +42,9 @@ declare global {
   const Dart: DartGlobal;
 
   const JsonPayload: {
+    // Encoding payload using MessagePack
     encode(value: unknown): Uint8Array | undefined;
+    // Decoding payload using MessagePack
     decode(value: Uint8Array): any;
   };
 }
