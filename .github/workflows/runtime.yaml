@@ -34,12 +34,12 @@ jobs:
       matrix:
         platform:
           - os-name: MacOS-x86_64
-            runs-on: macos-15
+            runs-on: macos-15-intel
             target: x86_64-apple-darwin
           
-          - os-name: MacOS-aarch64
-            runs-on: macos-15
-            target: aarch64-apple-darwin
+          # - os-name: MacOS-aarch64
+          #   runs-on: macos-15
+          #   target: aarch64-apple-darwin
             
           - os-name: Linux-x86_64
             runs-on: ubuntu-22.04
