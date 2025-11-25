@@ -1,0 +1,9 @@
+packages:
+  - 'examples/*'
+  - 'packages/globe_runtime_ts'
+
+catalog:
+  tsup: 8.0.2
+  typescript: 5.8.3
+  fs: 0.0.1-security
+  path: 0.12.7

@@ -1,17 +1,16 @@
 {
-  "name": "pretty_node",
+  "name": "mjml_bridge",
   "version": "1.0.0",
-  "description": "",
-  "type": "module",
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
+  "description": "A bridge to MJML for Dart using globe_runtime",
+  "scripts": {
+    "build": "tsup"
+  },
   "dependencies": {
-    "pretty-bytes": "^7.0.0",
-    "pretty-ms": "^9.2.0"
+    "mjml-browser": "^4.15.3"
   },
   "devDependencies": {
     "@globe/runtime_types": "workspace:*",
+    "@types/mjml-browser": "^4.15.0",
     "fs": "catalog:",
     "path": "catalog:",
     "tsup": "catalog:",

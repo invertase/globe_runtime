@@ -128,9 +128,11 @@ pub unsafe extern "C" fn register_module(
     let module_name = v8::String::new(scope, module_name_str).unwrap();
     let default_object = value.to_object(scope).unwrap();
 
+    // only run init function if it exists
     let init_key = v8::String::new(scope, "init").unwrap();
     let init_fnc_value = default_object.get(scope, init_key.into()).unwrap();
-    let init_function = v8::Local::<v8::Function>::try_from(init_fnc_value).unwrap();
+    let init_function = v8::Local::<v8::Function>::try_from(init_fnc_value)
+        .map_or_else(|_| None, |func| Some(func));
 
     let functions_key = v8::String::new(scope, "functions").unwrap();
     let functions_value = default_object.get(scope, functions_key.into()).unwrap();

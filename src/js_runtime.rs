@@ -408,20 +408,29 @@ pub fn c_args_to_v8_args_local<'s>(
 pub fn register_js_module<'s>(
     scope: &mut v8::HandleScope<'s>,
     module_name: v8::Local<'s, v8::String>,
-    init_function: v8::Local<'s, v8::Function>,
+    init_function: Option<v8::Local<'s, v8::Function>>,
     functions_object: v8::Local<'s, v8::Object>,
     module_init_args: JsFunctionArgs,
 ) -> u8 {
-    let v8_args = c_args_to_v8_args_local(
-        scope,
-        module_init_args.args,
-        module_init_args.type_ids,
-        module_init_args.sizes,
-        module_init_args.count,
-    );
+    let module_state_value = {
+        if init_function.is_some() {
+            let v8_args = c_args_to_v8_args_local(
+                scope,
+                module_init_args.args,
+                module_init_args.type_ids,
+                module_init_args.sizes,
+                module_init_args.count,
+            );
 
-    let receiver = v8::undefined(scope).into();
-    let module_state_value = init_function.call(scope, receiver, &v8_args).unwrap();
+            let receiver = v8::undefined(scope).into();
+            init_function
+                .unwrap()
+                .call(scope, receiver, &v8_args)
+                .unwrap()
+        } else {
+            v8::undefined(scope).into()
+        }
+    };
 
     // Create module object and set the state
     let module_object = v8::Object::new(scope);

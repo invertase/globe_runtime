@@ -2,7 +2,7 @@
   "name": "@globe/runtime_types",
   "version": "1.0.3",
   "description": "Global type declarations for the Dart JS runtime interop",
-  "types": "globe.d.ts",
+  "types": "index.d.ts",
   "sideEffects": false,
   "keywords": [
     "dart",

@@ -3,6 +3,7 @@ javascript
 node_modules
 .dart_tool
 .idea
+dist
 
 **/pubspec_overrides.yaml
 *.iml

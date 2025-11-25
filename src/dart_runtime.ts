@@ -5,10 +5,11 @@ import {
   SendValueRequest,
 } from "./dart_runtime_entry.ts";
 import * as msgPackr from "ext:js_msg_packr/index.js";
-
+ 
 const { core } = Deno;
 
-function register_js_module(moduleName: string, moduleFunctions) {
+
+function register_js_module(moduleName: string, moduleFunctions: Record<string, Function>) {
   if (globalThis[moduleName]) {
     throw new Error(`Module "${moduleName}" is already registered.`);
   }
@@ -46,20 +47,22 @@ class DartJSServiceImpl implements DartJSService {
 
 const _dartJSService = new DartJSServiceImpl();
 
+type DartValue = Uint8Array | undefined; 
+
 register_js_module("Dart", {
-  send_value: (callbackId: number, data: Uint8Array) => {
+  send_value: (callbackId: number, data: DartValue) => {
     const message: DartMessage = { data, done: true };
     return _dartJSService.SendValue({ callbackId, message });
   },
-  stream_value: (callbackId: number, data: Uint8Array) => {
+  stream_value: (callbackId: number, data: DartValue) => {
     const message: DartMessage = { data, done: false };
     return _dartJSService.SendValue({ callbackId, message });
   },
-  stream_value_end: (callbackId: number, data: Uint8Array | undefined) => {
+  stream_value_end: (callbackId: number, data: DartValue) => {
     const message: DartMessage = { data, done: true };
     return _dartJSService.SendValue({ callbackId, message });
   },
-  send_error: (callbackId, error: string) => {
+  send_error: (callbackId:number, error: string) => {
     const message: DartMessage = { error, done: true };
     return _dartJSService.SendValue({ callbackId, message });
   },
@@ -73,3 +76,5 @@ register_js_module("JsonPayload", {
     return msgPackr.unpack(value);
   },
 });
+
+globalThis.window = globalThis;
