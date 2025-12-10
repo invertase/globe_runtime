@@ -41,7 +41,7 @@ ${jsSource}
   splitting: false, // Prevents multiple output files
   treeshake: true, // Removes unused code
   clean: true, // Cleans output directory before build
-  dts: false, // Set to true if you need TypeScript declaration files
+  dts: true, // Set to true if you need TypeScript declaration files
   noExternal: [/.*/], // Include all dependencies in the bundle
   platform: "browser",
 });

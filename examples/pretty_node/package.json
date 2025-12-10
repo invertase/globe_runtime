@@ -6,6 +6,9 @@
   "keywords": [],
   "author": "",
   "license": "ISC",
+  "scripts": {
+    "build": "tsup"
+  },
   "dependencies": {
     "pretty-bytes": "^7.0.0",
     "pretty-ms": "^9.2.0"
