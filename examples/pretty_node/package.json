@@ -12,6 +12,7 @@
   },
   "devDependencies": {
     "@globe/runtime_types": "workspace:*",
+    "@types/node": "^25.0.0",
     "fs": "catalog:",
     "path": "catalog:",
     "tsup": "catalog:",
