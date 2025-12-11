@@ -1,12 +1,14 @@
 name: pretty_node
 version: 1.0.0
 description: A Dart package that uses Node.js modules.
+publish_to: none
 
 environment:
   sdk: ^3.4.0
 
 dependencies:
-  globe_runtime: ^1.0.7
+  globe_runtime:
+    path: ../../packages/globe_runtime
  
 
 dev_dependencies:
