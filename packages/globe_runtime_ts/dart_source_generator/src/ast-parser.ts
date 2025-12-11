@@ -3,8 +3,8 @@
  */
 
 import ts from "typescript";
-import type { ArgType, FuncType, InitArgs, ParseResult } from "./types";
 import { mapTsTypeToDart } from "./type-mapper";
+import type { ArgType, FuncType, ParseResult } from "./types";
 import { toCamelCase } from "./utils";
 
 /**
@@ -78,21 +78,19 @@ export function parseInitArgsAndFunctions({
   }
 
   // Extract InitArgs
-  const initArgs = {
-    args: initArgsType.elements.map((el): ArgType => {
-      let type = el;
-      let name = "arg";
-      if (ts.isNamedTupleMember(el)) {
-        name = el.name.getText();
-        type = el.type;
-      }
-      const resolvedType = resolveTypeAlias(typeAliasMap, type);
-      return {
-        name: toCamelCase(name),
-        type: mapTsTypeToDart(resolvedType, checker, typeAliasMap),
-      };
-    }),
-  };
+  const initArgs = initArgsType.elements.map((el): ArgType => {
+    let type = el;
+    let name = "arg";
+    if (ts.isNamedTupleMember(el)) {
+      name = el.name.getText();
+      type = el.type;
+    }
+    const resolvedType = resolveTypeAlias(typeAliasMap, type);
+    return {
+      name: toCamelCase(name),
+      type: mapTsTypeToDart(resolvedType, checker, typeAliasMap),
+    };
+  });
 
   // Check if Fns is a type literal node
   if (!ts.isTypeLiteralNode(funcsType)) {

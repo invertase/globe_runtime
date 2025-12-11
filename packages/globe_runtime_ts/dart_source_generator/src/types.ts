@@ -37,18 +37,11 @@ export interface FuncType {
 }
 
 /**
- * Represents the initialization arguments for the SDK
- */
-export interface InitArgs {
-  args: ArgType[];
-}
-
-/**
  * Result of parsing a TypeScript declaration file
  */
 export interface ParseResult {
   /** Initialization function arguments */
-  initArgs: InitArgs;
+  initArgs: ArgType[];
   /** Worker functions */
   functions: FuncType[];
 }
