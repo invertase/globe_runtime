@@ -1,0 +1,27 @@
+{
+  "name": "@globe/dart_source_generator",
+  "version": "1.0.0",
+  "description": "Generate Dart source files from TypeScript declarations and JavaScript source for use with the Dart JS runtime interop",
+  "types": "dist/index.d.ts",
+  "main": "dist/index.js",
+  "sideEffects": false,
+  "scripts": {
+    "build": "tsc"
+  },
+  "dependencies": {
+    "typescript": "^5.9.3"
+  },
+  "devDependencies": {
+    "@types/node": "^25.0.0"
+  },
+  "keywords": [
+    "dart",
+    "ffi",
+    "v8",
+    "interop",
+    "globe",
+    "runtime",
+    "code generation"
+  ],
+  "license": "MIT"
+}
