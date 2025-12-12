@@ -30,7 +30,7 @@ export function generateDartClass(
   const dartCode = `
 import 'dart:async';
 import 'dart:convert';
-import 'package:globe_runtime/globe_runtime.dart' as runtime;
+import 'package:globe_runtime/globe_runtime.dart';
 
 const packageVersion = '${packageVersion}';
 const packageSource = r'''
@@ -38,12 +38,12 @@ ${jsSource}
 ''';
 
 class ${className} {
-  final runtime.Module _module;
+  final Module _module;
 
   ${className}._(this._module);
 
   static Future<${className}> create({${createParams}}) async {
-    final module = runtime.InlinedModule(
+    final module = InlinedModule(
       name: '${className}',
       sourceCode: packageSource,
     );
@@ -55,7 +55,7 @@ class ${className} {
   }
 
   void dispose() {
-    runtime.GlobeRuntime.instance.dispose();
+    GlobeRuntime.instance.dispose();
   }
 
   ${generateWorkerFunctions(functions)}
