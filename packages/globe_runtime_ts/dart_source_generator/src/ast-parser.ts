@@ -187,7 +187,9 @@ export function getSdkTypes(
 
   // Check if InitArgs is a tuple type
   if (!ts.isTupleTypeNode(initArgsType)) {
-    throw new Error("InitArgs must be a tuple type");
+    throw new Error(
+      `InitArgs must be a tuple type found: ${initArgsType.getText()}`
+    );
   }
 
   return { initArgsType, funcsType };
