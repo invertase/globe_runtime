@@ -6,13 +6,18 @@
   "main": "dist/index.js",
   "sideEffects": false,
   "scripts": {
-    "build": "tsc"
+    "build": "tsc",
+    "test": "vitest",
+    "test:run": "vitest run",
+    "test:coverage": "vitest run --coverage.enabled --coverage.reporter=lcov --coverage.reporter=text"
   },
   "dependencies": {
     "typescript": "^5.9.3"
   },
   "devDependencies": {
-    "@types/node": "^25.0.0"
+    "@types/node": "^25.0.0",
+    "@vitest/coverage-v8": "^4.0.15",
+    "vitest": "^4.0.15"
   },
   "keywords": [
     "dart",
