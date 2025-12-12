@@ -6,6 +6,18 @@ import ts from "typescript";
 import type { DartType } from "./types.js";
 
 /**
+ * Recursively gets the entity name from a TypeScript entity name
+ * @param name - The TypeScript entity name to get the name from
+ * @returns The entity name as a string
+ */
+function getEntityName(name: ts.EntityName): string {
+  if (ts.isIdentifier(name)) {
+    return name.text;
+  }
+  return `${getEntityName(name.left)}.${name.right.text}`;
+}
+
+/**
  * Maps a TypeScript type node to a Dart type representation
  * @param typeNode - The TypeScript type node to map
  * @param checker - Optional TypeScript type checker for resolving type aliases
@@ -21,10 +33,13 @@ export function mapTsTypeToDart(
 
   // First, try to resolve type aliases using the map
   if (typeAliasMap && ts.isTypeReferenceNode(typeNode)) {
-    const typeName = typeNode.typeName.getText();
-    const resolvedType = typeAliasMap.get(typeName);
-    if (resolvedType) {
-      return mapTsTypeToDart(resolvedType, checker, typeAliasMap);
+    const typeName = getEntityName(typeNode.typeName);
+
+    if (typeName) {
+      const resolvedType = typeAliasMap.get(typeName);
+      if (resolvedType) {
+        return mapTsTypeToDart(resolvedType, checker, typeAliasMap);
+      }
     }
   }
 
@@ -79,6 +94,16 @@ export function mapTsTypeToDart(
       if (nonNullTypes.every((t: any) => t.isStringLiteral())) {
         return { dart: "String", ffi: "FFIString" };
       }
+
+      // Check if all non-null types are boolean-ish (true/false/boolean)
+      if (
+        nonNullTypes.every(
+          (t) =>
+            !!(t.flags & (ts.TypeFlags.Boolean | ts.TypeFlags.BooleanLiteral))
+        )
+      ) {
+        return { dart: "bool", ffi: "FFIBool" };
+      }
     }
 
     // If it's a primitive type alias, get the underlying type
@@ -100,7 +125,10 @@ export function mapTsTypeToDart(
   }
 
   if (ts.isTypeReferenceNode(typeNode)) {
-    if (typeNode.typeName.getText() === "Uint8Array") {
+    if (
+      ts.isIdentifier(typeNode.typeName) &&
+      typeNode.typeName.text === "Uint8Array"
+    ) {
       return { dart: "Uint8List", ffi: "FFIBytes" };
     }
   }
@@ -109,18 +137,38 @@ export function mapTsTypeToDart(
     case ts.SyntaxKind.StringKeyword:
     case ts.SyntaxKind.StringLiteral:
       return { dart: "String", ffi: "FFIString" };
+    case ts.SyntaxKind.LiteralType:
+      const literal = (typeNode as ts.LiteralTypeNode).literal;
+      if (literal.kind === ts.SyntaxKind.StringLiteral) {
+        return { dart: "String", ffi: "FFIString" };
+      }
+      if (literal.kind === ts.SyntaxKind.NumericLiteral) {
+        return { dart: "num", ffi: "FFINumber" };
+      }
+      if (
+        literal.kind === ts.SyntaxKind.TrueKeyword ||
+        literal.kind === ts.SyntaxKind.FalseKeyword
+      ) {
+        return { dart: "bool", ffi: "FFIBool" };
+      }
+      return { dart: "dynamic", ffi: "FFIJsonPayload" };
     case ts.SyntaxKind.NumberKeyword:
       return { dart: "num", ffi: "FFINumber" };
     case ts.SyntaxKind.BooleanKeyword:
+    case ts.SyntaxKind.TrueKeyword:
+    case ts.SyntaxKind.FalseKeyword:
       return { dart: "bool", ffi: "FFIBool" };
     case ts.SyntaxKind.UnionType:
       const union = typeNode as ts.UnionTypeNode;
-      // Filter out undefined and null
       const types = union.types.filter(
         (t) =>
           t.kind !== ts.SyntaxKind.UndefinedKeyword &&
           t.kind !== ts.SyntaxKind.NullKeyword &&
-          t.kind !== ts.SyntaxKind.VoidKeyword
+          t.kind !== ts.SyntaxKind.VoidKeyword &&
+          !(
+            ts.isLiteralTypeNode(t) &&
+            t.literal.kind === ts.SyntaxKind.NullKeyword
+          )
       );
 
       // If only one type remains after filtering, recursively resolve and map it
