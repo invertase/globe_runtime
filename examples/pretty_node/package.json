@@ -7,7 +7,7 @@
   "author": "",
   "license": "ISC",
   "scripts": {
-    "build": "tsup"
+    "generate": "npx @globe/dart_source_generator --input ./lib --output ./lib"
   },
   "dependencies": {
     "pretty-bytes": "^7.0.0",
@@ -19,7 +19,6 @@
     "@types/node": "^25.0.0",
     "fs": "catalog:",
     "path": "catalog:",
-    "tsup": "catalog:",
     "typescript": "catalog:"
   }
 }
