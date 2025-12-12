@@ -6,6 +6,9 @@ settings:
 
 catalogs:
   default:
+    '@types/node':
+      specifier: 25.0.3
+      version: 25.0.3
     fs:
       specifier: 0.0.1-security
       version: 0.0.1-security
@@ -62,14 +65,8 @@ importers:
         specifier: workspace:*
         version: link:../../packages/globe_runtime_ts/runtime_types
       '@types/node':
-        specifier: ^25.0.0
+        specifier: 'catalog:'
         version: 25.0.3
-      fs:
-        specifier: 'catalog:'
-        version: 0.0.1-security
-      path:
-        specifier: 'catalog:'
-        version: 0.12.7
       typescript:
         specifier: 'catalog:'
         version: 5.9.3

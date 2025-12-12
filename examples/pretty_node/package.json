@@ -16,9 +16,7 @@
   "devDependencies": {
     "@globe/runtime_types": "workspace:*",
     "@globe/dart_source_generator": "workspace:*",
-    "@types/node": "^25.0.0",
-    "fs": "catalog:",
-    "path": "catalog:",
+    "@types/node": "catalog:",
     "typescript": "catalog:"
   }
 }

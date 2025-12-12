@@ -7,3 +7,4 @@ catalog:
   typescript: 5.9.3
   fs: 0.0.1-security
   path: 0.12.7
+  "@types/node": 25.0.3
