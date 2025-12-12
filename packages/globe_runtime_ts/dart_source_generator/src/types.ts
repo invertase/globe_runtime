@@ -57,7 +57,7 @@ export interface GenerateDartSourceOptions {
   /** Path where the generated Dart file should be written */
   outputPath: string;
   /** Package name (e.g., "pretty_node") */
-  packageName: string;
+  fileName: string;
   /** Package version */
-  packageVersion: string;
+  version?: string;
 }

@@ -6,20 +6,27 @@ import type { ArgType, FuncType } from "./types";
 
 /**
  * Generates a complete Dart class from parsed function definitions
- * @param className - Name of the Dart class to generate
- * @param packageVersion - Version string for the package
- * @param jsSource - JavaScript source code to embed
- * @param initArgs - Initialization function arguments
- * @param functions - Worker functions
+ * @param params - Object containing class name, version, source, init args, and functions
+ * @param params.className - Name of the Dart class to generate
+ * @param params.version - Version string for the package
+ * @param params.jsSource - JavaScript source code to embed
+ * @param params.initArgs - Initialization function arguments
+ * @param params.functions - Worker functions
  * @returns Generated Dart source code
  */
-export function generateDartClass(
-  className: string,
-  packageVersion: string,
-  jsSource: string,
-  initArgs: ArgType[],
-  functions: FuncType[]
-): string {
+export function generateDartClass({
+  className,
+  version,
+  jsSource,
+  initArgs,
+  functions,
+}: {
+  className: string;
+  version: string;
+  jsSource: string;
+  initArgs: ArgType[];
+  functions: FuncType[];
+}): string {
   const createParams = initArgs
     .map((a) => `${a.type.dart}? ${a.name}`)
     .join(", ");
@@ -32,7 +39,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'package:globe_runtime/globe_runtime.dart';
 
-const packageVersion = '${packageVersion}';
+const packageVersion = '${version}';
 const packageSource = r'''
 ${jsSource}
 ''';

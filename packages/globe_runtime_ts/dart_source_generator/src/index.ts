@@ -14,29 +14,38 @@ import { generateDartClass } from "./dart-codegen";
 export function generateDartSourceFile(
   options: GenerateDartSourceOptions
 ): void {
-  const { jsSourcePath, dtsFilePath, outputPath, packageName, packageVersion } =
-    options;
+  const { jsSourcePath, dtsFilePath, outputPath, fileName, version } = options;
 
   // Read the JavaScript source
   const jsSource = readFileSync(jsSourcePath, "utf8");
 
   // Parse the TypeScript declaration file
-  const { initArgs, functions } = parseDeclarationFile(dtsFilePath);
+  const result = parseDeclarationFile(dtsFilePath);
+
+  if (!result) {
+    console.error(
+      "Could not parse SDK definition from declaration file",
+      dtsFilePath
+    );
+    return;
+  }
+
+  const { initArgs, functions } = result;
 
   // Generate the class name from package name
-  const className = packageName
+  const className = fileName
     .split("_")
     .map((s) => s.charAt(0).toUpperCase() + s.slice(1))
     .join("");
 
   // Generate Dart code
-  const dartCode = generateDartClass(
+  const dartCode = generateDartClass({
     className,
-    packageVersion,
+    version: version ?? "0.0.0",
     jsSource,
     initArgs,
-    functions
-  );
+    functions,
+  });
 
   // Write the Dart file
   writeFileSync(outputPath, dartCode);

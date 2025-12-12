@@ -12,7 +12,7 @@ import { toCamelCase } from "./utils";
  * @param dtsFilePath - Path to the .d.ts file
  * @returns Parsed init arguments and functions
  */
-export function parseDeclarationFile(dtsFilePath: string): ParseResult {
+export function parseDeclarationFile(dtsFilePath: string): ParseResult | null {
   const program = ts.createProgram([dtsFilePath], {});
   const sourceFile = program.getSourceFile(dtsFilePath);
   const checker = program.getTypeChecker();
@@ -23,13 +23,24 @@ export function parseDeclarationFile(dtsFilePath: string): ParseResult {
 
   // Build a map of type aliases for direct resolution
   const typeAliasMap = parseTypeAliasMap(sourceFile);
+  try {
+    // Get SDK types
+    const { initArgsType, funcsType } = getSdkTypes(sourceFile, typeAliasMap);
 
-  return parseInitArgsAndFunctions({ sourceFile, typeAliasMap, checker });
+    // Parse SDK types
+    return parseSdkTypes({ initArgsType, typeAliasMap, checker, funcsType });
+  } catch (error) {
+    console.error(error);
+    return null;
+  }
 }
 
 /**
  * Parses a TypeScript declaration file to extract init function arguments and worker functions
- * @param sourceFile - Source file to parse
+ * @param params - Object containing source file, type alias map, and checker
+ * @param params.sourceFile - Source file to parse
+ * @param params.typeAliasMap - Map of type aliases
+ * @param params.checker - TypeScript type checker
  * @returns Parsed init arguments and functions
  */
 export function parseInitArgsAndFunctions({
@@ -41,47 +52,33 @@ export function parseInitArgsAndFunctions({
   typeAliasMap: Map<string, ts.TypeNode>;
   checker: ts.TypeChecker;
 }): ParseResult {
-  // Get the variable statement in the source file,
-  // only one expected exported as _default
-  const variableStatement = sourceFile.statements.find((stmt) =>
-    ts.isVariableStatement(stmt)
-  ) as ts.VariableStatement;
+  // Get SDK types
+  const { initArgsType, funcsType } = getSdkTypes(sourceFile, typeAliasMap);
 
-  if (!variableStatement) {
-    throw new Error("Could not find SDK definition in declaration file");
-  }
+  // Parse SDK types
+  return parseSdkTypes({ initArgsType, typeAliasMap, checker, funcsType });
+}
 
-  const decl = variableStatement.declarationList.declarations[0];
-  // Check if it's the _default constraint
-  if (decl.name.getText() !== "_default") {
-    throw new Error("Could not find default export in declaration file");
-  }
-
-  // Check if it's the Sdk type (i.e. Sdk<...>)
-  if (!decl.type || !ts.isTypeReferenceNode(decl.type)) {
-    throw new Error("Could not find Sdk type in declaration file");
-  }
-
-  // Check if it has 3 type arguments (i.e. Sdk<InitArgs, State, Fns>)
-  if ((decl.type.typeArguments?.length ?? 0) < 3) {
-    throw new Error(
-      "Sdk type must have 3 type arguments. expected Sdk<InitArgs, State, Fns>"
-    );
-  }
-
-  // Get type arguments
-  let [initArgsType, _stateType, funcsType] = decl.type.typeArguments!;
-
-  // Resolve type aliases, if present
-  initArgsType = resolveTypeAlias(typeAliasMap, initArgsType);
-  funcsType = resolveTypeAlias(typeAliasMap, funcsType);
-
-  // Check if InitArgs is a tuple type
-  if (!ts.isTupleTypeNode(initArgsType)) {
-    throw new Error("InitArgs must be a tuple type");
-  }
-
-  // Extract InitArgs
+/**
+ * Parses a TypeScript declaration file to extract init function arguments and worker functions
+ * @param params - Object containing init arguments type, type alias map, checker, and functions type
+ * @param params.initArgsType - Init arguments type
+ * @param params.typeAliasMap - Map of type aliases
+ * @param params.checker - TypeScript type checker
+ * @param params.funcsType - Functions type
+ * @returns Parsed init arguments and functions
+ */
+function parseSdkTypes({
+  initArgsType,
+  typeAliasMap,
+  checker,
+  funcsType,
+}: {
+  initArgsType: ts.TupleTypeNode;
+  typeAliasMap: Map<string, ts.TypeNode>;
+  checker: ts.TypeChecker;
+  funcsType: ts.TypeNode;
+}) {
   const initArgs = initArgsType.elements.map((el): ArgType => {
     let type = el;
     let name = "arg";
@@ -142,6 +139,74 @@ export function parseInitArgsAndFunctions({
   }
 
   return { initArgs, functions };
+}
+
+/**
+ * Gets the SDK declaration from the source file
+ * @param sourceFile - Source file to parse
+ * @returns SDK declaration
+ */
+export function getSdkTypes(
+  sourceFile: ts.SourceFile,
+  typeAliasMap: Map<string, ts.TypeNode> = new Map()
+): { initArgsType: ts.TupleTypeNode; funcsType: ts.TypeNode } {
+  // Get the variable statement in the source file,
+  // only one expected exported as _default
+  const variableStatement = sourceFile.statements.find((stmt) =>
+    ts.isVariableStatement(stmt)
+  ) as ts.VariableStatement;
+
+  if (!variableStatement) {
+    throw new Error("Could not find SDK definition in declaration file");
+  }
+
+  const decl = variableStatement.declarationList.declarations[0];
+  // Check if it's the _default constraint
+  if (decl.name.getText() !== "_default") {
+    throw new Error("Could not find default export in declaration file");
+  }
+
+  // Check if it's the Sdk type (i.e. Sdk<...>)
+  if (!decl.type || !ts.isTypeReferenceNode(decl.type)) {
+    throw new Error("Could not find Sdk type in declaration file");
+  }
+
+  // Check if it has 3 type arguments (i.e. Sdk<InitArgs, State, Fns>)
+  if ((decl.type.typeArguments?.length ?? 0) < 3) {
+    throw new Error(
+      "Sdk type must have 3 type arguments. expected Sdk<InitArgs, State, Fns>"
+    );
+  }
+
+  // Get type arguments
+  let [initArgsType, _stateType, funcsType] = decl!.type.typeArguments!;
+
+  // Resolve type aliases, if present
+  initArgsType = resolveTypeAlias(typeAliasMap, initArgsType);
+  funcsType = resolveTypeAlias(typeAliasMap, funcsType);
+
+  // Check if InitArgs is a tuple type
+  if (!ts.isTupleTypeNode(initArgsType)) {
+    throw new Error("InitArgs must be a tuple type");
+  }
+
+  return { initArgsType, funcsType };
+}
+
+/**
+ * Determine if a file has an SDK declaration
+ * @param sourceFile - Source file to parse
+ * @returns true if the file has an SDK declaration
+ */
+export function hasSdkDeclaration(sourceFile: ts.SourceFile) {
+  try {
+    // Build a map of type aliases for direct resolution
+    const typeAliasMap = parseTypeAliasMap(sourceFile);
+    getSdkTypes(sourceFile, typeAliasMap);
+    return true;
+  } catch (e) {
+    return false;
+  }
 }
 
 /**
