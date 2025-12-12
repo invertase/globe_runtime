@@ -10,13 +10,13 @@ describe("dart-codegen", () => {
     const className = "MySdk";
     const version = "1.0.0";
 
-    const result = generateDartClass(
+    const result = generateDartClass({
       className,
       version,
       jsSource,
       initArgs,
-      functions
-    );
+      functions,
+    });
 
     expect(result).toContain("class MySdk {");
     expect(result).toContain("const packageVersion = '1.0.0';");
@@ -40,13 +40,13 @@ describe("dart-codegen", () => {
     const className = "TestSdk";
     const version = "0.0.1";
 
-    const result = generateDartClass(
+    const result = generateDartClass({
       className,
       version,
       jsSource,
       initArgs,
-      functions
-    );
+      functions,
+    });
 
     // Check init args usage
     expect(result).toContain("String? apiKey");
