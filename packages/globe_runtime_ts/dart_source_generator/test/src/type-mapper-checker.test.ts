@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { mapTsTypeToDart } from "../src/type-mapper";
+import { mapTsTypeToDart } from "../../src/type-mapper";
 import ts from "typescript";
 
 // Helper to fully mock the environment for type-mapper with checker

@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
-import { generateDartClass } from "../src/dart-codegen";
-import { ArgType, FuncType } from "../src/types";
+import { generateDartClass } from "../../src/dart-codegen";
+import { ArgType, FuncType } from "../../src/types";
 
 describe("dart-codegen", () => {
   it("should generate a simple class", () => {

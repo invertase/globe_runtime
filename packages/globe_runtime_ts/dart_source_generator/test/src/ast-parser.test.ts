@@ -4,7 +4,7 @@ import {
   hasSdkDeclaration,
   parseDeclarationFile,
   parseTypeAliasMap,
-} from "../src/ast-parser";
+} from "../../src/ast-parser";
 import ts from "typescript";
 import fs from "fs";
 import path from "path";
