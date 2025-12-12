@@ -120,14 +120,23 @@ export interface SdkDefinition<
  * The resolved SDK type after calling defineSdk().
  */
 export type Sdk<
-  InitArgs extends any[],
+  InitArgs extends readonly unknown[],
   State,
   Fns extends Record<string, any>
-> = SdkDefinition<InitArgs, State, Fns>;
+> = {
+  init: (...args: InitArgs) => State;
+  functions: Fns;
+
+  /**
+   * Expose the tuple for consumers
+   */
+  readonly initArgs: InitArgs;
+};
 
 // ======================================================
 //  defineSdk Helper
 // ======================================================
+type NoInfer<T> = [T][T extends any ? 0 : never];
 
 /**
  * Typed SDK creator.
@@ -147,13 +156,13 @@ export type Sdk<
  * All worker functions MUST return void | Promise<void>.
  */
 export declare function defineSdk<
-  InitArgs extends any[],
-  State,
-  Fns extends Record<string, any>
->(
-  def: SdkDefinition<InitArgs, State, Fns> & {
-    functions: ValidateFns<Fns, NoInfer<State>>;
-  }
-): Sdk<InitArgs, State, Fns>;
+  InitFn extends (...args: any) => any,
+  Fns extends Record<string, any>,
+  State = ReturnType<InitFn>,
+  InitArgs extends readonly unknown[] = Parameters<InitFn>
+>(def: {
+  init: InitFn;
+  functions: ValidateFns<Fns, NoInfer<State>>;
+}): Sdk<InitArgs, State, Fns>;
 
 export {};
