@@ -43,9 +43,9 @@ export function parseInitArgsAndFunctions({
 }): ParseResult {
   // Get the variable statement in the source file,
   // only one expected exported as _default
-  const variableStatement = sourceFile
-    .getChildren()
-    .find((stmt) => ts.isVariableStatement(stmt)) as ts.VariableStatement;
+  const variableStatement = sourceFile.statements.find((stmt) =>
+    ts.isVariableStatement(stmt)
+  ) as ts.VariableStatement;
 
   if (!variableStatement) {
     throw new Error("Could not find SDK definition in declaration file");
@@ -70,7 +70,11 @@ export function parseInitArgsAndFunctions({
   }
 
   // Get type arguments
-  const [initArgsType, _stateType, funcsType] = decl.type.typeArguments!;
+  let [initArgsType, _stateType, funcsType] = decl.type.typeArguments!;
+
+  // Resolve type aliases, if present
+  initArgsType = resolveTypeAlias(typeAliasMap, initArgsType);
+  funcsType = resolveTypeAlias(typeAliasMap, funcsType);
 
   // Check if InitArgs is a tuple type
   if (!ts.isTupleTypeNode(initArgsType)) {
