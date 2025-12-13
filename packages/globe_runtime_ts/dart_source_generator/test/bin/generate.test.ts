@@ -37,7 +37,6 @@ export const _default: Sdk<InitArgs, State, Functions> = {
 
   afterAll(async () => {
     await rm(TEST_DIR, { recursive: true, force: true });
-    // Keep output dir for potential inspection or clean it up
     await rm(OUTPUT_DIR, { recursive: true, force: true });
   });
 
@@ -47,14 +46,6 @@ export const _default: Sdk<InitArgs, State, Functions> = {
       TEST_DIR,
       "valid.ts"
     )} --output ${OUTPUT_DIR}`;
-
-    // NOTE: This test assumes @globe/runtime and other deps are resolvable or mocked if needed.
-    // However, the bundler uses 'noExternal: [/.*/]', so it tries to bundle everything.
-    // Since we are running in the repo, it might fail if deps aren't actually installed/resolvable.
-    // tsdown might complain if it can't resolve imports.
-    // For this test to work robustly, we might need to mock or ensure resolvable.
-    // Since @globe/runtime might not be a real package in this context or is linked...
-    // Let's rely on 'tsdown' behavior. If it fails to resolve, it typically warns or errors.
 
     try {
       await execAsync(cmd);
