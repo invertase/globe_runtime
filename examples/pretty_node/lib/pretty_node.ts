@@ -1,6 +1,6 @@
+import { defineSdk, returnString } from "@globe/runtime_types";
 import pretty_bytes from "pretty-bytes";
 import pretty_ms from "pretty-ms";
-import { defineSdk } from "@globe/runtime_types";
 
 type Language = "en" | "fr" | "es";
 
@@ -9,21 +9,21 @@ type ModuleState = {
   verbose: boolean;
 };
 
-const make_pretty_bytes = <T = string>(
-  state: ModuleState,
-  value: number,
-  callbackId: number
-) => {
-  const byte_str = pretty_bytes(value, { locale: state.language });
-  const result = new TextEncoder().encode(byte_str);
-  Dart.send_value(callbackId, result);
-};
+// Single-value function - returns DartReturn<string>
+const make_pretty_bytes = returnString(
+  (state: ModuleState, value: number, callbackId: number) => {
+    const str = pretty_bytes(value, { locale: state.language });
+    Dart.send_value(callbackId, new TextEncoder().encode(str));
+  }
+);
 
-const make_pretty_ms = <T = string>(state: ModuleState, value: number, callbackId: number) => {
-  const byte_str = pretty_ms(value, { verbose: state.verbose });
-  const result = new TextEncoder().encode(byte_str);
-  Dart.send_value(callbackId, result);
-};
+// Single-value function - returns DartReturn<string>
+const make_pretty_ms = returnString(
+  (state: ModuleState, value: number, callbackId: number) => {
+    const str = pretty_ms(value, { verbose: state.verbose });
+    Dart.send_value(callbackId, new TextEncoder().encode(str));
+  }
+);
 
 export default defineSdk({
   init(language: Language = "en", verbose: boolean = false): ModuleState {
