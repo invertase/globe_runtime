@@ -40,7 +40,7 @@ async function run() {
 
   if (values.help) {
     console.log(`
-Usage: globe-dart-source-generator [generate] [options]
+Usage: npx @globe/dart_source_generator [generate] [options]
 
 Options:
   --files <file>     List of input files (can be repeated)
