@@ -79,60 +79,68 @@ Options:
       const name = basename(file).replace(/\.[t,j]s$/, "");
       console.log("Processing file:", file, "Name:", name);
 
-      const config = defineConfig({
-        entry: { [name]: file },
-        outDir: tempDir,
-        format: ["esm"],
-        minify: true,
-        sourcemap: false,
-        unbundle: false,
-        treeshake: true,
-        clean: true,
-        dts: true,
-        noExternal: [/.*/],
-        platform: "browser",
-        onSuccess: async () => {
-          const outputFolder = resolve(values.output!);
-          const { readdir } = await import("fs/promises");
-          const files = await readdir(tempDir);
-          const filesSet = new Set(files);
+      await new Promise<void>(async (resolveGenerate) => {
+        const config = defineConfig({
+          entry: { [name]: file },
+          outDir: tempDir,
+          format: ["esm"],
+          minify: true,
+          sourcemap: false,
+          unbundle: false,
+          treeshake: true,
+          clean: true,
+          dts: true,
+          noExternal: [/.*/],
+          platform: "browser",
+          onSuccess: async () => {
+            const outputFolder = resolve(values.output!);
+            const { readdir } = await import("fs/promises");
+            const files = await readdir(tempDir);
+            const filesSet = new Set(files);
 
-          let sourceFile = join(tempDir, `${name}.mjs`);
-          let dtsFile = join(tempDir, `${name}.d.mts`);
+            let sourceFile = join(tempDir, `${name}.mjs`);
+            let dtsFile = join(tempDir, `${name}.d.mts`);
 
-          if (!filesSet.has(`${name}.mjs`) && filesSet.has(`${name}.js`)) {
-            sourceFile = join(tempDir, `${name}.js`);
-          }
+            if (!filesSet.has(`${name}.mjs`) && filesSet.has(`${name}.js`)) {
+              sourceFile = join(tempDir, `${name}.js`);
+            }
 
-          if (!filesSet.has(`${name}.d.mts`) && filesSet.has(`${name}.d.ts`)) {
-            dtsFile = join(tempDir, `${name}.d.ts`);
-          }
+            if (
+              !filesSet.has(`${name}.d.mts`) &&
+              filesSet.has(`${name}.d.ts`)
+            ) {
+              dtsFile = join(tempDir, `${name}.d.ts`);
+            }
 
-          const outputPath = join(outputFolder, `${name}_source.dart`);
+            const outputPath = join(outputFolder, `${name}_source.dart`);
 
-          try {
-            generateDartSourceFile({
-              jsSourcePath: sourceFile,
-              dtsFilePath: dtsFile,
-              outputPath: outputPath,
-              fileName: name,
-              version: version,
-            });
-            console.log(`Generated: ${outputPath}`);
-            // Run dart format on the generated file
-            execSync(`dart format ${outputPath}`);
-          } catch (e) {
-            console.error(`Failed to generate Dart source for ${name}:`, e);
-          }
-        },
+            try {
+              generateDartSourceFile({
+                jsSourcePath: sourceFile,
+                dtsFilePath: dtsFile,
+                outputPath: outputPath,
+                fileName: name,
+                version: version,
+              });
+
+              // Run dart format on the generated file
+              execSync(`dart format ${outputPath}`);
+
+              // Resolve the promise
+              resolveGenerate();
+            } catch (e) {
+              console.error(`Failed to generate Dart source for ${name}:`, e);
+            }
+          },
+        });
+
+        await build(config);
       });
-
-      await build(config);
     }
   } finally {
     // Cleanup
-    console.log("Temp dir:", tempDir);
-    // await rm(tempDir, { recursive: true, force: true });
+    console.log("Cleaning up temp dir:", tempDir);
+    await rm(tempDir, { recursive: true, force: true });
   }
 }
 

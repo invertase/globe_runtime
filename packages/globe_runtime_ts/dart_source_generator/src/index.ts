@@ -6,6 +6,7 @@ import { readFileSync, writeFileSync } from "fs";
 import type { GenerateDartSourceOptions } from "./types";
 import { parseDeclarationFile } from "./ast-parser";
 import { generateDartClass } from "./dart-codegen";
+import { execSync } from "child_process";
 
 /**
  * Generates a Dart source file from TypeScript declaration and JavaScript source
@@ -49,7 +50,10 @@ export function generateDartSourceFile(
 
   // Write the Dart file
   writeFileSync(outputPath, dartCode);
-  console.log(`\x1b[34mCLI\x1b[0m Wrote \x1b[32m${outputPath}\x1b[0m`);
+
+  // Run dart format on the Dart file
+  execSync(`dart format ${outputPath}`);
+  console.log(`\x1b[34mCLI\x1b[0m Wrote \x1b[32m${outputPath}\x1b[0m\n`);
 }
 
 // Re-export types for consumers
