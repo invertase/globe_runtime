@@ -36,6 +36,9 @@ export function generateDartClass({
   const createArgs = createParams.length > 0 ? `{${createParams}}` : "";
 
   const dartCode = `
+// GENERATED FILE — DO NOT MODIFY BY HAND
+// This file was generated from @globe/dart_source_generator
+
 import 'dart:async';
 import 'dart:convert';
 import 'package:globe_runtime/globe_runtime.dart';
