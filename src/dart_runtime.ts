@@ -5,11 +5,13 @@ import {
   SendValueRequest,
 } from "./dart_runtime_entry.ts";
 import * as msgPackr from "ext:js_msg_packr/index.js";
- 
+
 const { core } = Deno;
 
-
-function register_js_module(moduleName: string, moduleFunctions: Record<string, Function>) {
+function register_js_module(
+  moduleName: string,
+  moduleFunctions: Record<string, Function>
+) {
   if (globalThis[moduleName]) {
     throw new Error(`Module "${moduleName}" is already registered.`);
   }
@@ -47,7 +49,7 @@ class DartJSServiceImpl implements DartJSService {
 
 const _dartJSService = new DartJSServiceImpl();
 
-type DartValue = Uint8Array | undefined; 
+type DartValue = Uint8Array | undefined;
 
 register_js_module("Dart", {
   send_value: (callbackId: number, data: DartValue) => {
@@ -62,7 +64,7 @@ register_js_module("Dart", {
     const message: DartMessage = { data, done: true };
     return _dartJSService.SendValue({ callbackId, message });
   },
-  send_error: (callbackId:number, error: string) => {
+  send_error: (callbackId: number, error: string) => {
     const message: DartMessage = { error, done: true };
     return _dartJSService.SendValue({ callbackId, message });
   },
