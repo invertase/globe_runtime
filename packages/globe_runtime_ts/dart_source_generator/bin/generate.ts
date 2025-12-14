@@ -7,6 +7,8 @@ import { build, defineConfig } from "tsdown";
 import { parseArgs } from "util";
 import { version } from "../package.json";
 import { generateDartSourceFile } from "../src/index";
+import { existsSync } from "fs";
+import { execSync } from "child_process";
 
 // Helper to bundle and generate
 async function run() {
@@ -45,7 +47,16 @@ Options:
   const inputFiles: string[] = [];
 
   if (values.files) {
-    inputFiles.push(...values.files);
+    // Filter for .ts and .js files, and ensure they exist.
+    const files = values.files.filter((f) => {
+      const exists = existsSync(f);
+      if (!exists) {
+        console.error(`File does not exist: ${f}`);
+        return false;
+      }
+      return f.endsWith(".ts") || f.endsWith(".js");
+    });
+    inputFiles.push(...files);
   }
 
   if (values.input) {
@@ -63,63 +74,61 @@ Options:
   const tempDir = await mkdtemp(join(tmpdir(), "globe-gen-"));
 
   try {
-    const entry: Record<string, string> = {};
     for (const file of inputFiles) {
       // Use basename without extension as key.
       const name = basename(file).replace(/\.[t,j]s$/, "");
       console.log("Processing file:", file, "Name:", name);
-      entry[name] = file;
-    }
 
-    const config = defineConfig({
-      entry,
-      outDir: tempDir,
-      format: ["esm"],
-      minify: true,
-      sourcemap: false,
-      unbundle: false,
-      treeshake: true,
-      clean: true,
-      dts: true,
-      noExternal: [/.*/],
-      platform: "browser",
-      onSuccess: async () => {
-        const outputFolder = resolve(values.output!);
-        const { readdir } = await import("fs/promises");
-        const files = await readdir(tempDir);
-        const filesSet = new Set(files);
+      const config = defineConfig({
+        entry: { [name]: file },
+        outDir: tempDir,
+        format: ["esm"],
+        minify: true,
+        sourcemap: false,
+        unbundle: false,
+        treeshake: true,
+        clean: true,
+        dts: true,
+        noExternal: [/.*/],
+        platform: "browser",
+        onSuccess: async () => {
+          const outputFolder = resolve(values.output!);
+          const { readdir } = await import("fs/promises");
+          const files = await readdir(tempDir);
+          const filesSet = new Set(files);
 
-        for (const [key] of Object.entries(entry)) {
-          let sourceFile = join(tempDir, `${key}.mjs`);
-          let dtsFile = join(tempDir, `${key}.d.mts`);
+          let sourceFile = join(tempDir, `${name}.mjs`);
+          let dtsFile = join(tempDir, `${name}.d.mts`);
 
-          if (!filesSet.has(`${key}.mjs`) && filesSet.has(`${key}.js`)) {
-            sourceFile = join(tempDir, `${key}.js`);
+          if (!filesSet.has(`${name}.mjs`) && filesSet.has(`${name}.js`)) {
+            sourceFile = join(tempDir, `${name}.js`);
           }
 
-          if (!filesSet.has(`${key}.d.mts`) && filesSet.has(`${key}.d.ts`)) {
-            dtsFile = join(tempDir, `${key}.d.ts`);
+          if (!filesSet.has(`${name}.d.mts`) && filesSet.has(`${name}.d.ts`)) {
+            dtsFile = join(tempDir, `${name}.d.ts`);
           }
 
-          const outputPath = join(outputFolder, `${key}_source.dart`);
+          const outputPath = join(outputFolder, `${name}_source.dart`);
 
           try {
             generateDartSourceFile({
               jsSourcePath: sourceFile,
               dtsFilePath: dtsFile,
               outputPath: outputPath,
-              fileName: key,
+              fileName: name,
               version: version,
             });
             console.log(`Generated: ${outputPath}`);
+            // Run dart format on the generated file
+            execSync(`dart format ${outputPath}`);
           } catch (e) {
-            console.error(`Failed to generate Dart source for ${key}:`, e);
+            console.error(`Failed to generate Dart source for ${name}:`, e);
           }
-        }
-      },
-    });
+        },
+      });
 
-    await build(config);
+      await build(config);
+    }
   } finally {
     // Cleanup
     console.log("Temp dir:", tempDir);
