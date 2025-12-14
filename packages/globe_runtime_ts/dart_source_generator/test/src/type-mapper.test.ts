@@ -23,17 +23,17 @@ describe("type-mapper", () => {
     expect(mapTsTypeToDart(createTypeNode("'hello'")).dart).toBe("String");
   });
 
-  it("should map Uint8Array to Uint8List", () => {
+  it("should map Uint8Array to List<int>", () => {
     // Note: This relies on type reference name matching string "Uint8Array"
     // in the simplified mapper logic.
     expect(mapTsTypeToDart(createTypeNode("Uint8Array")).dart).toBe(
-      "Uint8List"
+      "List<int>"
     );
   });
 
   it("should map unknown/void/dynamic", () => {
     expect(mapTsTypeToDart(createTypeNode("any")).dart).toBe("dynamic");
-    expect(mapTsTypeToDart(createTypeNode("void")).dart).toBe("dynamic");
+    expect(mapTsTypeToDart(createTypeNode("void")).dart).toBe("void");
     // void usually maps to dynamic in the mapper logic unless specific handling
   });
 
@@ -65,6 +65,9 @@ describe("type-mapper", () => {
     aliasMap.set("MyString", createTypeNode("string"));
     aliasMap.set("MyNumber", createTypeNode("number"));
     aliasMap.set("Recursive", createTypeNode("MyString"));
+    aliasMap.set("DartMap", createTypeNode("{ __dartType: 'Map' }"));
+    aliasMap.set("DartSet", createTypeNode("{ __dartType: 'Set' }"));
+    aliasMap.set("DartList", createTypeNode("{ __dartType: 'List' }"));
 
     // Direct alias
     expect(
@@ -75,35 +78,26 @@ describe("type-mapper", () => {
     expect(
       mapTsTypeToDart(createTypeNode("Recursive"), undefined, aliasMap).dart
     ).toBe("String");
+
+    // DartMap alias
+    expect(
+      mapTsTypeToDart(createTypeNode("DartMap"), undefined, aliasMap).dart
+    ).toBe("Map<dynamic, dynamic>");
+
+    // DartSet alias
+    expect(
+      mapTsTypeToDart(createTypeNode("DartSet"), undefined, aliasMap).dart
+    ).toBe("Set<dynamic>");
+
+    // DartList alias
+    expect(
+      mapTsTypeToDart(createTypeNode("DartList"), undefined, aliasMap).dart
+    ).toBe("List<dynamic>");
   });
 
   it("should handle number and boolean literals", () => {
-    // Note: The current implementation might fall back to dynamic for number/bool literals
-    // if they are not explicitly handled in SyntaxKind switch or if they are in unions.
-    // Let's check the code:
-    // switch(typeNode.kind) ... LiteralType ... if string literal -> String.
-    // It doesn't seem to explicitly handle number/bool literals in the switch,
-    // so expected might be dynamic unless I fix/ensure it.
-    // However, usually we want literal 1 -> num, true -> bool.
-    // Let's see what happens.
-    // expect(mapTsTypeToDart(createTypeNode("1")).dart).toBe("num");
-    // expect(mapTsTypeToDart(createTypeNode("true")).dart).toBe("bool");
-
-    // Actually the current code returns dynamic:
-    // case ts.SyntaxKind.LiteralType: ... if string -> String ... return dynamic;
-
-    // I should update the code to handle these if I want them to succeed,
-    // or just assert dynamic for now as per current behavior.
-    // The user asked to "check all return types".
-
-    // Let's just verify current behavior first.
     expect(mapTsTypeToDart(createTypeNode("1")).dart).toBe("num");
-    expect(mapTsTypeToDart(createTypeNode("true")).dart).toBe("bool"); // true/false keywords are SyntaxKind.TrueKeyword/FalseKeyword?
-    // TypeScript `true` is usually SyntaxKind.TrueKeyword (similar to BooleanKeyword logic maybe?)
-    // Wait, let's check SyntaxKind.
-    // BooleanKeyword covers `boolean`.
-    // `true` is TrueKeyword, `false` is FalseKeyword.
-    // The switch has `BooleanKeyword`. It does NOT have True/False keywords.
+    expect(mapTsTypeToDart(createTypeNode("true")).dart).toBe("bool");
   });
 
   it("should handle unhandled literals (BigInt) as dynamic", () => {
