@@ -7,6 +7,7 @@ import type { GenerateDartSourceOptions } from "./types";
 import { parseDeclarationFile } from "./ast-parser";
 import { generateDartClass } from "./dart-codegen";
 import { execSync } from "child_process";
+import path from "path";
 
 /**
  * Generates a Dart source file from TypeScript declaration and JavaScript source
@@ -15,7 +16,14 @@ import { execSync } from "child_process";
 export function generateDartSourceFile(
   options: GenerateDartSourceOptions
 ): void {
-  const { jsSourcePath, dtsFilePath, outputPath, fileName, version } = options;
+  const {
+    jsSourcePath,
+    dtsFilePath,
+    outputPath,
+    fileName,
+    version,
+    outputDir,
+  } = options;
 
   // Read the JavaScript source
   const jsSource = readFileSync(jsSourcePath, "utf8");
@@ -53,7 +61,8 @@ export function generateDartSourceFile(
 
   // Run dart format on the Dart file
   execSync(`dart format ${outputPath}`);
-  console.log(`\x1b[34mCLI\x1b[0m Wrote \x1b[32m${outputPath}\x1b[0m\n`);
+  const relativePath = path.relative(outputDir, outputPath);
+  console.info(`\x1b[34mWrote\x1b[0m \x1b[32m${relativePath}\x1b[0m\n`);
 }
 
 // Re-export types for consumers

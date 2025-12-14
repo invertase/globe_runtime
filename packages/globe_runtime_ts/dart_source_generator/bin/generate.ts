@@ -65,90 +65,98 @@ Options:
 
   if (values.input) {
     const folder = values.input;
-    const files = await glob(`${folder}/*.[t,j]s`);
+    const files = await glob(`${folder}/**/*.[t,j]s`);
     inputFiles.push(...files);
   }
 
   if (inputFiles.length === 0) {
     console.error("No input files provided. Use --files or --input.");
     process.exit(1);
+  } else {
+    console.log("Input files found:", inputFiles);
   }
 
   // Create temp dir
   const tempDir = await mkdtemp(join(tmpdir(), "globe-gen-"));
 
-  try {
-    for (const file of inputFiles) {
-      // Use basename without extension as key.
-      const name = basename(file).replace(/\.[t,j]s$/, "");
-      console.log("Processing file:", file, "Name:", name);
+  // Process each file individually.
+  // This is to ensure every file is bundled with its own dependencies fully.
+  for (const file of inputFiles) {
+    const filePath = resolve(file);
+    console.log("Processing file:", filePath);
+    const outputFolder = resolve(values.output!);
+    console.log("Output folder:", outputFolder);
+    const relativePath = filePath.replace(outputFolder, "").replace(/^\//, "");
+    console.log("Relative path:", relativePath);
 
-      await new Promise<void>(async (resolveGenerate) => {
-        const config = defineConfig({
-          entry: { [name]: file },
-          outDir: tempDir,
-          format: ["esm"],
-          minify: true,
-          sourcemap: false,
-          unbundle: false,
-          treeshake: true,
-          clean: true,
-          dts: true,
-          noExternal: [/.*/],
-          watch: values.watch,
-          platform: "browser",
-          onSuccess: async () => {
-            const outputFolder = resolve(values.output!);
-            const { readdir } = await import("fs/promises");
-            const files = await readdir(tempDir);
-            const filesSet = new Set(files);
+    // Remove ts or js extension
+    const outputName = relativePath.replace(/\.[t,j]s$/, "");
+    // Use basename as key.
+    const name = basename(outputName);
+    console.info(`\x1b[34mProcessing\x1b[0m \x1b[32m${relativePath}\x1b[0m`);
 
-            let sourceFile = join(tempDir, `${name}.mjs`);
-            let dtsFile = join(tempDir, `${name}.d.mts`);
+    await new Promise<void>(async (resolveGenerate) => {
+      const config = defineConfig({
+        entry: { [name]: file },
+        outDir: tempDir,
+        format: ["esm"],
+        minify: true,
+        sourcemap: false,
+        unbundle: false,
+        treeshake: true,
+        clean: true,
+        dts: true,
+        noExternal: [/.*/],
+        watch: values.watch,
+        platform: "browser",
+        onSuccess: async () => {
+          const { readdir } = await import("fs/promises");
+          const files = await readdir(tempDir, { recursive: true });
+          const filesSet = new Set(files);
 
-            if (!filesSet.has(`${name}.mjs`) && filesSet.has(`${name}.js`)) {
-              sourceFile = join(tempDir, `${name}.js`);
-            }
+          let sourceFile = join(tempDir, `${name}.mjs`);
+          let dtsFile = join(tempDir, `${name}.d.mts`);
 
-            if (
-              !filesSet.has(`${name}.d.mts`) &&
-              filesSet.has(`${name}.d.ts`)
-            ) {
-              dtsFile = join(tempDir, `${name}.d.ts`);
-            }
+          if (!filesSet.has(`${name}.mjs`) && filesSet.has(`${name}.js`)) {
+            sourceFile = join(tempDir, `${name}.js`);
+          }
 
-            const outputPath = join(outputFolder, `${name}_source.dart`);
+          if (!filesSet.has(`${name}.d.mts`) && filesSet.has(`${name}.d.ts`)) {
+            dtsFile = join(tempDir, `${name}.d.ts`);
+          }
 
-            try {
-              generateDartSourceFile({
-                jsSourcePath: sourceFile,
-                dtsFilePath: dtsFile,
-                outputPath: outputPath,
-                fileName: name,
-                version: version,
-              });
+          const outputPath = join(outputFolder, `${outputName}_source.dart`);
 
-              // Run dart format on the generated file
-              execSync(`dart format ${outputPath}`);
+          try {
+            generateDartSourceFile({
+              jsSourcePath: sourceFile,
+              dtsFilePath: dtsFile,
+              outputPath: outputPath,
+              fileName: name,
+              version: version,
+              outputDir: outputFolder,
+            });
 
-              // Resolve the promise
-              resolveGenerate();
-            } catch (e) {
-              console.error(`Failed to generate Dart source for ${name}:`, e);
-            }
-          },
-        });
+            // Run dart format on the generated file
+            execSync(`dart format ${outputPath}`);
 
-        await build(config);
+            // Resolve the promise
+            resolveGenerate();
+          } catch (e) {
+            console.error(`Failed to generate Dart source for ${name}:`, e);
+          }
+        },
       });
-    }
-  } finally {
-    // Cleanup
-    console.log("Cleaning up temp dir:", tempDir);
-    await rm(tempDir, { recursive: true, force: true });
+
+      await build(config);
+    });
   }
+
+  // Cleanup
+  await rm(tempDir, { recursive: true, force: true });
 }
 
+// Generate the source files
 run().catch((e) => {
   console.error(e);
   process.exit(1);
