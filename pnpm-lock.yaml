@@ -52,10 +52,10 @@ importers:
   examples/pretty_node:
     dependencies:
       pretty-bytes:
-        specifier: ^7.0.0
+        specifier: ^7.1.0
         version: 7.1.0
       pretty-ms:
-        specifier: ^9.2.0
+        specifier: ^9.3.0
         version: 9.3.0
     devDependencies:
       '@globe/dart_source_generator':
