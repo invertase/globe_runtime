@@ -58,8 +58,6 @@ export interface GenerateDartSourceOptions {
   dtsFilePath: string;
   /** Path where the generated Dart file should be written */
   outputPath: string;
-  /** Path to the output directory */
-  outputDir: string;
   /** Package name (e.g., "pretty_node") */
   fileName: string;
   /** Package version */

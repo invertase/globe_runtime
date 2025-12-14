@@ -1,14 +1,14 @@
 #!/usr/bin/env node
+import { existsSync } from "fs";
 import { mkdtemp, rm } from "fs/promises";
 import { glob } from "glob";
 import { tmpdir } from "os";
-import { basename, join, resolve } from "path";
+import { basename, join, resolve, relative } from "path";
 import { build, defineConfig } from "tsdown";
 import { parseArgs } from "util";
 import { version } from "../package.json";
 import { generateDartSourceFile } from "../src/index";
-import { existsSync } from "fs";
-import { execSync } from "child_process";
+import { Logger, ILogObj } from "tslog";
 
 // Helper to bundle and generate
 async function run() {
@@ -28,6 +28,10 @@ async function run() {
       watch: {
         type: "boolean",
       },
+      verbose: {
+        type: "boolean",
+        default: false,
+      },
       help: {
         type: "boolean",
       },
@@ -43,10 +47,24 @@ Options:
   --input <dir>      Input directory to scan for .ts files
   --output <dir>     Output directory (default: .)
   --watch            Watch for changes and re-run
+  --verbose          Enable verbose logging
   --help             Show this help message
 `);
     process.exit(0);
   }
+
+  // Set up logging
+  const minLevel = values.verbose
+    ? 1 // trace
+    : 3; // info
+  const hideLogPositionForProduction = values.verbose ? false : true;
+
+  const logger: Logger<ILogObj> = new Logger({
+    minLevel,
+    hideLogPositionForProduction,
+    // hide all preceding info if not verbose
+    prettyLogTemplate: values.verbose ? undefined : "",
+  });
 
   const inputFiles: string[] = [];
 
@@ -73,7 +91,7 @@ Options:
     console.error("No input files provided. Use --files or --input.");
     process.exit(1);
   } else {
-    console.log("Input files found:", inputFiles);
+    logger.debug("Input files found:", inputFiles);
   }
 
   // Create temp dir
@@ -83,17 +101,18 @@ Options:
   // This is to ensure every file is bundled with its own dependencies fully.
   for (const file of inputFiles) {
     const filePath = resolve(file);
-    console.log("Processing file:", filePath);
+    logger.debug("Processing file:", filePath);
     const outputFolder = resolve(values.output!);
-    console.log("Output folder:", outputFolder);
+    logger.debug("Output folder:", outputFolder);
     const relativePath = filePath.replace(outputFolder, "").replace(/^\//, "");
-    console.log("Relative path:", relativePath);
+    logger.debug("Relative path:", relativePath);
 
     // Remove ts or js extension
     const outputName = relativePath.replace(/\.[t,j]s$/, "");
     // Use basename as key.
     const name = basename(outputName);
-    console.info(`\x1b[34mProcessing\x1b[0m \x1b[32m${relativePath}\x1b[0m`);
+
+    logger.info(`\x1b[34mProcessing\x1b[0m \x1b[32m${relativePath}\x1b[0m`);
 
     await new Promise<void>(async (resolveGenerate) => {
       const config = defineConfig({
@@ -109,6 +128,7 @@ Options:
         noExternal: [/.*/],
         watch: values.watch,
         platform: "browser",
+        logLevel: values.verbose ? "info" : "warn",
         onSuccess: async () => {
           const { readdir } = await import("fs/promises");
           const files = await readdir(tempDir, { recursive: true });
@@ -134,16 +154,17 @@ Options:
               outputPath: outputPath,
               fileName: name,
               version: version,
-              outputDir: outputFolder,
             });
 
-            // Run dart format on the generated file
-            execSync(`dart format ${outputPath}`);
+            const relativePath = relative(outputFolder, outputPath);
+            logger.info(
+              `\x1b[34mWROTE\x1b[0m \x1b[32m${relativePath}\x1b[0m\n`
+            );
 
             // Resolve the promise
             resolveGenerate();
           } catch (e) {
-            console.error(`Failed to generate Dart source for ${name}:`, e);
+            logger.error(`Failed to generate Dart source for ${name}:`, e);
           }
         },
       });
