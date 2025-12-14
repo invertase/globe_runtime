@@ -34,6 +34,8 @@ export interface FuncType {
   returnType: DartType;
   /** Function arguments */
   args: ArgType[];
+  /** Whether the function returns a stream */
+  isStream?: boolean;
 }
 
 /**

@@ -31,11 +31,48 @@ export function mapTsTypeToDart(
 ): DartType {
   if (!typeNode) return { dart: "dynamic", ffi: "FFIJsonPayload" };
 
+  // Handle array types (string[], number[], etc.)
+  if (ts.isArrayTypeNode(typeNode)) {
+    const elementType = mapTsTypeToDart(
+      typeNode.elementType,
+      checker,
+      typeAliasMap
+    );
+    return {
+      dart: `List<${elementType.dart}>`,
+      ffi: "FFIJsonPayload",
+    };
+  }
+
   // First, try to resolve type aliases using the map
   if (typeAliasMap && ts.isTypeReferenceNode(typeNode)) {
     const typeName = getEntityName(typeNode.typeName);
 
     if (typeName) {
+      // Handle Dart collection marker types
+      if (typeName.includes("DartMap")) {
+        return { dart: "Map<dynamic, dynamic>", ffi: "FFIJsonPayload" };
+      }
+      if (typeName.includes("DartList")) {
+        return { dart: "List<dynamic>", ffi: "FFIJsonPayload" };
+      }
+      if (typeName.includes("DartSet")) {
+        return { dart: "Set<dynamic>", ffi: "FFIJsonPayload" };
+      }
+
+      // Handle Array<T> generic syntax
+      if (typeName === "Array" && typeNode.typeArguments?.length) {
+        const elementType = mapTsTypeToDart(
+          typeNode.typeArguments[0],
+          checker,
+          typeAliasMap
+        );
+        return {
+          dart: `List<${elementType.dart}>`,
+          ffi: "FFIJsonPayload",
+        };
+      }
+
       const resolvedType = typeAliasMap.get(typeName);
       if (resolvedType) {
         return mapTsTypeToDart(resolvedType, checker, typeAliasMap);
@@ -46,6 +83,30 @@ export function mapTsTypeToDart(
   // Resolve type aliases and references using the type checker
   if (checker && ts.isTypeReferenceNode(typeNode)) {
     const type = checker.getTypeAtLocation(typeNode);
+
+    // Check if it's an array type via the type checker
+    const symbol = type.getSymbol();
+    if (symbol?.getName() === "Array") {
+      const typeArgs = (type as ts.TypeReference).typeArguments;
+      if (typeArgs && typeArgs.length > 0) {
+        const elementTypeNode = checker.typeToTypeNode(
+          typeArgs[0],
+          undefined,
+          ts.NodeBuilderFlags.InTypeAlias
+        );
+        if (elementTypeNode) {
+          const elementType = mapTsTypeToDart(
+            elementTypeNode,
+            checker,
+            typeAliasMap
+          );
+          return {
+            dart: `List<${elementType.dart}>`,
+            ffi: "FFIJsonPayload",
+          };
+        }
+      }
+    }
 
     // Handle union types (e.g., Language | undefined)
     if (type.isUnion()) {
@@ -124,12 +185,13 @@ export function mapTsTypeToDart(
     }
   }
 
+  // Handle Uint8Array
   if (ts.isTypeReferenceNode(typeNode)) {
     if (
       ts.isIdentifier(typeNode.typeName) &&
       typeNode.typeName.text === "Uint8Array"
     ) {
-      return { dart: "Uint8List", ffi: "FFIBytes" };
+      return { dart: "List<int>", ffi: "FFIBytes" };
     }
   }
 
@@ -158,6 +220,8 @@ export function mapTsTypeToDart(
     case ts.SyntaxKind.TrueKeyword:
     case ts.SyntaxKind.FalseKeyword:
       return { dart: "bool", ffi: "FFIBool" };
+    case ts.SyntaxKind.VoidKeyword:
+      return { dart: "void", ffi: "Void" };
     case ts.SyntaxKind.UnionType:
       const union = typeNode as ts.UnionTypeNode;
       const types = union.types.filter(

@@ -60,6 +60,94 @@ export function parseInitArgsAndFunctions({
 }
 
 /**
+ * Extracts the type argument from DartReturn<T> or DartStreamReturn<T>
+ * @param returnType - The return type node
+ * @param checker - TypeScript type checker
+ * @param typeAliasMap - Map of type aliases
+ * @returns The extracted return type and whether it's a stream
+ */
+function extractDartReturnType(
+  returnType: ts.TypeNode | undefined,
+  checker: ts.TypeChecker,
+  typeAliasMap: Map<string, ts.TypeNode>
+): { type: { dart: string; ffi: string }; isStream: boolean } {
+  if (!returnType) {
+    return { type: { dart: "void", ffi: "Void" }, isStream: false };
+  }
+
+  // Check if it's a type reference (e.g., DartReturn<T> or DartStreamReturn<T>)
+  if (ts.isTypeReferenceNode(returnType)) {
+    const typeName = returnType.typeName.getText();
+
+    // Handle namespaced types like _globe_runtime_types0.DartReturn
+    if (typeName.includes("DartReturn") && returnType.typeArguments?.length) {
+      const typeArg = returnType.typeArguments[0];
+      return {
+        type: mapDartCollectionType(typeArg, checker, typeAliasMap),
+        isStream: false,
+      };
+    }
+
+    if (
+      typeName.includes("DartStreamReturn") &&
+      returnType.typeArguments?.length
+    ) {
+      const typeArg = returnType.typeArguments[0];
+      return {
+        type: mapDartCollectionType(typeArg, checker, typeAliasMap),
+        isStream: true,
+      };
+    }
+  }
+
+  // Check for plain void return
+  if (returnType.kind === ts.SyntaxKind.VoidKeyword) {
+    return { type: { dart: "void", ffi: "Void" }, isStream: false };
+  }
+
+  // If we get here, it's likely an unwrapped type - map it directly
+  return {
+    type: mapDartCollectionType(returnType, checker, typeAliasMap),
+    isStream: false,
+  };
+}
+
+/**
+ * Maps Dart collection marker types (DartMap, DartList, DartSet) to their Dart equivalents
+ * @param typeNode - The type node to map
+ * @param checker - TypeScript type checker
+ * @param typeAliasMap - Map of type aliases
+ * @returns Mapped Dart type
+ */
+function mapDartCollectionType(
+  typeNode: ts.TypeNode,
+  checker: ts.TypeChecker,
+  typeAliasMap: Map<string, ts.TypeNode>
+): { dart: string; ffi: string } {
+  // Resolve type aliases first
+  const resolvedType = resolveTypeAlias(typeAliasMap, typeNode);
+
+  // Check if it's a type reference to DartMap, DartList, or DartSet
+  // if (ts.isTypeReferenceNode(resolvedType)) {
+  //   const typeName = resolvedType.typeName.getText();
+
+  //   // Handle namespaced types like _globe_runtime_types0.DartMap
+  //   if (typeName.includes("DartMap")) {
+  //     return { dart: "Map<dynamic, dynamic>", ffi: "FFIJsonPayload" };
+  //   }
+  //   if (typeName.includes("DartList")) {
+  //     return { dart: "List<dynamic>", ffi: "FFIJsonPayload" };
+  //   }
+  //   if (typeName.includes("DartSet")) {
+  //     return { dart: "Set<dynamic>", ffi: "FFIJsonPayload" };
+  //   }
+  // }
+
+  // Fall back to standard type mapping
+  return mapTsTypeToDart(resolvedType, checker, typeAliasMap);
+}
+
+/**
  * Parses a TypeScript declaration file to extract init function arguments and worker functions
  * @param params - Object containing init arguments type, type alias map, checker, and functions type
  * @param params.initArgsType - Init arguments type
@@ -109,14 +197,12 @@ function parseSdkTypes({
       const funcName = member.name.getText();
       const sig = member.type;
 
-      // Return type from Generic <T = ...>
-      let retType = { dart: "void", ffi: "void" };
-      if (sig.typeParameters && sig.typeParameters.length > 0) {
-        const tParam = sig.typeParameters[0];
-        if (tParam.default) {
-          retType = mapTsTypeToDart(tParam.default, checker, typeAliasMap);
-        }
-      }
+      // Extract return type from DartReturn<T> or DartStreamReturn<T>
+      const { type: retType, isStream } = extractDartReturnType(
+        sig.type,
+        checker,
+        typeAliasMap
+      );
 
       // Params (skip state (0) and callbackId (last))
       const params = sig.parameters.filter(
@@ -133,6 +219,7 @@ function parseSdkTypes({
         name: funcName,
         dartName: toCamelCase(funcName),
         returnType: retType,
+        isStream, // Add stream flag if needed for your use case
         args,
       });
     }

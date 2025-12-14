@@ -33,6 +33,7 @@ export function generateDartClass({
   const registerArgs = initArgs
     .map((a) => `${a.name}?.toFFIType`)
     .join(",\n      ");
+  const createArgs = createParams.length > 0 ? `{${createParams}}` : "";
 
   const dartCode = `
 import 'dart:async';
@@ -49,7 +50,7 @@ class ${className} {
 
   ${className}._(this._module);
 
-  static Future<${className}> create({${createParams}}) async {
+  static Future<${className}> create(${createArgs}) async {
     final module = InlinedModule(
       name: '${className}',
       sourceCode: packageSource,
@@ -87,6 +88,17 @@ function generateWorkerFunctions(functions: FuncType[]): string {
  * @returns Generated function code
  */
 function generateSingleFunction(func: FuncType): string {
+  return func.isStream
+    ? generateStreamFunction(func)
+    : generateSingleValueFunction(func);
+}
+
+/**
+ * Generates a single-value worker function method
+ * @param func - Function definition
+ * @returns Generated function code
+ */
+function generateSingleValueFunction(func: FuncType): string {
   const params = func.args
     .map((a: ArgType) => `${a.type.dart} ${a.name}`)
     .join(", ");
@@ -123,18 +135,101 @@ function generateSingleFunction(func: FuncType): string {
 }
 
 /**
+ * Generates a streaming worker function method
+ * @param func - Function definition
+ * @returns Generated function code
+ */
+function generateStreamFunction(func: FuncType): string {
+  const params = func.args
+    .map((a: ArgType) => `${a.type.dart} ${a.name}`)
+    .join(", ");
+
+  const callArgs = func.args
+    .map((a: ArgType) => `${a.name}.toFFIType`)
+    .join(", ");
+
+  const streamValueHandling = generateStreamValueHandling(func.returnType.dart);
+
+  return `
+  Stream<${func.returnType.dart}> ${func.dartName}(${params}) {
+    final controller = StreamController<${func.returnType.dart}>();
+
+    _module.callFunction(
+      '${func.name}',
+      args: [${callArgs}],
+      onData: (data) {
+        if (data.hasError()) {
+          controller.addError(data.error);
+          return true;
+        }
+        
+        ${streamValueHandling}
+        
+        return false; // Keep listening for more data
+      },
+    );
+
+    return controller.stream;
+  }
+  `;
+}
+
+/**
  * Generates code for handling non-void return types
  * @param dartType - Dart type name
  * @returns Generated handling code
  */
 function generateReturnTypeHandling(dartType: string): string {
-  const isString = dartType === "String";
-  const dataMethodCall = isString ? "" : ".unpack()";
-  const resultType = isString ? "utf8.decode(result)" : "result as ${dartType}";
+  const { dataMethodCall, resultType } = getValueHandling(dartType);
   return `
-          final result = data.data${dataMethodCall};
+          final value = data.data${dataMethodCall};
           completer.complete(${resultType});
           `;
+}
+
+/**
+ * Generates code for handling stream values
+ * @param dartType - Dart type name
+ * @returns Generated handling code
+ */
+export function generateStreamValueHandling(dartType: string): string {
+  const { dataMethodCall, resultType } = getValueHandling(dartType);
+
+  return `
+        if (data.hasData()) {
+          final value = data.data${dataMethodCall};
+          controller.add(${resultType});
+        }
+        
+        if (data.done) {
+          controller.close();
+          return true;
+        }
+      `;
+}
+
+/**
+ * Get dataMethodCall and resultType based on Dart type
+ * @param dartType - Dart type name
+ * @returns Object containing dataMethodCall and resultType
+ */
+function getValueHandling(dartType: string) {
+  const isString = dartType === "String";
+  const isList = dartType === "List<int>";
+  const isSet = dartType === "Set<dynamic>";
+  const returnData = isString || isList;
+  const dataMethodCall = returnData ? "" : ".unpack()";
+
+  switch (true) {
+    case isString:
+      return { dataMethodCall, resultType: "utf8.decode(value)" };
+    case isList:
+      return { dataMethodCall, resultType: "value" };
+    case isSet:
+      return { dataMethodCall, resultType: "Set.from(value)" };
+    default:
+      return { dataMethodCall, resultType: `value as ${dartType}` };
+  }
 }
 
 /**
