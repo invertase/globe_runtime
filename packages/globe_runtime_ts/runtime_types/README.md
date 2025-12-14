@@ -60,7 +60,7 @@ export default defineSdk({
 
 These helpers define functions that send a single value back to Dart.
 
-#### `returnString<State, Args>(fn)`
+#### `returnString(fn)`
 
 Returns a string to Dart (Dart: `String`, JS: `string`).
 
@@ -75,7 +75,7 @@ const fetchUser = returnString(
 );
 ```
 
-#### `returnInt<State, Args>(fn)`
+#### `returnInt(fn)`
 
 Returns an integer to Dart (Dart: `int`, JS: `number`).
 
@@ -88,7 +88,7 @@ const calculateSum = returnInt(
 );
 ```
 
-#### `returnDouble<State, Args>(fn)`
+#### `returnDouble(fn)`
 
 Returns a double-precision number to Dart (Dart: `double`, JS: `number`).
 
@@ -101,11 +101,11 @@ const calculateAverage = returnDouble(
 );
 ```
 
-#### `returnNumber<State, Args>(fn)`
+#### `returnNumber(fn)`
 
 Returns a generic number to Dart (Dart: `num`, JS: `number`).
 
-#### `returnBoolean<State, Args>(fn)`
+#### `returnBoolean(fn)`
 
 Returns a boolean to Dart (Dart: `bool`, JS: `boolean`).
 
@@ -118,7 +118,7 @@ const isValid = returnBoolean(
 );
 ```
 
-#### `returnUint8Array<State, Args>(fn)`
+#### `returnUint8Array(fn)`
 
 Returns binary data to Dart (Dart: `List<int>`, JS: `Uint8Array`).
 
@@ -134,7 +134,7 @@ const generateBytes = returnUint8Array(
 );
 ```
 
-#### `returnMap<State, Args>(fn)`
+#### `returnMap(fn)`
 
 Returns a map/object to Dart (Dart: `Map<dynamic, dynamic>`, JS: `object`).
 
@@ -150,7 +150,7 @@ const getMetadata = returnMap(
 );
 ```
 
-#### `returnList<State, Args>(fn)`
+#### `returnList(fn)`
 
 Returns a list to Dart (Dart: `List<dynamic>`, JS: `object`).
 
@@ -166,7 +166,7 @@ const getItems = returnList(
 );
 ```
 
-#### `returnSet<State, Args>(fn)`
+#### `returnSet(fn)`
 
 Returns a set to Dart (Dart: `Set<dynamic>`, JS: `object`).
 
@@ -186,7 +186,7 @@ const getUniqueValues = returnSet(
 
 These helpers define functions that stream multiple values back to Dart.
 
-#### `streamString<State, Args>(fn)`
+#### `streamString(fn)`
 
 Streams strings to Dart (Dart: `Stream<String>`, JS: `string`).
 
@@ -202,27 +202,27 @@ const streamMessages = streamString(
 );
 ```
 
-#### `streamInt<State, Args>(fn)`
+#### `streamInt(fn)`
 
 Streams integers to Dart (Dart: `Stream<int>`, JS: `number`).
 
-#### `streamDouble<State, Args>(fn)`
+#### `streamDouble(fn)`
 
 Streams doubles to Dart (Dart: `Stream<double>`, JS: `number`).
 
-#### `streamNumber<State, Args>(fn)`
+#### `streamNumber(fn)`
 
 Streams numbers to Dart (Dart: `Stream<num>`, JS: `number`).
 
-#### `streamBoolean<State, Args>(fn)`
+#### `streamBoolean(fn)`
 
 Streams booleans to Dart (Dart: `Stream<bool>`, JS: `boolean`).
 
-#### `streamUint8Array<State, Args>(fn)`
+#### `streamUint8Array(fn)`
 
 Streams binary data to Dart (Dart: `Stream<List<int>>`, JS: `Uint8Array`).
 
-#### `streamMap<State, Args>(fn)`
+#### `streamMap(fn)`
 
 Streams maps to Dart (Dart: `Stream<Map<dynamic, dynamic>>`, JS: `object`).
 
@@ -242,11 +242,11 @@ const streamUpdates = streamMap(
 );
 ```
 
-#### `streamList<State, Args>(fn)`
+#### `streamList(fn)`
 
 Streams lists to Dart (Dart: `Stream<List<dynamic>>`, JS: `object`).
 
-#### `streamSet<State, Args>(fn)`
+#### `streamSet(fn)`
 
 Streams sets to Dart (Dart: `Stream<Set<dynamic>>`, JS: `object`).
 
