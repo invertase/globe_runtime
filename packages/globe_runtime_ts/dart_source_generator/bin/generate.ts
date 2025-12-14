@@ -175,6 +175,9 @@ Options:
 
   // Cleanup
   await rm(tempDir, { recursive: true, force: true });
+  if (!values.watch) {
+    process.exit(0);
+  }
 }
 
 // Generate the source files
