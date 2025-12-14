@@ -480,18 +480,133 @@ In your JavaScript modules, you have access to:
 
 Globe Runtime supports using NPM packages through a bundling approach. This allows you to use any JavaScript library in your Dart applications.
 
-### Why Bundle Instead of FileModule?
+### Recommended Approach: Using @globe/dart_source_generator (Easiest)
 
-When using NPM packages, you **cannot** use `FileModule` directly because:
+The **recommended way** to create Globe Runtime SDKs is using the `@globe/dart_source_generator` CLI with `@globe/runtime_types`. This provides:
 
-1. **Module Resolution**: Globe Runtime's internal module resolver expects proper `file://` URLs, but npm packages use different import mechanisms
-2. **Dependency Management**: NPM packages have their own dependencies that need to be resolved and bundled together
-3. **Browser Environment**: Globe Runtime runs in a browser-like environment, not Node.js, so packages need to be bundled for browser compatibility
-4. **Import/Export Compatibility**: ES modules and CommonJS modules need to be properly transformed for the runtime environment
+- **Type-safe SDK definitions** with full TypeScript support
+- **Automatic bundling** of your code with all dependencies
+- **Seamless Dart integration** with generated wrapper classes
+- **Hot reload support** in watch mode during development
 
-The bundling approach ensures all dependencies are included and properly formatted for Globe Runtime.
+#### Step 1: Set up your TypeScript SDK
 
-### Approach 1: Using esbuild (JavaScript - Simpler)
+Create a new directory for your SDK and initialize it:
+
+```bash
+mkdir my_sdk
+cd my_sdk
+npm init -y
+npm install @globe/runtime_types @globe/dart_source_generator -D
+```
+
+#### Step 2: Define your SDK in TypeScript
+
+Create `src/sdk.ts`:
+
+```typescript
+import { defineSdk, returnString, streamString } from "@globe/runtime_types";
+
+type ModuleState = {
+  apiUrl: string;
+  timeout: number;
+};
+
+const fetchUsers = streamString(
+  async (state: ModuleState, callbackId: number) => {
+    try {
+      const url = `${state.apiUrl}/users`;
+      const response = await fetch(url, { 
+        signal: AbortSignal.timeout(state.timeout) 
+      });
+
+      for await (const chunk of response.body!.values()) {
+        Dart.stream_value(callbackId, chunk);
+      }
+
+      Dart.stream_value_end(callbackId);
+    } catch (error) {
+      Dart.send_error(callbackId, `Stream failed: ${error.message}`);
+    }
+  }
+);
+
+const calculatePrice = returnInt(
+  (state: ModuleState, quantity: number, price: number, callbackId: number) => {
+    const total = quantity * price;
+    Dart.send_value(callbackId, new TextEncoder().encode(total.toString()));
+  }
+);
+
+export default defineSdk({
+  init(apiUrl: string = "https://api.example.com", timeout: number = 5000): ModuleState {
+    return { apiUrl, timeout };
+  },
+  functions: {
+    fetchUsers,
+    calculatePrice,
+  },
+});
+```
+
+#### Step 3: Generate Dart source files
+
+Run the generator:
+
+```bash
+npx @globe/dart_source_generator --files src/sdk.ts --output lib/generated/
+```
+
+This generates `lib/generated/sdk_source.dart` containing the bundled JavaScript code.
+
+#### Step 4: Use in your Dart project
+
+Add to your `pubspec.yaml`:
+
+```yaml
+dependencies:
+  globe_runtime: ^1.0.7
+```
+
+Then use in your Dart code:
+
+```dart
+import 'dart:async';
+import 'package:your_package/generated/sdk_source.dart';
+
+void main() async {
+  // Create an instance of your SDK with initialization parameters
+  final sdk = await Sdk.create(
+    apiUrl: 'https://api.custom.com',
+    timeout: 10000,
+  );
+
+  // Call single-value functions (returns a Future)
+  final price = await sdk.calculatePrice(10, 99);
+  print('Total Price: $price');
+
+  // Call streaming functions (returns a Stream)
+  final userStream = await sdk.fetchUsers();
+  
+  final completer = Completer<void>();
+  userStream.listen((user) {
+    print('User: $user');
+  }, onDone: completer.complete);
+
+  await completer.future;
+
+  // Clean up when done
+  sdk.dispose();
+}
+```
+
+The `@globe/dart_source_generator` automatically generates the SDK wrapper class with type-safe methods that handle all the Dart FFI interop boilerplate. You simply call methods and get properly typed `Future` or `Stream` objects back.
+
+For more details, see the [@globe/dart_source_generator documentation](https://www.npmjs.com/package/@globe/dart_source_generator) and [@globe/runtime_types documentation](https://www.npmjs.com/package/@globe/runtime_types).
+
+---
+
+### Alternative Approach 1: Using esbuild (JavaScript - Simpler)
 
 #### Step 1: Create package.json
 
@@ -633,7 +748,7 @@ void main() async {
 }
 ```
 
-### Approach 2: Using tsup (TypeScript - Recommended)
+### Alternative Approach 2: Using tsup (TypeScript)
 
 #### Step 1: Create package.json
 
@@ -786,7 +901,7 @@ void main() async {
 
 ### Why This Approach Works
 
-1. **Bundling**: `tsup` bundles all NPM dependencies into a single JavaScript file
+1. **Bundling**: Bundlers like `tsup` or `esbuild` bundle all NPM dependencies into a single JavaScript file
 2. **TypeScript Support**: Full type safety and IntelliSense
 3. **No external dependencies**: The bundled file contains everything needed
 4. **InlinedModule**: Uses the bundled code directly, avoiding file path and module resolution issues
