@@ -25,6 +25,9 @@ async function run() {
         type: "string",
         default: ".",
       },
+      watch: {
+        type: "boolean",
+      },
       help: {
         type: "boolean",
       },
@@ -39,6 +42,7 @@ Options:
   --files <file>     List of input files (can be repeated)
   --input <dir>      Input directory to scan for .ts files
   --output <dir>     Output directory (default: .)
+  --watch            Watch for changes and re-run
   --help             Show this help message
 `);
     process.exit(0);
@@ -91,6 +95,7 @@ Options:
           clean: true,
           dts: true,
           noExternal: [/.*/],
+          watch: values.watch,
           platform: "browser",
           onSuccess: async () => {
             const outputFolder = resolve(values.output!);
