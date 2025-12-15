@@ -554,10 +554,10 @@ export default defineSdk({
 Run the generator:
 
 ```bash
-npx @globe/dart_source_generator --files src/sdk.ts --output lib/generated/
+npx @globe/dart_source_generator --files src/sdk.ts --output lib/
 ```
 
-This generates `lib/generated/sdk_source.dart` containing the bundled JavaScript code.
+This generates `lib/sdk_source.dart` containing the bundled JavaScript code.
 
 #### Step 4: Use in your Dart project
 
@@ -570,9 +570,11 @@ dependencies:
 
 Then use in your Dart code:
 
+Create `lib/sdk_access.dart`:
+
 ```dart
 import 'dart:async';
-import 'package:your_package/generated/sdk_source.dart';
+import 'package:your_package/sdk_source.dart';
 
 void main() async {
   // Create an instance of your SDK with initialization parameters
@@ -598,6 +600,19 @@ void main() async {
   // Clean up when done
   sdk.dispose();
 }
+```
+
+### Project structure
+
+```
+my_sdk/
+├── src/
+│   └── sdk.ts
+├── lib/
+│   └── sdk_access.dart
+│   └── sdk_source.dart
+├── pubspec.yaml
+├── package.json
 ```
 
 The `@globe/dart_source_generator` automatically generates the SDK wrapper class with type-safe methods that handle all the Dart FFI interop boilerplate. You simply call methods and get properly typed `Future` or `Stream` objects back.
