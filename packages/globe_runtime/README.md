@@ -489,6 +489,8 @@ The **recommended way** to create Globe Runtime SDKs is using the `@globe/dart_s
 - **Seamless Dart integration** with generated wrapper classes
 - **Hot reload support** in watch mode during development
 
+### Example
+
 #### Step 1: Set up your TypeScript SDK
 
 Create a new directory for your SDK and initialize it:
@@ -502,7 +504,8 @@ npm install @globe/runtime_types @globe/dart_source_generator -D
 
 #### Step 2: Define your SDK in TypeScript
 
-Create `src/sdk.ts`:
+Create `src/sdk.ts`.
+Note: You can create multiple SDKs in the same project but not in the same file.
 
 ```typescript
 import { defineSdk, returnString, streamString } from "@globe/runtime_types";
@@ -602,7 +605,7 @@ void main() async {
 }
 ```
 
-### Project structure
+#### Final Project structure
 
 ```
 my_sdk/
@@ -615,9 +618,9 @@ my_sdk/
 ├── package.json
 ```
 
-The `@globe/dart_source_generator` automatically generates the SDK wrapper class with type-safe methods that handle all the Dart FFI interop boilerplate. You simply call methods and get properly typed `Future` or `Stream` objects back.
+The `@globe/dart_source_generator` automatically generates the SDK wrapper class with type-safe methods that handle all the Dart FFI interop boilerplate. You simply call methods, with type-safe parameters, and get properly typed `Future` or `Stream` objects back.
 
-For more details, see the [@globe/dart_source_generator documentation](https://www.npmjs.com/package/@globe/dart_source_generator) and [@globe/runtime_types documentation](https://www.npmjs.com/package/@globe/runtime_types).
+For more details, see the [@globe/dart_source_generator documentation](https://github.com/invertase/globe_runtime/tree/main/packages/globe_runtime_ts/dart_source_generator/README.md) and [@globe/runtime_types documentation](https://github.com/invertase/globe_runtime/tree/main/packages/globe_runtime_ts/runtime_types/README.md).
 
 ---
 
