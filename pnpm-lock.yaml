@@ -24,6 +24,28 @@ catalogs:
 
 importers:
 
+  examples/full_example:
+    dependencies:
+      pretty-bytes:
+        specifier: ^7.1.0
+        version: 7.1.0
+      pretty-ms:
+        specifier: ^9.3.0
+        version: 9.3.0
+    devDependencies:
+      '@globe/dart_source_generator':
+        specifier: workspace:*
+        version: link:../../packages/globe_runtime_ts/dart_source_generator
+      '@globe/runtime_types':
+        specifier: workspace:*
+        version: link:../../packages/globe_runtime_ts/runtime_types
+      '@types/node':
+        specifier: 'catalog:'
+        version: 25.0.3
+      typescript:
+        specifier: 'catalog:'
+        version: 5.9.3
+
   examples/mjml:
     dependencies:
       mjml-browser:
@@ -67,6 +89,9 @@ importers:
       '@types/node':
         specifier: 'catalog:'
         version: 25.0.3
+      tsup:
+        specifier: 'catalog:'
+        version: 8.5.1(postcss@8.5.6)(typescript@5.9.3)(yaml@2.8.1)
       typescript:
         specifier: 'catalog:'
         version: 5.9.3
@@ -77,14 +102,17 @@ importers:
         specifier: ^13.0.0
         version: 13.0.0
       tsdown:
-        specifier: 0.17.3
-        version: 0.17.3(typescript@5.9.3)
+        specifier: 0.17.4
+        version: 0.17.4(typescript@5.9.3)
+      tslog:
+        specifier: ^4.10.2
+        version: 4.10.2
       typescript:
         specifier: ^5.9.3
         version: 5.9.3
     devDependencies:
       '@types/node':
-        specifier: ^25.0.1
+        specifier: ^25.0.2
         version: 25.0.3
       '@vitest/coverage-v8':
         specifier: ^4.0.15
@@ -302,16 +330,8 @@ packages:
   '@jridgewell/gen-mapping@0.3.13':
     resolution: {integrity: sha512-2kkt/7niJ6MgEPxF0bYdQ6etZaA+fQvDcLKckhy1yIQOzaoKjBBjSj63/aLVjYE3qhRt5dvM+uUyfCg6UKCBbA==}
 
-  '@jridgewell/gen-mapping@0.3.8':
-    resolution: {integrity: sha512-imAbBGkb+ebQyxKgzv5Hu2nmROxoDOXHh80evxdoXNOrvAnVx7zimzc1Oo5h9RlfV4vPXaE2iM5pOFbvOCClWA==}
-    engines: {node: '>=6.0.0'}
-
   '@jridgewell/resolve-uri@3.1.2':
     resolution: {integrity: sha512-bRISgCIjP20/tbWSPWMEi54QVPRZExkuD9lJL+UIxUKtwVJA8wW1Trb1jMs1RFXo1CBTNZ/5hpC9QvmKWdopKw==}
-    engines: {node: '>=6.0.0'}
-
-  '@jridgewell/set-array@1.2.1':
-    resolution: {integrity: sha512-R8gLRTZeyp03ymzP/6Lil/28tGeGEzhx1q2k703KGWRAI1VdvPIXdG70VJc2pAMw3NA6JKL5hhFu1sJX0Mnn/A==}
     engines: {node: '>=6.0.0'}
 
   '@jridgewell/sourcemap-codec@1.5.0':
@@ -1177,8 +1197,8 @@ packages:
   ts-interface-checker@0.1.13:
     resolution: {integrity: sha512-Y/arvbn+rrz3JCKl9C4kVNfTfSm2/mEp5FSz5EsZSANGPSlQrpRI5M4PKF+mJnE52jOO90PnPSc3Ur3bTQw0gA==}
 
-  tsdown@0.17.3:
-    resolution: {integrity: sha512-bgLgTog+oyadDTr9SZ57jZtb+A4aglCjo3xgJrkCDxbzcQl2l2iDDr4b06XHSQHwyDNIhYFDgPRhuu1wL3pNsw==}
+  tsdown@0.17.4:
+    resolution: {integrity: sha512-z+kNuv1rwM1POQIufDUVrdNc/uGy0ueRVafCyDH39IdHxin4JXgB8DNGSPoqdIpcOpqUoRbNreK8NxENFmlhKw==}
     engines: {node: '>=20.19.0'}
     deprecated: Including an unexpected breaking change (copy behavior)
     hasBin: true
@@ -1205,6 +1225,10 @@ packages:
 
   tslib@2.8.1:
     resolution: {integrity: sha512-oJFu94HQb+KVduSUQL7wnpmqnfmLsOA/nAh6b6EH0wCEoK0/mPeXU6c3wKDV83MkOuHPRHtSXKKU99IBazS/2w==}
+
+  tslog@4.10.2:
+    resolution: {integrity: sha512-XuELoRpMR+sq8fuWwX7P0bcj+PRNiicOKDEb3fGNURhxWVyykCi9BNq7c4uVz7h7P0sj8qgBsr5SWS6yBClq3g==}
+    engines: {node: '>=16'}
 
   tsup@8.5.1:
     resolution: {integrity: sha512-xtgkqwdhpKWr3tKPmCkvYmS9xnQK3m3XgxZHwSUjvfTjp7YfXe5tT3GgWi0F2N+ZSMsOeWeZFh7ZZFg5iPhing==}
@@ -1488,15 +1512,7 @@ snapshots:
       '@jridgewell/sourcemap-codec': 1.5.5
       '@jridgewell/trace-mapping': 0.3.31
 
-  '@jridgewell/gen-mapping@0.3.8':
-    dependencies:
-      '@jridgewell/set-array': 1.2.1
-      '@jridgewell/sourcemap-codec': 1.5.0
-      '@jridgewell/trace-mapping': 0.3.25
-
   '@jridgewell/resolve-uri@3.1.2': {}
-
-  '@jridgewell/set-array@1.2.1': {}
 
   '@jridgewell/sourcemap-codec@1.5.0': {}
 
@@ -2217,7 +2233,7 @@ snapshots:
 
   sucrase@3.35.0:
     dependencies:
-      '@jridgewell/gen-mapping': 0.3.8
+      '@jridgewell/gen-mapping': 0.3.13
       commander: 4.1.1
       glob: 10.4.5
       lines-and-columns: 1.2.4
@@ -2254,7 +2270,7 @@ snapshots:
 
   ts-interface-checker@0.1.13: {}
 
-  tsdown@0.17.3(typescript@5.9.3):
+  tsdown@0.17.4(typescript@5.9.3):
     dependencies:
       ansis: 4.2.0
       cac: 6.7.14
@@ -2282,6 +2298,8 @@ snapshots:
 
   tslib@2.8.1:
     optional: true
+
+  tslog@4.10.2: {}
 
   tsup@8.5.1(postcss@8.5.6)(typescript@5.9.3)(yaml@2.8.1):
     dependencies:

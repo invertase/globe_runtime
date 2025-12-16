@@ -1,11 +1,14 @@
 {
-  "name": "pretty_node",
+  "name": "full_example",
   "version": "1.0.0",
   "description": "",
   "type": "module",
   "keywords": [],
   "author": "",
   "license": "ISC",
+  "scripts": {
+    "generate": "npx @globe/dart_source_generator --input ./lib --output ./lib"
+  },
   "dependencies": {
     "pretty-bytes": "^7.1.0",
     "pretty-ms": "^9.3.0"
@@ -14,7 +17,6 @@
     "@globe/runtime_types": "workspace:*",
     "@globe/dart_source_generator": "workspace:*",
     "@types/node": "catalog:",
-    "tsup": "catalog:",
     "typescript": "catalog:"
   }
 }

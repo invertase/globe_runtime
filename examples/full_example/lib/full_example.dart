@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 
-import 'package:pretty_node/full_example/full_example_source.dart';
+import 'package:full_example/full_example_source.dart';
 
 void main() async {
   final fullExample = await FullExample.create(language: 'en', verbose: true);
