@@ -11,10 +11,11 @@ import type { GenerateDartSourceOptions } from "./types";
 /**
  * Generates a Dart source file from TypeScript declaration and JavaScript source
  * @param options - Configuration options for generation
+ * @returns true if generation was successful, false otherwise
  */
 export function generateDartSourceFile(
   options: GenerateDartSourceOptions
-): void {
+): boolean {
   const { jsSourcePath, dtsFilePath, outputPath, fileName, version } = options;
 
   // Read the JavaScript source
@@ -28,7 +29,7 @@ export function generateDartSourceFile(
       "Could not parse SDK definition from declaration file",
       dtsFilePath
     );
-    return;
+    return false;
   }
 
   const { initArgs, functions } = result;
@@ -53,6 +54,9 @@ export function generateDartSourceFile(
 
   // Run dart format on the Dart file
   execSync(`dart format ${outputPath}`);
+
+  // Generation was successful
+  return true;
 }
 
 // Re-export types for consumers
