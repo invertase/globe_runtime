@@ -83,7 +83,10 @@ Options:
 
   if (values.input) {
     const folder = values.input;
-    const files = await glob(`${folder}/**/*.[t,j]s`);
+    // Ensure node_modules folder is not included.
+    const files = await glob(`${folder}/**/*.[t,j]s`, {
+      ignore: `${folder}/**/node_modules/**`,
+    });
     inputFiles.push(...files);
   }
 
@@ -114,7 +117,7 @@ Options:
 
     logger.info(`\x1b[34mProcessing\x1b[0m \x1b[32m${relativePath}\x1b[0m`);
 
-    await new Promise<void>(async (resolveGenerate) => {
+    await new Promise<void>(async (resolveGenerate, rejectGenerate) => {
       const config = defineConfig({
         entry: { [name]: file },
         outDir: tempDir,
@@ -148,13 +151,18 @@ Options:
           const outputPath = join(outputFolder, `${outputName}_source.dart`);
 
           try {
-            generateDartSourceFile({
+            const success = generateDartSourceFile({
               jsSourcePath: sourceFile,
               dtsFilePath: dtsFile,
               outputPath: outputPath,
               fileName: name,
               version: version,
             });
+
+            if (!success) {
+              rejectGenerate(`Failed to generate Dart source for ${name}`);
+              return;
+            }
 
             const relativePath = relative(outputFolder, outputPath);
             logger.info(
