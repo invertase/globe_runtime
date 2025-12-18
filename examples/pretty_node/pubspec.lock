@@ -124,11 +124,10 @@ packages:
   globe_runtime:
     dependency: "direct main"
     description:
-      name: globe_runtime
-      sha256: c538800ceabfacc1e7ab51d733cb58a5f269649cbc5c022f78531d64867fef40
-      url: "https://pub.dev"
-    source: hosted
-    version: "1.0.7"
+      path: "../../packages/globe_runtime"
+      relative: true
+    source: path
+    version: "1.0.8"
   http:
     dependency: transitive
     description:

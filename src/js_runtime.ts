@@ -29,137 +29,31 @@ import * as imageData from "ext:deno_web/16_image_data.js";
 
 import { core } from "ext:core/mod.js";
 
+Object.assign(globalThis, timers);
+Object.assign(globalThis, streams);
+Object.assign(globalThis, encoding);
+Object.assign(globalThis, url);
+Object.assign(globalThis, urlPattern);
+Object.assign(globalThis, abortSignal);
+Object.assign(globalThis, fileReader);
+Object.assign(globalThis, base64);
+Object.assign(globalThis, compression);
+Object.assign(globalThis, imageData);
+Object.assign(globalThis, messagePort);
+Object.assign(globalThis, performance);
+Object.assign(globalThis, eventSource);
+Object.assign(globalThis, fetch);
+Object.assign(globalThis, request);
+Object.assign(globalThis, response);
+Object.assign(globalThis, headers);
+Object.assign(globalThis, formData);
+Object.assign(globalThis, globalInterfaces);
+
 Object.defineProperty(globalThis, "self", {
   value: core.propGetterOnly(() => globalThis),
   enumerable: true,
   configurable: false,
   writable: false,
-});
-
-Object.defineProperty(globalThis, "Window", {
-  value: globalInterfaces.windowConstructorDescriptor,
-  enumerable: false,
-  configurable: true,
-  writable: true,
-});
-
-Object.defineProperty(globalThis, "setTimeout", {
-  value: timers.setTimeout,
-  enumerable: true,
-  configurable: true,
-  writable: true,
-});
-
-Object.defineProperty(globalThis, "clearTimeout", {
-  value: timers.clearTimeout,
-  enumerable: true,
-  configurable: true,
-  writable: true,
-});
-
-Object.defineProperty(globalThis, "ReadableStream", {
-  value: streams.ReadableStream,
-  enumerable: false,
-  configurable: true,
-  writable: true,
-});
-
-Object.defineProperty(globalThis, "TransformStream", {
-  value: streams.TransformStream,
-  enumerable: false,
-  configurable: true,
-  writable: true,
-});
-
-Object.defineProperty(globalThis, "WritableStream", {
-  value: streams.WritableStream,
-  enumerable: false,
-  configurable: true,
-  writable: true,
-});
-
-Object.defineProperty(globalThis, "TextEncoder", {
-  value: encoding.TextEncoder,
-  enumerable: false,
-  configurable: true,
-  writable: true,
-});
-
-Object.defineProperty(globalThis, "TextDecoder", {
-  value: encoding.TextDecoder,
-  enumerable: false,
-  configurable: true,
-  writable: true,
-});
-
-Object.defineProperty(globalThis, "TextDecoderStream", {
-  value: encoding.TextDecoderStream,
-  enumerable: false,
-  configurable: true,
-  writable: true,
-});
-
-Object.defineProperty(globalThis, "TextEncoderStream", {
-  value: encoding.TextEncoderStream,
-  enumerable: false,
-  configurable: true,
-  writable: true,
-});
-
-Object.defineProperty(globalThis, "URL", {
-  value: url.URL,
-  enumerable: false,
-  configurable: true,
-  writable: true,
-});
-
-Object.defineProperty(globalThis, "URLPattern", {
-  value: urlPattern.URLPattern,
-  enumerable: false,
-  configurable: true,
-  writable: true,
-});
-
-Object.defineProperty(globalThis, "URLSearchParams", {
-  value: urlPattern.URLSearchParams,
-  enumerable: false,
-  configurable: true,
-  writable: true,
-});
-
-Object.defineProperty(globalThis, "AbortController", {
-  value: abortSignal.AbortController,
-  enumerable: false,
-  configurable: true,
-  writable: true,
-});
-
-Object.defineProperty(globalThis, "AbortSignal", {
-  value: abortSignal.AbortSignal,
-  enumerable: false,
-  configurable: true,
-  writable: true,
-});
-
-Object.defineProperty(globalThis, "FileReader", {
-  value: fileReader.FileReader,
-  enumerable: false,
-  configurable: true,
-  writable: true,
-});
-
-Object.defineProperty(globalThis, "atob", {
-  value: base64.atob,
-  enumerable: true,
-  configurable: true,
-  writable: true,
-});
-
-Object.defineProperty(globalThis, "btoa", {
-  value: base64.btoa,
-  enumerable: true,
-  configurable: true,
-  writable: true,
 });
 
 Object.defineProperty(globalThis, "DOMException", {
@@ -169,116 +63,4 @@ Object.defineProperty(globalThis, "DOMException", {
   writable: true,
 });
 
-Object.defineProperty(globalThis, "CompressionStream", {
-  value: compression.CompressionStream,
-  enumerable: false,
-  configurable: true,
-  writable: true,
-});
-
-Object.defineProperty(globalThis, "DecompressionStream", {
-  value: compression.DecompressionStream,
-  enumerable: false,
-  configurable: true,
-  writable: true,
-});
-
-Object.defineProperty(globalThis, "ImageData", {
-  value: imageData.ImageData,
-  enumerable: false,
-  configurable: true,
-  writable: true,
-});
-
-Object.defineProperty(globalThis, "MessageChannel", {
-  value: messagePort.MessageChannel,
-  enumerable: false,
-  configurable: true,
-  writable: true,
-});
-
-Object.defineProperty(globalThis, "MessagePort", {
-  value: messagePort.MessagePort,
-  enumerable: false,
-  configurable: true,
-  writable: true,
-});
-
-Object.defineProperty(globalThis, "structuredClone", {
-  value: messagePort.structuredClone,
-  enumerable: false,
-  configurable: true,
-  writable: true,
-});
-
-Object.defineProperty(globalThis, "Performance", {
-  value: performance.Performance,
-  enumerable: false,
-  configurable: true,
-  writable: true,
-});
-
-Object.defineProperty(globalThis, "PerformanceEntry", {
-  value: performance.PerformanceEntry,
-  enumerable: false,
-  configurable: true,
-  writable: true,
-});
-
-Object.defineProperty(globalThis, "PerformanceMark", {
-  value: performance.PerformanceMark,
-  enumerable: false,
-  configurable: true,
-  writable: true,
-});
-
-Object.defineProperty(globalThis, "PerformanceMeasure", {
-  value: performance.PerformanceMeasure,
-  enumerable: false,
-  configurable: true,
-  writable: true,
-});
-
-Object.defineProperty(globalThis, "EventSource", {
-  value: eventSource.EventSource,
-  enumerable: false,
-  configurable: true,
-  writable: true,
-});
-
 Deno.core.setWasmStreamingCallback(fetch.handleWasmStreaming);
-
-Object.defineProperty(globalThis, "fetch", {
-  value: fetch.fetch,
-  enumerable: true,
-  configurable: true,
-  writable: true,
-});
-
-Object.defineProperty(globalThis, "Request", {
-  value: request.Request,
-  enumerable: false,
-  configurable: true,
-  writable: true,
-});
-
-Object.defineProperty(globalThis, "Response", {
-  value: response.Response,
-  enumerable: false,
-  configurable: true,
-  writable: true,
-});
-
-Object.defineProperty(globalThis, "Headers", {
-  value: headers.Headers,
-  enumerable: false,
-  configurable: true,
-  writable: true,
-});
-
-Object.defineProperty(globalThis, "FormData", {
-  value: formData.FormData,
-  enumerable: false,
-  configurable: true,
-  writable: true,
-});

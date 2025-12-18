@@ -1,8 +1,7 @@
 import 'dart:io';
-import 'package:globe_runtime/globe_runtime.dart';
 import 'package:mjml_bridge/mjml_bridge.dart';
 
-const mjml = r'''
+const mjmlSource = r'''
 <mjml>
   <mj-body background-color="#F4F4F4">
     <mj-section background-color="#ffffff" background-repeat="repeat" padding-bottom="0px" padding-top="30px" padding="20px 0" text-align="center">
@@ -86,7 +85,8 @@ const mjml = r'''
 ''';
 
 void main() async {
-  final result = await render(mjml);
+  final mjml = await MjmlBridge.init();
+  final result = await mjml.render(mjmlSource);
 
   final server = await HttpServer.bind(InternetAddress.loopbackIPv4, 8080);
   server.listen((request) {
@@ -96,7 +96,7 @@ void main() async {
       ..close();
   });
 
-  if (Platform.isWindows) { 
+  if (Platform.isWindows) {
     await Process.run('cmd', ['/c', 'start', 'http://localhost:8080']);
   } else if (Platform.isMacOS) {
     await Process.run('open', ['http://localhost:8080']);

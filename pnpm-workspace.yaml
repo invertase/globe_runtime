@@ -1,6 +1,6 @@
 packages:
-  - 'examples/*'
-  - 'packages/globe_runtime_ts'
+  - "examples/*"
+  - "packages/globe_runtime_ts"
 
 catalog:
   tsup: 8.0.2
