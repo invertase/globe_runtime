@@ -5,54 +5,35 @@ on:
     branches:
       - main
     tags:
-      - '*'
+      - "*"
   pull_request:
 
 jobs:
-  Test:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: dart-lang/setup-dart@v1
-
-      - name: Install Globe Runtime
-        run: |
-          sudo apt-get update && sudo apt-get install -y jq curl
-          mkdir -p ~/.globe/runtime && cd ~/.globe/runtime
-          curl -s https://api.github.com/repos/invertase/globe_runtime/releases/latest \
-            | jq -r '.assets[] | select(.name == "libglobe_runtime-x86_64-unknown-linux-gnu.so") | .browser_download_url' \
-            | xargs curl -L -OJ
-
-      - name: Run Dart Tests
-        working-directory: packages/globe_runtime
-        run: dart test --reporter expanded --concurrency=1
-
   Build:
-    needs: Test
     name: Build - ${{ matrix.platform.os-name }}
     strategy:
       matrix:
         platform:
           - os-name: MacOS-x86_64
-            runs-on: macOS-latest
+            runs-on: macos-15-intel
             target: x86_64-apple-darwin
-          
+
           - os-name: MacOS-aarch64
-            runs-on: macOS-latest
+            runs-on: macos-15
             target: aarch64-apple-darwin
-            
+
           - os-name: Linux-x86_64
             runs-on: ubuntu-22.04
             target: x86_64-unknown-linux-gnu
 
           - os-name: Linux-aarch64
             runs-on: ubuntu-22.04-arm
-            target: aarch64-unknown-linux-gnu	
+            target: aarch64-unknown-linux-gnu
 
           - os-name: Windows-x86_64
-            runs-on: windows-latest
+            runs-on: windows-2025
             target: x86_64-pc-windows-msvc
-          
+
     runs-on: ${{ matrix.platform.runs-on }}
     steps:
       - name: Checkout
@@ -99,12 +80,36 @@ jobs:
           mv "$ARTIFACT_FILE" "$NEW_NAME"
 
           echo "artifact_path=$NEW_NAME" >> $GITHUB_ENV
-          
+
       - name: Upload built library as artifact
         uses: actions/upload-artifact@v4
         with:
           name: ${{ env.artifact_path }}
           path: ${{ env.artifact_path }}
+
+  Test:
+    needs: Build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download Linux x86_64 artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: libglobe_runtime-x86_64-unknown-linux-gnu.so
+          path: ./artifacts
+
+      - name: Add library path to environment
+        run: |
+          LIB_PATH="${GITHUB_WORKSPACE}/artifacts/libglobe_runtime-x86_64-unknown-linux-gnu.so"
+          echo "GLOBE_RUNTIME_LIB_PATH=${LIB_PATH}" >> $GITHUB_ENV
+          echo "Library path set to: ${LIB_PATH}"
+          ls -la "${LIB_PATH}"
+
+      - uses: dart-lang/setup-dart@v1
+      - name: Run Dart Tests
+        working-directory: packages/globe_runtime
+        run: dart test --reporter expanded --concurrency=1
 
   Release:
     name: Publish Release
@@ -125,5 +130,3 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           files: dist/**/*
-
-        

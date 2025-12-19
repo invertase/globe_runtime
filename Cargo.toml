@@ -21,3 +21,8 @@ node-resolve = "2.2.0"
 [build-dependencies]
 bindgen = "0.71.1"
 cc = "1.0"
+
+
+[dependencies.libffi-sys]
+version = "2.3.0"
+features = ["system"]

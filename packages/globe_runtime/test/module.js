@@ -1,7 +1,4 @@
 const sdk = {
-  init: function () {
-    return {};
-  },
   functions: {
     json_encode: function (_, DartCallbackId) {
       Dart.send_value(

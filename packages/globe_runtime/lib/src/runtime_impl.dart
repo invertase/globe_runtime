@@ -97,7 +97,8 @@ class _$GlobeRuntimeImpl {
   int _messageCount = 0;
 
   static final dylib = () {
-    final libraryPath = _dylibPath;
+    final libraryPath =
+        Platform.environment['GLOBE_RUNTIME_LIB_PATH'] ?? _dylibPath;
     validateRuntimeLibraryExists(libraryPath);
     return DynamicLibrary.open(libraryPath);
   }();

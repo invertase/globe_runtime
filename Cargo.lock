@@ -2849,6 +2849,7 @@ dependencies = [
  "deno_error",
  "deno_runtime",
  "libc",
+ "libffi-sys",
  "node-resolve",
  "sys_traits",
  "thiserror 2.0.11",

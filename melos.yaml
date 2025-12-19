@@ -2,6 +2,7 @@ name: workspace
 
 packages:
   - packages/**
+  - examples/**
 
 scripts:
   generate:protobuf:

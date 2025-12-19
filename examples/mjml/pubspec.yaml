@@ -1,0 +1,11 @@
+name: mjml_bridge
+description: A bridge to MJML for Dart using globe_runtime
+version: 1.0.0
+publish_to: none
+
+environment:
+  sdk: ^3.0.0
+
+dependencies:
+  globe_runtime:
+    path: ../../packages/globe_runtime

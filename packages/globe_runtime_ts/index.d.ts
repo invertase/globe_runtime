@@ -1,4 +1,7 @@
 declare global {
+
+  type DartValue = Uint8Array | undefined; 
+
   interface DartGlobal {
     /**
      * Sends data back to Dart from JavaScript.
@@ -7,7 +10,7 @@ declare global {
      * @param data - The data to send.
      * @returns {boolean} - Returns true if the data was sent successfully.
      */
-    send_value: (callbackId: number, data: Uint8Array) => boolean;
+    send_value: (callbackId: number, data: DartValue) => boolean;
 
     /**
      * Sends an error message back to Dart from JavaScript.
@@ -15,7 +18,7 @@ declare global {
      * @param callbackId - A unique identifier for the callback.
      * @param error - The error message to send.
      */
-    send_error: (callbackId, error: string) => boolean;
+    send_error: (callbackId: number, error: string) => boolean;
 
     /**
      * Sends data back to Dart from JavaScript.
@@ -24,7 +27,7 @@ declare global {
      * @param data - The data to send.
      * @returns {boolean} - Returns true if the data was sent successfully.
      */
-    stream_value: (callbackId: number, data: Uint8Array) => boolean;
+    stream_value: (callbackId: number, data: DartValue) => boolean;
 
     /**
      * Sends data back to Dart from JavaScript.
@@ -35,7 +38,7 @@ declare global {
      */
     stream_value_end: (
       callbackId: number,
-      data?: Uint8Array | undefined
+      data?:DartValue
     ) => boolean;
   }
 
@@ -43,7 +46,7 @@ declare global {
 
   const JsonPayload: {
     // Encoding payload using MessagePack
-    encode(value: unknown): Uint8Array | undefined;
+    encode(value: unknown): DartValue;
     // Decoding payload using MessagePack
     decode(value: Uint8Array): any;
   };
