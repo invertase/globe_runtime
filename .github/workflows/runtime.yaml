@@ -13,16 +13,14 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - uses: houseabsolute/actions-rust-cross@v1
+        with:
+          command: build
+          target: x86_64-unknown-linux-gnu
+          args: "${{ github.ref == 'refs/heads/main' && '--locked --release' || '' }}"
+          strip: true
+
       - uses: dart-lang/setup-dart@v1
-
-      - name: Install Globe Runtime
-        run: |
-          sudo apt-get update && sudo apt-get install -y jq curl
-          mkdir -p ~/.globe/runtime && cd ~/.globe/runtime
-          curl -s https://api.github.com/repos/invertase/globe_runtime/releases/latest \
-            | jq -r '.assets[] | select(.name == "libglobe_runtime-x86_64-unknown-linux-gnu.so") | .browser_download_url' \
-            | xargs curl -L -OJ
-
       - name: Run Dart Tests
         working-directory: packages/globe_runtime
         run: dart test --reporter expanded --concurrency=1
