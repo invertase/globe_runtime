@@ -99,7 +99,7 @@ jobs:
           name: libglobe_runtime-x86_64-unknown-linux-gnu.so
           path: ./artifacts
 
-      - name: Set GLOBE_RUNTIME_LIB_PATH
+      - name: Add library path to environment
         run: |
           LIB_PATH="${GITHUB_WORKSPACE}/artifacts/libglobe_runtime-x86_64-unknown-linux-gnu.so"
           echo "GLOBE_RUNTIME_LIB_PATH=${LIB_PATH}" >> $GITHUB_ENV
