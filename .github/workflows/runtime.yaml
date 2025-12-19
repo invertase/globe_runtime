@@ -99,15 +99,17 @@ jobs:
           name: libglobe_runtime-x86_64-unknown-linux-gnu.so
           path: ./artifacts
 
-      - uses: dart-lang/setup-dart@v1
-      - name: Run Dart Tests
-        working-directory: packages/globe_runtime
+      - name: Add library path to environment
         run: |
           LIB_PATH="${GITHUB_WORKSPACE}/artifacts/libglobe_runtime-x86_64-unknown-linux-gnu.so"
           echo "GLOBE_RUNTIME_LIB_PATH=${LIB_PATH}" >> $GITHUB_ENV
           echo "Library path set to: ${LIB_PATH}"
           ls -la "${LIB_PATH}"
-          dart test --reporter expanded --concurrency=1
+
+      - uses: dart-lang/setup-dart@v1
+      - name: Run Dart Tests
+        working-directory: packages/globe_runtime
+        run: dart test --reporter expanded --concurrency=1
 
   Release:
     name: Publish Release
