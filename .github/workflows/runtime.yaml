@@ -9,30 +9,7 @@ on:
   pull_request:
 
 jobs:
-  Test:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: houseabsolute/actions-rust-cross@v1
-        with:
-          command: build
-          target: x86_64-unknown-linux-gnu
-          args: "${{ github.ref == 'refs/heads/main' && '--locked --release' || '' }}"
-          strip: true
-
-      - name: Set GLOBE_RUNTIME_LIB_PATH
-        run: |
-          LIB_PATH="${GITHUB_WORKSPACE}/target/x86_64-unknown-linux-gnu/release/libglobe_runtime.so"
-          echo "GLOBE_RUNTIME_LIB_PATH=${LIB_PATH}" >> $GITHUB_ENV
-          echo "Library path set to: ${LIB_PATH}"
-
-      - uses: dart-lang/setup-dart@v1
-      - name: Run Dart Tests
-        working-directory: packages/globe_runtime
-        run: dart test --reporter expanded --concurrency=1
-
   Build:
-    needs: Test
     name: Build - ${{ matrix.platform.os-name }}
     strategy:
       matrix:
@@ -109,6 +86,30 @@ jobs:
         with:
           name: ${{ env.artifact_path }}
           path: ${{ env.artifact_path }}
+
+  Test:
+    needs: Build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download Linux x86_64 artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: libglobe_runtime-x86_64-unknown-linux-gnu.so
+          path: ./artifacts
+
+      - name: Set GLOBE_RUNTIME_LIB_PATH
+        run: |
+          LIB_PATH="${GITHUB_WORKSPACE}/artifacts/libglobe_runtime-x86_64-unknown-linux-gnu.so"
+          echo "GLOBE_RUNTIME_LIB_PATH=${LIB_PATH}" >> $GITHUB_ENV
+          echo "Library path set to: ${LIB_PATH}"
+          ls -la "${LIB_PATH}"
+
+      - uses: dart-lang/setup-dart@v1
+      - name: Run Dart Tests
+        working-directory: packages/globe_runtime
+        run: dart test --reporter expanded --concurrency=1
 
   Release:
     name: Publish Release
