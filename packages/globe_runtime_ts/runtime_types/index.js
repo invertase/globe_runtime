@@ -266,6 +266,6 @@ export const streamSet = defineStreamFunction();
  * @param {Object} def - SDK definition with init and functions
  * @param {InitFn} def.init - Initialization function that returns state
  * @param {Fns} def.functions - Object containing worker functions
- * @returns {{init: InitFn, functions: Fns}} The SDK definition
+ * @returns {{init?: InitFn, functions: Fns}} The SDK definition
  */
 export const defineSdk = returnFn();

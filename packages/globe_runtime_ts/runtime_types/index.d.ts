@@ -343,10 +343,10 @@ export type Sdk<
  * All worker functions MUST return DartReturn<T> | DartStreamReturn<T>.
  */
 export function defineSdk<
-  InitFn extends (...args: any) => any,
+  InitFn extends (...args: any) => any = () => void,
   Fns extends Record<string, any>,
   State = ReturnType<InitFn>,
   InitArgs extends readonly unknown[] = Parameters<InitFn>
->(def: { init: InitFn; functions: Fns }): Sdk<InitArgs, State, Fns>;
+>(def: { init?: InitFn; functions: Fns }): Sdk<InitArgs, State, Fns>;
 
 export {};
