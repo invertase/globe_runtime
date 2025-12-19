@@ -52,13 +52,7 @@ Object.assign(globalThis, file);
 
 // window refers back to globalThis
 globalThis.window = globalThis;
-
-Object.defineProperty(globalThis, "self", {
-  value: core.propGetterOnly(() => globalThis),
-  enumerable: true,
-  configurable: false,
-  writable: false,
-});
+globalThis.self = globalThis;
 
 Object.defineProperty(globalThis, "DOMException", {
   value: DOMException,
