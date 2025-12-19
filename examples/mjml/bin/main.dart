@@ -85,8 +85,7 @@ const mjmlSource = r'''
 ''';
 
 void main() async {
-  final mjml = await MjmlBridge.init();
-  final result = await mjml.render(mjmlSource);
+  final result = await mjmlSource.render();
 
   final server = await HttpServer.bind(InternetAddress.loopbackIPv4, 8080);
   server.listen((request) {

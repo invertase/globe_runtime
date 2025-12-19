@@ -5,15 +5,8 @@ import 'package:mjml_bridge/mjml_bridge_source.dart';
 
 const _module = InlinedModule(name: 'mjml_bridge', sourceCode: packageSource);
 
-final class MjmlBridge {
-  MjmlBridge._();
-
-  static Future<MjmlBridge> init() async {
-    await _module.register();
-    return MjmlBridge._();
-  }
-
-  Future<MJMLResult> render(String mjml, {MJMLOptions? options}) async {
+extension MjMlExtension on String {
+  Future<MJMLResult> render({MJMLOptions? options}) async {
     final completer = Completer<MJMLResult>();
 
     await _module.register();
@@ -21,7 +14,7 @@ final class MjmlBridge {
     _module.callFunction(
       'render',
       args: [
-        mjml.toFFIType,
+        this.toFFIType,
         (options?.toJson() ?? {}).toFFIType,
       ],
       onData: (data) {

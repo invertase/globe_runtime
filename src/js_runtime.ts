@@ -48,6 +48,10 @@ Object.assign(globalThis, response);
 Object.assign(globalThis, headers);
 Object.assign(globalThis, formData);
 Object.assign(globalThis, globalInterfaces);
+Object.assign(globalThis, file);
+
+// window refers back to globalThis
+globalThis.window = globalThis;
 
 Object.defineProperty(globalThis, "self", {
   value: core.propGetterOnly(() => globalThis),
