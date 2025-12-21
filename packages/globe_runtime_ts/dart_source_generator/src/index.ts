@@ -3,10 +3,11 @@
  */
 
 import { execSync } from "child_process";
-import { readFileSync, writeFileSync } from "fs";
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from "fs";
 import { parseDeclarationFile } from "./ast-parser";
 import { generateDartClass } from "./dart-codegen";
 import type { GenerateDartSourceOptions } from "./types";
+import { dirname } from "path";
 
 /**
  * Generates a Dart source file from TypeScript declaration and JavaScript source
@@ -48,6 +49,12 @@ export function generateDartSourceFile(
     initArgs,
     functions,
   });
+
+  // Ensure output directory exists
+  const outputDir = dirname(outputPath);
+  if (!existsSync(outputDir)) {
+    mkdirSync(outputDir, { recursive: true });
+  }
 
   // Write the Dart file
   writeFileSync(outputPath, dartCode);
