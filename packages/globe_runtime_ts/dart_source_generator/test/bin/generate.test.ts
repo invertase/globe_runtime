@@ -17,19 +17,58 @@ const timeout = 30000;
 describe("Generate Dart Source Command", () => {
   // Create a dummy valid input file
   const validFileContent = `
-import { Sdk } from "@globe/runtime_types";
-export type InitArgs = [foo: string]
-export type State = {}
-export type Functions = {
-  hello: <Result = string>(state: any, name: string, id: number) => string;
-}
+import { defineSdk, returnString, returnNumber } from "@globe/runtime_types";
 
-export const _default: Sdk<InitArgs, State, Functions> = {
-  // implementation details omitted for bundle test
-} as any;
+type ModuleState = {
+  apiKey: string;
+  timeout: number;
+};
+
+export default defineSdk({
+  /**
+   * Initialize the SDK with authentication credentials
+   * 
+   * This sets up the SDK with your API key and configures the timeout
+   * for all network requests.
+   * 
+   * @param apiKey - Your API key for authentication
+   * @param timeout - Request timeout in milliseconds
+   */
+  init(apiKey: string, timeout: number = 5000): ModuleState {
+    return { apiKey, timeout };
+  },
+  functions: {
+    /**
+     * Fetches user data from the API
+     * 
+     * This function retrieves user information based on the provided user ID.
+     * It handles authentication automatically using the configured API key.
+     * 
+     * @param userId - The unique identifier for the user
+     * @returns A JSON string containing the user's profile information
+     */
+    getUserData: returnString(
+      (state: ModuleState, userId: string, callbackId: number) => {
+        // implementation
+      }
+    ),
+    
+    /**
+     * Calculates the sum of two numbers
+     * @param a - First number
+     * @param b - Second number
+     * @returns The sum of a and b
+     */
+    calculateSum: returnNumber(
+      (state: ModuleState, a: number, b: number, callbackId: number) => {
+        // implementation
+      }
+    ),
+  },
+});
 `;
-  const fileName = "valid.ts";
-  const outputFileName = "valid_source.dart";
+  const fileName = "my-sdk.ts";
+  const outputFileName = "my_sdk_source.dart";
   let filePath: string;
 
   beforeAll(async () => {
