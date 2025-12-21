@@ -1,5 +1,5 @@
 import { exec } from "child_process";
-import { constants } from "fs";
+import { constants, existsSync } from "fs";
 import { access, mkdir, rm, writeFile } from "fs/promises";
 import { join, resolve } from "path";
 import { promisify } from "util";
@@ -70,30 +70,37 @@ export default defineSdk({
   const fileName = "my-sdk.ts";
   const outputFileName = "my_sdk_source.dart";
   let filePath: string;
+  let testDir: string;
+  let outputDir: string;
 
   beforeAll(async () => {
-    // Compile the project first to ensure dist/bin/generate.js exists
-    await execAsync("npm run build");
+    if (!existsSync(BIN_PATH)) {
+      // Compile the project first to ensure dist/bin/generate.js exists
+      await execAsync("npm run build");
+    }
   });
 
   beforeEach(async () => {
-    await mkdir(TEST_DIR, { recursive: true });
-    await mkdir(OUTPUT_DIR, { recursive: true });
+    testDir = join(TEST_DIR, Date.now().toString());
+    outputDir = join(OUTPUT_DIR, Date.now().toString());
 
-    filePath = join(TEST_DIR, fileName);
+    await mkdir(testDir, { recursive: true });
+    await mkdir(outputDir, { recursive: true });
+
+    filePath = join(testDir, fileName);
     await writeFile(filePath, validFileContent);
   });
 
   afterEach(async () => {
-    await rm(TEST_DIR, { recursive: true, force: true });
-    await rm(OUTPUT_DIR, { recursive: true, force: true });
+    await rm(testDir, { recursive: true, force: true });
+    await rm(outputDir, { recursive: true, force: true });
   });
 
   it(
     "should generate dart source for valid input file via CLI",
     async () => {
       // We run the built JS file using node
-      const cmd = `node ${BIN_PATH} --files ${filePath} --output ${OUTPUT_DIR} --verbose`;
+      const cmd = `node ${BIN_PATH} --files ${filePath} --output ${outputDir} --verbose`;
 
       try {
         const output = await execAsync(cmd);
@@ -105,7 +112,7 @@ export default defineSdk({
       }
 
       // Check if output exists
-      const dartFile = join(OUTPUT_DIR, outputFileName);
+      const dartFile = join(outputDir, outputFileName);
 
       // We expect the file to exist.
       // Use access to check existence
@@ -118,7 +125,7 @@ export default defineSdk({
     "should generate dart source for valid input folder via CLI",
     async () => {
       // We run the built JS file using node
-      const cmd = `node ${BIN_PATH} --input ${TEST_DIR} --output ${OUTPUT_DIR} --verbose`;
+      const cmd = `node ${BIN_PATH} --input ${testDir} --output ${outputDir} --verbose`;
 
       try {
         const output = await execAsync(cmd);
@@ -130,7 +137,7 @@ export default defineSdk({
       }
 
       // Check if output exists
-      const dartFile = join(OUTPUT_DIR, outputFileName);
+      const dartFile = join(outputDir, outputFileName);
 
       // We expect the file to exist.
       // Use access to check existence
@@ -141,12 +148,12 @@ export default defineSdk({
 
   it("should generate nested files", async () => {
     const nestedFolder = "nested";
-    await mkdir(join(TEST_DIR, nestedFolder), { recursive: true });
-    await writeFile(join(TEST_DIR, nestedFolder, fileName), validFileContent);
-    await writeFile(join(TEST_DIR, fileName), validFileContent);
+    await mkdir(join(testDir, nestedFolder), { recursive: true });
+    await writeFile(join(testDir, nestedFolder, fileName), validFileContent);
+    await writeFile(join(testDir, fileName), validFileContent);
 
     // We run the built JS file using node
-    const cmd = `node ${BIN_PATH} --input ${TEST_DIR} --output ${OUTPUT_DIR} --verbose`;
+    const cmd = `node ${BIN_PATH} --input ${testDir} --output ${outputDir} --verbose`;
 
     try {
       const output = await execAsync(cmd);
@@ -158,11 +165,11 @@ export default defineSdk({
     }
 
     // Check if output exists
-    const nestedDartFile = join(OUTPUT_DIR, nestedFolder, outputFileName);
+    const nestedDartFile = join(outputDir, nestedFolder, outputFileName);
     await expect(
       access(nestedDartFile, constants.F_OK)
     ).resolves.toBeUndefined();
-    const dartFile = join(OUTPUT_DIR, outputFileName);
+    const dartFile = join(outputDir, outputFileName);
     await expect(access(dartFile, constants.F_OK)).resolves.toBeUndefined();
   });
 });
