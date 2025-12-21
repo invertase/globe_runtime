@@ -4,10 +4,11 @@
 
 import { execSync } from "child_process";
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "fs";
+import { dirname } from "path";
+import { pascalCase } from "text-case";
 import { parseDeclarationFile } from "./ast-parser";
 import { generateDartClass } from "./dart-codegen";
 import type { GenerateDartSourceOptions } from "./types";
-import { dirname } from "path";
 
 /**
  * Generates a Dart source file from TypeScript declaration and JavaScript source
@@ -36,10 +37,7 @@ export function generateDartSourceFile(
   const { initArgs, functions } = result;
 
   // Generate the class name from package name
-  const className = fileName
-    .split("_")
-    .map((s) => s.charAt(0).toUpperCase() + s.slice(1))
-    .join("");
+  const className = pascalCase(fileName);
 
   // Generate Dart code
   const dartCode = generateDartClass({

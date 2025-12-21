@@ -3,12 +3,13 @@ import { existsSync } from "fs";
 import { mkdtemp, rm } from "fs/promises";
 import { glob } from "glob";
 import { tmpdir } from "os";
-import { basename, join, resolve, relative, dirname } from "path";
+import { basename, dirname, join, relative, resolve } from "path";
+import { snakeCase } from "text-case";
 import { build, defineConfig } from "tsdown";
+import { ILogObj, Logger } from "tslog";
 import { parseArgs } from "util";
 import { version } from "../package.json";
 import { generateDartSourceFile } from "../src/index";
-import { Logger, ILogObj } from "tslog";
 
 // Helper to bundle and generate
 async function run() {
@@ -158,7 +159,10 @@ Options:
             dtsFile = join(tempDir, `${name}.d.ts`);
           }
 
-          const outputPath = join(outputFolder, `${relativeName}_source.dart`);
+          const outputPath = join(
+            outputFolder,
+            `${snakeCase(relativeName)}_source.dart`
+          );
           logger.debug("Output path:", outputPath);
 
           try {
