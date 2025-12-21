@@ -318,14 +318,13 @@ export interface SdkDefinition<
 /**
  * The resolved SDK type after calling defineSdk().
  */
-export type Sdk<
-  InitArgs extends readonly unknown[],
-  State,
+export interface Sdk<
+  InitFn extends (...args: any) => any,
   Fns extends Record<string, any>
-> = {
-  init: (...args: InitArgs) => State;
+> {
+  init: InitFn;
   functions: Fns;
-};
+}
 
 /**
  * Typed SDK creator.
@@ -343,10 +342,16 @@ export type Sdk<
  * All worker functions MUST return DartReturn<T> | DartStreamReturn<T>.
  */
 export function defineSdk<
-  InitFn extends (...args: any) => any = () => void,
-  Fns extends Record<string, any>,
-  State = ReturnType<InitFn>,
-  InitArgs extends readonly unknown[] = Parameters<InitFn>
->(def: { init?: InitFn; functions: Fns }): Sdk<InitArgs, State, Fns>;
+  Def extends {
+    init?: (...args: any) => any;
+    functions: Record<string, any>;
+  }
+>(
+  def: Def
+): Def &
+  Sdk<
+    Def["init"] extends (...args: any) => any ? Def["init"] : () => void,
+    Def["functions"]
+  >;
 
 export {};
