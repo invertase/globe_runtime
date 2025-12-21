@@ -16,7 +16,8 @@ function parseCode(code: string) {
   const sourceFile = ts.createSourceFile(
     fileName,
     code,
-    ts.ScriptTarget.Latest
+    ts.ScriptTarget.Latest,
+    true
   );
   const defaultCompilerHost = ts.createCompilerHost({});
 
@@ -51,7 +52,7 @@ describe("ast-parser", () => {
   describe("parseInitArgsAndFunctions", () => {
     it("should parse simple init args and functions with DartReturn", () => {
       const code = `
-      declare const _default: Sdk<[string, number], any, {
+      declare const _default: Sdk<(arg1: string, arg2: number) => any, {
         hello: (state: any, name: string, callbackId: number) => DartReturn<string>;
       }>;
       
@@ -84,7 +85,7 @@ describe("ast-parser", () => {
 
     it("should parse streaming functions with DartStreamReturn", () => {
       const code = `
-      declare const _default: Sdk<[], any, {
+      declare const _default: Sdk<() => void, {
         streamData: (state: any, count: number, callbackId: number) => DartStreamReturn<string>;
       }>;
       
@@ -112,7 +113,7 @@ describe("ast-parser", () => {
 
     it("should handle multiple functions with mixed return types", () => {
       const code = `
-      declare const _default: Sdk<[], any, {
+      declare const _default: Sdk<() => void, {
         getString: (state: any, callbackId: number) => DartReturn<string>;
         getNumber: (state: any, callbackId: number) => DartReturn<number>;
         streamStrings: (state: any, callbackId: number) => DartStreamReturn<string>;
@@ -152,7 +153,7 @@ describe("ast-parser", () => {
 
     it("should handle named tuples", () => {
       const code = `
-      declare const _default: Sdk<[apiKey: string, timeout: number], any, {}>;
+      declare const _default: Sdk<(apiKey: string, timeout: number) => any, {}>;
       export { _default as default };
     `;
 
@@ -172,7 +173,7 @@ describe("ast-parser", () => {
 
     it("should handle snake_case to camelCase conversion", () => {
       const code = `
-      declare const _default: Sdk<[api_key: string], any, {
+      declare const _default: Sdk<(api_key: string) => any, {
         get_user_data: (state: any, user_id: string, callbackId: number) => DartReturn<string>;
       }>;
       export { _default as default };
@@ -194,7 +195,7 @@ describe("ast-parser", () => {
 
     it("should handle functions with no arguments (only state and callbackId)", () => {
       const code = `
-      declare const _default: Sdk<[], any, {
+      declare const _default: Sdk<() => void, {
         noArgs: (state: any, callbackId: number) => DartReturn<string>;
       }>;
       export { _default as default };
@@ -214,7 +215,7 @@ describe("ast-parser", () => {
 
     it("should handle functions with multiple arguments", () => {
       const code = `
-      declare const _default: Sdk<[], any, {
+      declare const _default: Sdk<() => void, {
         multipleArgs: (state: any, a: string, b: number, c: boolean, callbackId: number) => DartReturn<string>;
       }>;
       export { _default as default };
@@ -237,7 +238,7 @@ describe("ast-parser", () => {
 
     it("should handle void return type", () => {
       const code = `
-      declare const _default: Sdk<[], any, {
+      declare const _default: Sdk<() => void, {
         doSomething: (state: any, callbackId: number) => void;
       }>;
       export { _default as default };
@@ -258,7 +259,7 @@ describe("ast-parser", () => {
 
     it("should handle Uint8Array return type", () => {
       const code = `
-      declare const _default: Sdk<[], any, {
+      declare const _default: Sdk<() => void, {
         getBytes: (state: any, callbackId: number) => DartReturn<Uint8Array>;
       }>;
       export { _default as default };
@@ -278,7 +279,7 @@ describe("ast-parser", () => {
 
     it("should handle DartMap return type", () => {
       const code = `
-      declare const _default: Sdk<[], any, {
+      declare const _default: Sdk<() => void, {
         getMap: (state: any, callbackId: number) => DartReturn<DartMap>;
       }>;
       export { _default as default };
@@ -299,7 +300,7 @@ describe("ast-parser", () => {
 
     it("should handle DartList return type", () => {
       const code = `
-      declare const _default: Sdk<[], any, {
+      declare const _default: Sdk<() => void, {
         getList: (state: any, callbackId: number) => DartReturn<DartList>;
       }>;
       export { _default as default };
@@ -320,7 +321,7 @@ describe("ast-parser", () => {
 
     it("should handle DartSet return type", () => {
       const code = `
-      declare const _default: Sdk<[], any, {
+      declare const _default: Sdk<() => void, {
         getSet: (state: any, callbackId: number) => DartReturn<DartSet>;
       }>;
       export { _default as default };
@@ -341,7 +342,7 @@ describe("ast-parser", () => {
 
     it("should handle streaming DartMap", () => {
       const code = `
-      declare const _default: Sdk<[], any, {
+      declare const _default: Sdk<() => void, {
         streamMaps: (state: any, callbackId: number) => DartStreamReturn<DartMap>;
       }>;
       export { _default as default };
@@ -363,7 +364,7 @@ describe("ast-parser", () => {
 
     it("should handle streaming DartList", () => {
       const code = `
-      declare const _default: Sdk<[], any, {
+      declare const _default: Sdk<() => void, {
         streamLists: (state: any, callbackId: number) => DartStreamReturn<DartList>;
       }>;
       export { _default as default };
@@ -385,7 +386,7 @@ describe("ast-parser", () => {
 
     it("should handle streaming DartSet", () => {
       const code = `
-      declare const _default: Sdk<[], any, {
+      declare const _default: Sdk<() => void, {
         streamSets: (state: any, callbackId: number) => DartStreamReturn<DartSet>;
       }>;
       export { _default as default };
@@ -407,7 +408,7 @@ describe("ast-parser", () => {
 
     it("should handle array function return type", () => {
       const code = `
-      declare const _default: Sdk<[], any, {
+      declare const _default: Sdk<() => void, {
         getArray: (state: any, callbackId: number) => DartReturn<string[]>;
       }>;
       export { _default as default };
@@ -428,7 +429,7 @@ describe("ast-parser", () => {
 
     it("should handle array function args", () => {
       const code = `
-      declare const _default: Sdk<[], any, {
+      declare const _default: Sdk<() => void, {
         getArray: (state: any, array: string[], callbackId: number) => DartReturn<string[]>;
       }>;
       export { _default as default };`;
@@ -448,7 +449,7 @@ describe("ast-parser", () => {
 
     it("should handle Array<T> generic syntax", () => {
       const code = `
-      declare const _default: Sdk<[], any, {
+      declare const _default: Sdk<() => void, {
         getNumbers: (state: any, callbackId: number) => DartReturn<Array<number>>;
       }>;
       export { _default as default };
@@ -468,7 +469,7 @@ describe("ast-parser", () => {
 
     it("should handle nested arrays", () => {
       const code = `
-      declare const _default: Sdk<[], any, {
+      declare const _default: Sdk<() => void, {
         getMatrix: (state: any, callbackId: number) => DartReturn<number[][]>;
       }>;
       export { _default as default };
@@ -488,7 +489,7 @@ describe("ast-parser", () => {
 
     it("should handle streaming arrays", () => {
       const code = `
-      declare const _default: Sdk<[], any, {
+      declare const _default: Sdk<() => void, {
         streamArrays: (state: any, callbackId: number) => DartStreamReturn<boolean[]>;
       }>;
       export { _default as default };
@@ -511,7 +512,7 @@ describe("ast-parser", () => {
       const code = `
       type MyString = string;
       type MyNumber = number;
-      declare const _default: Sdk<[MyString, MyNumber], any, {}>;
+      declare const _default: Sdk<(arg1: MyString, arg2: MyNumber) => any, {}>;
       export { _default as default };
     `;
 
@@ -531,7 +532,7 @@ describe("ast-parser", () => {
     it("should resolve type aliases in function arguments", () => {
       const code = `
       type UserId = string;
-      declare const _default: Sdk<[], any, {
+      declare const _default: Sdk<() => void, {
         getUser: (state: any, id: UserId, callbackId: number) => DartReturn<string>;
       }>;
       export { _default as default };
@@ -552,7 +553,7 @@ describe("ast-parser", () => {
     it("should resolve type aliases in return types", () => {
       const code = `
       type ResponseData = string;
-      declare const _default: Sdk<[], any, {
+      declare const _default: Sdk<() => void, {
         getData: (state: any, callbackId: number) => DartReturn<ResponseData>;
       }>;
       export { _default as default };
@@ -591,7 +592,7 @@ describe("ast-parser", () => {
 
     it("should return false for wrong export name", () => {
       const code = `
-        declare const someOtherName: Sdk<[], any, {}>;
+        declare const someOtherName: Sdk<() => void, {}>;
         export { someOtherName as default };
       `;
       const { sf } = parseCode(code);
@@ -609,7 +610,7 @@ describe("ast-parser", () => {
 
     it("should return false for insufficient type arguments", () => {
       const code = `
-        declare const _default: Sdk<[], any>;
+        declare const _default: Sdk<() => void>;
         export { _default as default };
       `;
       const { sf } = parseCode(code);
@@ -623,7 +624,7 @@ describe("ast-parser", () => {
       const filePath = path.join(tmpDir, `test-${Date.now()}.d.ts`);
       const code = `
         type MyType = string;
-        declare const _default: Sdk<[MyType], any, {
+        declare const _default: Sdk<(arg: MyType) => any, {
           foo: (state: any, arg: MyType, callbackId: number) => DartReturn<number>;
         }>;
         export { _default as default };
@@ -648,7 +649,7 @@ describe("ast-parser", () => {
       const tmpDir = os.tmpdir();
       const filePath = path.join(tmpDir, `test-stream-${Date.now()}.d.ts`);
       const code = `
-        declare const _default: Sdk<[], any, {
+        declare const _default: Sdk<() => void, {
           streamData: (state: any, callbackId: number) => DartStreamReturn<string>;
         }>;
         export { _default as default };
@@ -726,7 +727,7 @@ describe("ast-parser", () => {
   describe("edge cases", () => {
     it("should handle empty init args", () => {
       const code = `
-        declare const _default: Sdk<[], any, {
+        declare const _default: Sdk<() => void, {
           test: (state: any, callbackId: number) => DartReturn<string>;
         }>;
         export { _default as default };
@@ -745,7 +746,7 @@ describe("ast-parser", () => {
 
     it("should handle empty functions object", () => {
       const code = `
-        declare const _default: Sdk<[], any, {}>;
+        declare const _default: Sdk<() => void, {}>;
         export { _default as default };
       `;
       const { sf, checker } = parseCode(code);
@@ -764,7 +765,7 @@ describe("ast-parser", () => {
       const code = `
         type InnerType = string;
         type OuterType = InnerType;
-        declare const _default: Sdk<[OuterType], any, {}>;
+        declare const _default: Sdk<(arg: OuterType) => any, {}>;
         export { _default as default };
       `;
       const { sf, checker } = parseCode(code);
@@ -781,7 +782,7 @@ describe("ast-parser", () => {
 
     it("should handle functions with Promise return type", () => {
       const code = `
-        declare const _default: Sdk<[], any, {
+        declare const _default: Sdk<() => void, {
           asyncFunc: (state: any, callbackId: number) => Promise<void>;
         }>;
         export { _default as default };
@@ -801,7 +802,7 @@ describe("ast-parser", () => {
 
     it("should handle namespaced DartReturn types (tsdown bundler)", () => {
       const code = `
-        declare const _default: Sdk<[], any, {
+        declare const _default: Sdk<() => void, {
           getString: (state: any, callbackId: number) => _globe_runtime_types0.DartReturn<string>;
           getMap: (state: any, callbackId: number) => _globe_runtime_types0.DartReturn<_globe_runtime_types0.DartMap>;
         }>;
@@ -823,7 +824,7 @@ describe("ast-parser", () => {
 
     it("should handle namespaced DartStreamReturn types (tsdown bundler)", () => {
       const code = `
-        declare const _default: Sdk<[], any, {
+        declare const _default: Sdk<() => void, {
           streamString: (state: any, callbackId: number) => _namespace.DartStreamReturn<string>;
           streamList: (state: any, callbackId: number) => _namespace.DartStreamReturn<_namespace.DartList>;
         }>;
@@ -847,7 +848,7 @@ describe("ast-parser", () => {
 
     it("should handle all namespaced collection types", () => {
       const code = `
-        declare const _default: Sdk<[], any, {
+        declare const _default: Sdk<() => void, {
           getMap: (state: any, callbackId: number) => _types.DartReturn<_types.DartMap>;
           getList: (state: any, callbackId: number) => _types.DartReturn<_types.DartList>;
           getSet: (state: any, callbackId: number) => _types.DartReturn<_types.DartSet>;
@@ -867,6 +868,45 @@ describe("ast-parser", () => {
       expect(result.functions[0].returnType.dart).toBe("Map<dynamic, dynamic>");
       expect(result.functions[1].returnType.dart).toBe("List<dynamic>");
       expect(result.functions[2].returnType.dart).toBe("Set<dynamic>");
+    });
+
+    it("should preserve documentation and parameter names in init function", () => {
+      const code = `
+        declare const _default: {
+          /**
+           * Initialize the SDK
+           * @param apiKey - Your API key
+           * @param timeout - Request timeout
+           */
+          init: (apiKey: string, timeout: number) => any;
+        } & Sdk<(apiKey: string, timeout: number) => any, {
+          /**
+           * Get user data
+           * @param id - User ID
+           */
+          getUser: (state: any, id: string, callbackId: number) => DartReturn<string>;
+        }>;
+        export { _default as default };
+      `;
+      const { sf, checker } = parseCode(code);
+      const typeAliasMap = parseTypeAliasMap(sf);
+
+      const result = parseInitArgsAndFunctions({
+        sourceFile: sf,
+        checker,
+        typeAliasMap,
+      });
+
+      expect(result.initDescription).toBe("Initialize the SDK");
+      expect(result.initArgs).toHaveLength(2);
+      expect(result.initArgs[0].name).toBe("apiKey");
+      expect(result.initArgs[0].description).toBe("Your API key");
+      expect(result.initArgs[1].name).toBe("timeout");
+      expect(result.initArgs[1].description).toBe("Request timeout");
+
+      expect(result.functions).toHaveLength(1);
+      expect(result.functions[0].description).toBe("Get user data");
+      expect(result.functions[0].args[0].description).toBe("User ID");
     });
   });
 });
