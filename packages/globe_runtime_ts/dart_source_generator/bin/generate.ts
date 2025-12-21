@@ -3,7 +3,7 @@ import { existsSync } from "fs";
 import { mkdtemp, rm } from "fs/promises";
 import { glob } from "glob";
 import { tmpdir } from "os";
-import { basename, join, resolve, relative } from "path";
+import { basename, join, resolve, relative, dirname } from "path";
 import { build, defineConfig } from "tsdown";
 import { parseArgs } from "util";
 import { version } from "../package.json";
@@ -105,16 +105,26 @@ Options:
   for (const file of inputFiles) {
     const filePath = resolve(file);
     logger.debug("Processing file:", filePath);
-    const outputFolder = resolve(values.output!);
-    logger.debug("Output folder:", outputFolder);
-    const relativePath = filePath.replace(outputFolder, "").replace(/^\//, "");
+    // Get file folder path
+    const fileFolder = values.input ?? dirname(filePath);
+    logger.debug("File folder:", fileFolder);
+
+    // Get relative path of input file from file folder
+    const relativePath = relative(fileFolder, filePath);
     logger.debug("Relative path:", relativePath);
 
-    // Remove ts or js extension
-    const outputName = relativePath.replace(/\.[t,j]s$/, "");
-    // Use basename as key.
-    const name = basename(outputName);
+    const relativeName = relativePath.replace(/\.[t,j]s$/, "");
+    logger.debug("Relative name:", relativeName);
 
+    // Use basename as key.
+    const name = basename(relativeName);
+    logger.debug("Name:", name);
+
+    // Get output folder
+    const outputFolder = resolve(values.output!);
+    logger.debug("Output folder:", outputFolder);
+
+    // Display the relative path to the file being processed
     logger.info(`\x1b[34mProcessing\x1b[0m \x1b[32m${relativePath}\x1b[0m`);
 
     await new Promise<void>(async (resolveGenerate, rejectGenerate) => {
@@ -148,7 +158,8 @@ Options:
             dtsFile = join(tempDir, `${name}.d.ts`);
           }
 
-          const outputPath = join(outputFolder, `${outputName}_source.dart`);
+          const outputPath = join(outputFolder, `${relativeName}_source.dart`);
+          logger.debug("Output path:", outputPath);
 
           try {
             const success = generateDartSourceFile({
