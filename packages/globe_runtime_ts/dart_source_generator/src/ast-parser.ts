@@ -28,7 +28,13 @@ export function parseDeclarationFile(dtsFilePath: string): ParseResult | null {
     const { initArgsType, funcsType } = getSdkTypes(sourceFile, typeAliasMap);
 
     // Parse SDK types
-    return parseSdkTypes({ initArgsType, typeAliasMap, checker, funcsType });
+    return parseSdkTypes({
+      initArgsType,
+      typeAliasMap,
+      checker,
+      funcsType,
+      sourceFile,
+    });
   } catch (error) {
     console.error(error);
     return null;
@@ -56,7 +62,13 @@ export function parseInitArgsAndFunctions({
   const { initArgsType, funcsType } = getSdkTypes(sourceFile, typeAliasMap);
 
   // Parse SDK types
-  return parseSdkTypes({ initArgsType, typeAliasMap, checker, funcsType });
+  return parseSdkTypes({
+    initArgsType,
+    typeAliasMap,
+    checker,
+    funcsType,
+    sourceFile,
+  });
 }
 
 /**
@@ -287,7 +299,7 @@ function parseSdkTypes({
   funcsType,
   sourceFile,
 }: {
-  initArgsType: ts.TupleTypeNode;
+  initArgsType: ts.TupleTypeNode | ts.NodeArray<ts.ParameterDeclaration>;
   typeAliasMap: Map<string, ts.TypeNode>;
   checker: ts.TypeChecker;
   funcsType: ts.TypeNode;
@@ -305,13 +317,24 @@ function parseSdkTypes({
     }
   }
 
-  const initArgs = initArgsType.elements.map((el): ArgType => {
-    let type = el;
+  const elements = ts.isTupleTypeNode(initArgsType as ts.Node)
+    ? (initArgsType as ts.TupleTypeNode).elements
+    : (initArgsType as ts.NodeArray<ts.ParameterDeclaration>);
+
+  const initArgs = (elements as readonly any[]).map((el): ArgType => {
+    let type: ts.TypeNode;
     let name = "arg";
-    if (ts.isNamedTupleMember(el)) {
+
+    if (ts.isParameter(el)) {
+      name = el.name.getText();
+      type = el.type || (checker.getTypeAtLocation(el) as any);
+    } else if (ts.isNamedTupleMember(el)) {
       name = el.name.getText();
       type = el.type;
+    } else {
+      type = el as ts.TypeNode;
     }
+
     const resolvedType = resolveTypeAlias(typeAliasMap, type);
     const camelName = camelCase(name);
 
@@ -386,6 +409,38 @@ function parseSdkTypes({
  * @returns Init function node or undefined
  */
 function findInitFunction(sourceFile: ts.SourceFile): ts.Node | undefined {
+  // First look for the _default variable declaration in the .d.ts
+  const variableStatement = sourceFile.statements.find((stmt) =>
+    ts.isVariableStatement(stmt)
+  ) as ts.VariableStatement;
+
+  if (variableStatement) {
+    const decl = variableStatement.declarationList.declarations[0];
+    if (decl.name.getText() === "_default" && decl.type) {
+      // Check if it's an intersection type (typeof def & Sdk<InitFn, Fns>)
+      let type = decl.type;
+
+      const typesToSearch = ts.isIntersectionTypeNode(type)
+        ? type.types
+        : [type];
+
+      for (const t of typesToSearch) {
+        if (ts.isTypeLiteralNode(t)) {
+          const initProp = t.members.find((m) => {
+            return (
+              (ts.isPropertySignature(m) || ts.isMethodSignature(m)) &&
+              m.name.getText() === "init"
+            );
+          });
+          if (initProp) {
+            return initProp;
+          }
+        }
+      }
+    }
+  }
+
+  // Fallback to searching for object literal (useful for tests on raw .ts files)
   let initFunction: ts.Node | undefined;
 
   function visit(node: ts.Node) {
@@ -426,7 +481,10 @@ function findInitFunction(sourceFile: ts.SourceFile): ts.Node | undefined {
 export function getSdkTypes(
   sourceFile: ts.SourceFile,
   typeAliasMap: Map<string, ts.TypeNode> = new Map()
-): { initArgsType: ts.TupleTypeNode; funcsType: ts.TypeNode } {
+): {
+  initArgsType: ts.TupleTypeNode | ts.NodeArray<ts.ParameterDeclaration>;
+  funcsType: ts.TypeNode;
+} {
   // Get the variable statement in the source file,
   // only one expected exported as _default
   const variableStatement = sourceFile.statements.find((stmt) =>
@@ -443,33 +501,67 @@ export function getSdkTypes(
     throw new Error("Could not find default export in declaration file");
   }
 
-  // Check if it's the Sdk type (i.e. Sdk<...>)
-  if (!decl.type || !ts.isTypeReferenceNode(decl.type)) {
+  // Check if it has a type
+  if (!decl.type) {
     throw new Error("Could not find Sdk type in declaration file");
   }
 
-  // Check if it has 3 type arguments (i.e. Sdk<InitArgs, State, Fns>)
-  if ((decl.type.typeArguments?.length ?? 0) < 3) {
+  // Handle intersection type: typeof def & Sdk<InitFn, Fns>
+  let sdkType: ts.TypeReferenceNode | undefined;
+  let funcsType: ts.TypeNode | undefined;
+
+  const types = ts.isIntersectionTypeNode(decl.type)
+    ? decl.type.types
+    : [decl.type];
+
+  for (const t of types) {
+    if (ts.isTypeReferenceNode(t) && t.typeName.getText().includes("Sdk")) {
+      sdkType = t;
+    } else if (ts.isTypeLiteralNode(t)) {
+      // Potentially the 'functions' part if it was inlined
+      const funcsProp = t.members.find(
+        (m) => ts.isPropertySignature(m) && m.name.getText() === "functions"
+      ) as ts.PropertySignature;
+      if (funcsProp?.type) {
+        funcsType = funcsProp.type;
+      }
+    }
+  }
+
+  if (!sdkType) {
+    throw new Error("Could not find Sdk type reference in declaration file");
+  }
+
+  // Check if it has 2 type arguments (i.e. Sdk<InitFn, Fns>)
+  if ((sdkType.typeArguments?.length ?? 0) < 2) {
     throw new Error(
-      "Sdk type must have 3 type arguments. expected Sdk<InitArgs, State, Fns>"
+      "Sdk type must have at least 2 type arguments. expected Sdk<InitFn, Fns>"
     );
   }
 
   // Get type arguments
-  let [initArgsType, _stateType, funcsType] = decl!.type.typeArguments!;
+  const typeArgs = sdkType.typeArguments!;
+  let initFnType = typeArgs[0];
+  funcsType = funcsType || typeArgs[1];
 
   // Resolve type aliases, if present
-  initArgsType = resolveTypeAlias(typeAliasMap, initArgsType);
+  initFnType = resolveTypeAlias(typeAliasMap, initFnType);
   funcsType = resolveTypeAlias(typeAliasMap, funcsType);
 
-  // Check if InitArgs is a tuple type
-  if (!ts.isTupleTypeNode(initArgsType)) {
-    throw new Error(
-      `InitArgs must be a tuple type found: ${initArgsType.getText()}`
-    );
+  // InitFn can be a FunctionTypeNode or a TypeReference (if it's a named function)
+  if (ts.isFunctionTypeNode(initFnType)) {
+    return { initArgsType: initFnType.parameters, funcsType };
   }
 
-  return { initArgsType, funcsType };
+  // Check if InitFn is a tuple type (old way, for compatibility if needed,
+  // though we are upgrading everything)
+  if (ts.isTupleTypeNode(initFnType)) {
+    return { initArgsType: initFnType, funcsType };
+  }
+
+  throw new Error(
+    `InitFn must be a function type. found: ${initFnType.getText()}`
+  );
 }
 
 /**

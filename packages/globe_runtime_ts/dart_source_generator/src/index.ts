@@ -34,7 +34,7 @@ export function generateDartSourceFile(
     return false;
   }
 
-  const { initArgs, functions } = result;
+  const { initArgs, functions, initDescription } = result;
 
   // Generate the class name from package name
   const className = pascalCase(fileName);
@@ -46,6 +46,7 @@ export function generateDartSourceFile(
     jsSource,
     initArgs,
     functions,
+    initDescription,
   });
 
   // Ensure output directory exists
