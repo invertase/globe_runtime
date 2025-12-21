@@ -20,6 +20,8 @@ export interface ArgType {
   name: string;
   /** Dart type mapping */
   type: DartType;
+  /** Optional parameter documentation */
+  description?: string;
 }
 
 /**
@@ -36,6 +38,10 @@ export interface FuncType {
   args: ArgType[];
   /** Whether the function returns a stream */
   isStream?: boolean;
+  /** Optional function documentation */
+  description?: string;
+  /** Optional return value documentation */
+  returnDescription?: string;
 }
 
 /**
@@ -46,6 +52,8 @@ export interface ParseResult {
   initArgs: ArgType[];
   /** Worker functions */
   functions: FuncType[];
+  /** Optional init function documentation */
+  initDescription?: string;
 }
 
 /**

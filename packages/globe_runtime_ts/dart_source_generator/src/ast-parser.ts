@@ -5,7 +5,7 @@
 import ts from "typescript";
 import { mapTsTypeToDart } from "./type-mapper";
 import type { ArgType, FuncType, ParseResult } from "./types";
-import { toCamelCase } from "./utils";
+import { camelCase } from "text-case";
 
 /**
  * Parses a TypeScript declaration file to extract init function arguments and worker functions
@@ -148,25 +148,163 @@ function mapDartCollectionType(
 }
 
 /**
- * Parses a TypeScript declaration file to extract init function arguments and worker functions
- * @param params - Object containing init arguments type, type alias map, checker, and functions type
- * @param params.initArgsType - Init arguments type
- * @param params.typeAliasMap - Map of type aliases
- * @param params.checker - TypeScript type checker
- * @param params.funcsType - Functions type
- * @returns Parsed init arguments and functions
+ * Extracts JSDoc comment text from a node
+ * @param node - TypeScript node
+ * @returns Cleaned documentation text or undefined
+ */
+function extractJsDocComment(node: ts.Node): string | undefined {
+  const jsDocTags = ts.getJSDocTags(node);
+  const jsDocComments = ts.getJSDocCommentsAndTags(node);
+
+  if (jsDocComments.length === 0) return undefined;
+
+  // Get the first JSDoc comment
+  const firstComment = jsDocComments[0];
+  if (!ts.isJSDoc(firstComment)) return undefined;
+
+  // Extract the comment text
+  const commentText = firstComment.comment;
+
+  if (typeof commentText === "string") {
+    return cleanJsDocComment(commentText);
+  }
+
+  // Handle structured JSDoc comments (array of JSDocText/JSDocLink nodes)
+  if (Array.isArray(commentText)) {
+    const text = commentText
+      .map((part) => {
+        if (typeof part === "string") return part;
+        if ("text" in part) return part.text;
+        return "";
+      })
+      .join("");
+    return cleanJsDocComment(text);
+  }
+
+  return undefined;
+}
+
+/**
+ * Cleans JSDoc comment text by removing asterisks and extra whitespace
+ * while preserving paragraph breaks
+ * @param text - Raw JSDoc comment text
+ * @returns Cleaned text with preserved paragraphs
+ */
+function cleanJsDocComment(text: string): string {
+  const lines = text.split("\n").map((line) => line.trim());
+
+  // Group lines into paragraphs (separated by empty lines)
+  const paragraphs: string[] = [];
+  let currentParagraph: string[] = [];
+
+  for (const line of lines) {
+    if (line.length === 0) {
+      // Empty line - end current paragraph
+      if (currentParagraph.length > 0) {
+        paragraphs.push(currentParagraph.join(" "));
+        currentParagraph = [];
+      }
+    } else {
+      currentParagraph.push(line);
+    }
+  }
+
+  // Add the last paragraph if any
+  if (currentParagraph.length > 0) {
+    paragraphs.push(currentParagraph.join(" "));
+  }
+
+  // Join paragraphs with double newline
+  return paragraphs.join("\n\n").trim();
+}
+
+/**
+ * Extracts parameter documentation from JSDoc
+ * @param node - TypeScript node
+ * @returns Map of parameter name to documentation
+ */
+function extractParamDocs(node: ts.Node): Map<string, string> {
+  const paramDocs = new Map<string, string>();
+  const jsDocTags = ts.getJSDocTags(node);
+
+  for (const tag of jsDocTags) {
+    if (tag.tagName.text === "param" && ts.isJSDocParameterTag(tag)) {
+      const paramName = tag.name.getText();
+      const comment = tag.comment;
+
+      let text = "";
+      if (typeof comment === "string") {
+        text = comment;
+      } else if (Array.isArray(comment)) {
+        text = comment
+          .map((part) => (typeof part === "string" ? part : part.text))
+          .join("");
+      }
+
+      // Remove leading dash and whitespace that JSDoc often includes
+      text = text.replace(/^\s*-\s*/, "");
+
+      paramDocs.set(paramName, cleanJsDocComment(text));
+    }
+  }
+
+  return paramDocs;
+}
+
+/**
+ * Extracts return documentation from JSDoc
+ * @param node - TypeScript node
+ * @returns Return documentation or undefined
+ */
+function extractReturnDoc(node: ts.Node): string | undefined {
+  const jsDocTags = ts.getJSDocTags(node);
+
+  for (const tag of jsDocTags) {
+    if (tag.tagName.text === "returns" || tag.tagName.text === "return") {
+      const comment = tag.comment;
+
+      if (typeof comment === "string") {
+        return cleanJsDocComment(comment);
+      } else if (Array.isArray(comment)) {
+        const text = comment
+          .map((part) => (typeof part === "string" ? part : part.text))
+          .join("");
+        return cleanJsDocComment(text);
+      }
+    }
+  }
+
+  return undefined;
+}
+
+/**
+ * Parses SDK types with documentation
  */
 function parseSdkTypes({
   initArgsType,
   typeAliasMap,
   checker,
   funcsType,
+  sourceFile,
 }: {
   initArgsType: ts.TupleTypeNode;
   typeAliasMap: Map<string, ts.TypeNode>;
   checker: ts.TypeChecker;
   funcsType: ts.TypeNode;
+  sourceFile?: ts.SourceFile;
 }) {
+  // Extract init function documentation if sourceFile is provided
+  let initDescription: string | undefined;
+  let initParamDocs = new Map<string, string>();
+
+  if (sourceFile) {
+    const initFunction = findInitFunction(sourceFile);
+    if (initFunction) {
+      initDescription = extractJsDocComment(initFunction);
+      initParamDocs = extractParamDocs(initFunction);
+    }
+  }
+
   const initArgs = initArgsType.elements.map((el): ArgType => {
     let type = el;
     let name = "arg";
@@ -175,9 +313,12 @@ function parseSdkTypes({
       type = el.type;
     }
     const resolvedType = resolveTypeAlias(typeAliasMap, type);
+    const camelName = camelCase(name);
+
     return {
-      name: toCamelCase(name),
+      name: camelName,
       type: mapTsTypeToDart(resolvedType, checker, typeAliasMap),
+      description: initParamDocs.get(name) || initParamDocs.get(camelName),
     };
   });
 
@@ -186,7 +327,7 @@ function parseSdkTypes({
     throw new Error("Fns must be a type literal node");
   }
 
-  // Extract Fns
+  // Extract Fns with documentation
   const functions: FuncType[] = [];
   for (const member of funcsType.members) {
     if (
@@ -196,6 +337,11 @@ function parseSdkTypes({
     ) {
       const funcName = member.name.getText();
       const sig = member.type;
+
+      // Extract documentation
+      const description = extractJsDocComment(member);
+      const paramDocs = extractParamDocs(member);
+      const returnDoc = extractReturnDoc(member);
 
       // Extract return type from DartReturn<T> or DartStreamReturn<T>
       const { type: retType, isStream } = extractDartReturnType(
@@ -209,23 +355,67 @@ function parseSdkTypes({
         (_, i) => i !== 0 && i !== sig.parameters.length - 1
       );
 
-      // Format args
-      const args = params.map((p) => ({
-        name: toCamelCase(p.name.getText()),
-        type: mapTsTypeToDart(p.type, checker, typeAliasMap),
-      }));
+      // Format args with documentation
+      const args = params.map((p) => {
+        const paramName = p.name.getText();
+        return {
+          name: camelCase(paramName),
+          type: mapTsTypeToDart(p.type, checker, typeAliasMap),
+          description: paramDocs.get(paramName),
+        };
+      });
 
       functions.push({
         name: funcName,
-        dartName: toCamelCase(funcName),
+        dartName: camelCase(funcName),
         returnType: retType,
-        isStream, // Add stream flag if needed for your use case
+        isStream,
         args,
+        description,
+        returnDescription: returnDoc,
       });
     }
   }
 
-  return { initArgs, functions };
+  return { initArgs, functions, initDescription };
+}
+
+/**
+ * Finds the init function in the source file
+ * @param sourceFile - Source file to search
+ * @returns Init function node or undefined
+ */
+function findInitFunction(sourceFile: ts.SourceFile): ts.Node | undefined {
+  let initFunction: ts.Node | undefined;
+
+  function visit(node: ts.Node) {
+    // Look for object literal with 'init' property
+    if (ts.isObjectLiteralExpression(node)) {
+      for (const prop of node.properties) {
+        if (
+          ts.isPropertyAssignment(prop) ||
+          ts.isMethodDeclaration(prop) ||
+          ts.isShorthandPropertyAssignment(prop)
+        ) {
+          const name = prop.name?.getText();
+          if (name === "init") {
+            // Found the init property
+            if (ts.isPropertyAssignment(prop)) {
+              initFunction = prop.initializer;
+            } else if (ts.isMethodDeclaration(prop)) {
+              initFunction = prop;
+            }
+            return;
+          }
+        }
+      }
+    }
+
+    ts.forEachChild(node, visit);
+  }
+
+  visit(sourceFile);
+  return initFunction;
 }
 
 /**
