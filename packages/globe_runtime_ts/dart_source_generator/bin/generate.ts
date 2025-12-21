@@ -159,9 +159,13 @@ Options:
             dtsFile = join(tempDir, `${name}.d.ts`);
           }
 
+          const outputFolderPath = dirname(join(outputFolder, relativeName));
+          logger.debug("Output folder path:", outputFolderPath);
+
+          const outputBaseName = snakeCase(basename(relativeName));
           const outputPath = join(
-            outputFolder,
-            `${snakeCase(relativeName)}_source.dart`
+            outputFolderPath,
+            `${outputBaseName}_source.dart`
           );
           logger.debug("Output path:", outputPath);
 
