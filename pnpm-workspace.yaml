@@ -4,6 +4,7 @@ packages:
 
 catalog:
   tsup: 8.5.1
+  tsdown: 0.18.1
   typescript: 5.9.3
   fs: 0.0.1-security
   path: 0.12.7
