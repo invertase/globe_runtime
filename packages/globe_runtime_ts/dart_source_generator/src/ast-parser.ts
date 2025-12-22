@@ -139,22 +139,6 @@ function mapDartCollectionType(
   // Resolve type aliases first
   const resolvedType = resolveTypeAlias(typeAliasMap, typeNode);
 
-  // Check if it's a type reference to DartMap, DartList, or DartSet
-  // if (ts.isTypeReferenceNode(resolvedType)) {
-  //   const typeName = resolvedType.typeName.getText();
-
-  //   // Handle namespaced types like _globe_runtime_types0.DartMap
-  //   if (typeName.includes("DartMap")) {
-  //     return { dart: "Map<dynamic, dynamic>", ffi: "FFIJsonPayload" };
-  //   }
-  //   if (typeName.includes("DartList")) {
-  //     return { dart: "List<dynamic>", ffi: "FFIJsonPayload" };
-  //   }
-  //   if (typeName.includes("DartSet")) {
-  //     return { dart: "Set<dynamic>", ffi: "FFIJsonPayload" };
-  //   }
-  // }
-
   // Fall back to standard type mapping
   return mapTsTypeToDart(resolvedType, checker, typeAliasMap);
 }
@@ -165,7 +149,6 @@ function mapDartCollectionType(
  * @returns Cleaned documentation text or undefined
  */
 function extractJsDocComment(node: ts.Node): string | undefined {
-  const jsDocTags = ts.getJSDocTags(node);
   const jsDocComments = ts.getJSDocCommentsAndTags(node);
 
   if (jsDocComments.length === 0) return undefined;
