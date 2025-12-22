@@ -42,7 +42,7 @@ class FullExample {
 
   /// makePrettyBytes function
   ///
-  /// **Returns:** Future<String>
+  /// **Returns:** `Future<String>`
   Future<String> makePrettyBytes(num value) async {
     final completer = Completer<String>();
 
@@ -65,7 +65,7 @@ class FullExample {
 
   /// makePrettyMs function
   ///
-  /// **Returns:** Future<String>
+  /// **Returns:** `Future<String>`
   Future<String> makePrettyMs(num value) async {
     final completer = Completer<String>();
 
@@ -88,7 +88,7 @@ class FullExample {
 
   /// calculateSum function
   ///
-  /// **Returns:** Future<num>
+  /// **Returns:** `Future<num>`
   Future<num> calculateSum(num a, num b) async {
     final completer = Completer<num>();
 
@@ -111,7 +111,7 @@ class FullExample {
 
   /// calculateAverage function
   ///
-  /// **Returns:** Future<num>
+  /// **Returns:** `Future<num>`
   Future<num> calculateAverage(List<num> values) async {
     final completer = Completer<num>();
 
@@ -134,7 +134,7 @@ class FullExample {
 
   /// isValid function
   ///
-  /// **Returns:** Future<bool>
+  /// **Returns:** `Future<bool>`
   Future<bool> isValid(String value) async {
     final completer = Completer<bool>();
 
@@ -157,7 +157,7 @@ class FullExample {
 
   /// generateBytes function
   ///
-  /// **Returns:** Future<List<int>>
+  /// **Returns:** `Future<List<int>>`
   Future<List<int>> generateBytes(num length) async {
     final completer = Completer<List<int>>();
 
@@ -180,7 +180,7 @@ class FullExample {
 
   /// getMetadata function
   ///
-  /// **Returns:** Future<Map<dynamic, dynamic>>
+  /// **Returns:** `Future<Map<dynamic, dynamic>>`
   Future<Map<dynamic, dynamic>> getMetadata(String id) async {
     final completer = Completer<Map<dynamic, dynamic>>();
 
@@ -203,7 +203,7 @@ class FullExample {
 
   /// getItems function
   ///
-  /// **Returns:** Future<List<dynamic>>
+  /// **Returns:** `Future<List<dynamic>>`
   Future<List<dynamic>> getItems(num count) async {
     final completer = Completer<List<dynamic>>();
 
@@ -226,7 +226,7 @@ class FullExample {
 
   /// getUniqueValues function
   ///
-  /// **Returns:** Future<Set<dynamic>>
+  /// **Returns:** `Future<Set<dynamic>>`
   Future<Set<dynamic>> getUniqueValues(List<num> values) async {
     final completer = Completer<Set<dynamic>>();
 
@@ -249,7 +249,7 @@ class FullExample {
 
   /// streamMessages function
   ///
-  /// **Returns:** Stream<String>
+  /// **Returns:** `Stream<String>`
   Stream<String> streamMessages(num count) {
     final controller = StreamController<String>();
 
@@ -281,7 +281,7 @@ class FullExample {
 
   /// streamIntegers function
   ///
-  /// **Returns:** Stream<num>
+  /// **Returns:** `Stream<num>`
   Stream<num> streamIntegers(num max) {
     final controller = StreamController<num>();
 
@@ -313,7 +313,7 @@ class FullExample {
 
   /// streamRandomNumbers function
   ///
-  /// **Returns:** Stream<num>
+  /// **Returns:** `Stream<num>`
   Stream<num> streamRandomNumbers(num count) {
     final controller = StreamController<num>();
 
@@ -345,7 +345,7 @@ class FullExample {
 
   /// streamUpdates function
   ///
-  /// **Returns:** Stream<Map<dynamic, dynamic>>
+  /// **Returns:** `Stream<Map<dynamic, dynamic>>`
   Stream<Map<dynamic, dynamic>> streamUpdates(num count) {
     final controller = StreamController<Map<dynamic, dynamic>>();
 
@@ -377,7 +377,7 @@ class FullExample {
 
   /// streamBatches function
   ///
-  /// **Returns:** Stream<List<dynamic>>
+  /// **Returns:** `Stream<List<dynamic>>`
   Stream<List<dynamic>> streamBatches(num batchCount, num batchSize) {
     final controller = StreamController<List<dynamic>>();
 
