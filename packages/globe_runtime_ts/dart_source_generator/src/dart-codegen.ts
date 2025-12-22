@@ -22,18 +22,21 @@ function formatDartDoc(text: string | undefined, indent: number = 2): string {
 
   // Format each paragraph
   const formattedParagraphs = paragraphs.map((paragraph) => {
-    // Split long lines at word boundaries (approximately 80 chars)
+    // Split long lines at word boundaries
     const words = paragraph.split(/\s+/);
     const lines: string[] = [];
     let currentLine = "";
 
+    // Maximum length of the line
+    const maxLength = 80;
+
     for (const word of words) {
-      if (currentLine.length + word.length + 1 > 80) {
+      if (currentLine.length + word.length + 1 > maxLength) {
         if (currentLine) {
           lines.push(currentLine);
           currentLine = word;
         } else {
-          // Word itself is longer than 80 chars
+          // Word itself is longer than maxLength chars
           lines.push(word);
         }
       } else {
@@ -86,12 +89,10 @@ function formatReturnDoc(
 ): string {
   const spaces = " ".repeat(indent);
 
-  if (returnDoc) {
-    return `${spaces}///\n${spaces}/// **Returns:** ${returnDoc}\n`;
-  }
+  const returns = returnDoc ? returnDoc : returnType;
 
-  if (returnType !== "void") {
-    return `${spaces}///\n${spaces}/// **Returns:** ${returnType}\n`;
+  if (returns && returns !== "void") {
+    return `${spaces}///\n${spaces}/// **Returns:** ${returns}\n`;
   }
 
   return "";
