@@ -3,7 +3,15 @@ import { constants, existsSync } from "fs";
 import { access, mkdir, rm, writeFile } from "fs/promises";
 import { join, resolve } from "path";
 import { promisify } from "util";
-import { afterEach, beforeAll, beforeEach, describe, expect, it } from "vitest";
+import {
+  afterAll,
+  afterEach,
+  beforeAll,
+  beforeEach,
+  describe,
+  expect,
+  it,
+} from "vitest";
 
 const execAsync = promisify(exec);
 
@@ -94,6 +102,11 @@ export default defineSdk({
   afterEach(async () => {
     await rm(testDir, { recursive: true, force: true });
     await rm(outputDir, { recursive: true, force: true });
+  });
+
+  afterAll(async () => {
+    await rm(TEST_DIR, { recursive: true, force: true });
+    await rm(OUTPUT_DIR, { recursive: true, force: true });
   });
 
   it(
