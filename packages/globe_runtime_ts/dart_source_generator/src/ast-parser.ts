@@ -192,22 +192,24 @@ function cleanJsDocComment(text: string): string {
   const paragraphs: string[] = [];
   let currentParagraph: string[] = [];
 
+  const addCurrentParagraph = () => {
+    if (currentParagraph.length > 0) {
+      paragraphs.push(currentParagraph.join(" "));
+      currentParagraph = [];
+    }
+  };
+
   for (const line of lines) {
     if (line.length === 0) {
       // Empty line - end current paragraph
-      if (currentParagraph.length > 0) {
-        paragraphs.push(currentParagraph.join(" "));
-        currentParagraph = [];
-      }
+      addCurrentParagraph();
     } else {
       currentParagraph.push(line);
     }
   }
 
   // Add the last paragraph if any
-  if (currentParagraph.length > 0) {
-    paragraphs.push(currentParagraph.join(" "));
-  }
+  addCurrentParagraph();
 
   // Join paragraphs with double newline
   return paragraphs.join("\n\n").trim();
