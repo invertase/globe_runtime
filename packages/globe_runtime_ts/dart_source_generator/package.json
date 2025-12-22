@@ -1,0 +1,42 @@
+{
+  "name": "@globe/dart_source_generator",
+  "version": "1.0.0",
+  "description": "Generate Dart source files from TypeScript declarations and JavaScript source for use with the Dart JS runtime interop",
+  "types": "dist/index.d.ts",
+  "main": "dist/index.js",
+  "sideEffects": false,
+  "scripts": {
+    "build": "npm run clean && tsc",
+    "watch": "npm run build -- --watch",
+    "clean": "rm -rf dist",
+    "test": "vitest",
+    "test:run": "vitest run",
+    "test:coverage": "vitest run --coverage.enabled --coverage.reporter=lcov --coverage.reporter=text"
+  },
+  "bin": {
+    "globe-dart-source-generator": "./dist/bin/generate.js"
+  },
+  "dependencies": {
+    "typescript": "^5.9.3",
+    "tsdown": "^0.18.2",
+    "glob": "^13.0.0",
+    "tslog": "^4.10.2",
+    "text-case": "^1.2.9"
+  },
+  "devDependencies": {
+    "@types/node": "^25.0.3",
+    "@vitest/coverage-v8": "^4.0.16",
+    "vitest": "^4.0.16",
+    "@globe/runtime_types": "workspace:*"
+  },
+  "keywords": [
+    "dart",
+    "ffi",
+    "v8",
+    "interop",
+    "globe",
+    "runtime",
+    "code generation"
+  ],
+  "license": "MIT"
+}

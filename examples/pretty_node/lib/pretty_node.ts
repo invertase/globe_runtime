@@ -23,8 +23,5 @@ export default {
   init: (..._: any[]): ModuleState => {
     return {};
   },
-  functions: {
-    make_pretty_bytes,
-    make_pretty_ms,
-  },
+  functions: { make_pretty_bytes, make_pretty_ms },
 };

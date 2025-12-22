@@ -1,0 +1,19 @@
+name: full_example
+version: 1.0.0
+description: A Dart package that uses @globe/dart_source_generator to generate Dart code from Node.js modules.
+publish_to: none
+
+environment:
+  sdk: ^3.4.0
+
+dependencies:
+  globe_runtime: "^1.0.8"
+ 
+
+dev_dependencies:
+  lints: ^6.0.0
+  test: ^1.24.0
+  rps: ^0.7.0
+
+scripts:
+  build: npm run generate

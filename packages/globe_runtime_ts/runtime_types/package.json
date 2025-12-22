@@ -3,6 +3,8 @@
   "version": "1.0.3",
   "description": "Global type declarations for the Dart JS runtime interop",
   "types": "index.d.ts",
+  "main": "index.js",
+  "type": "module",
   "sideEffects": false,
   "keywords": [
     "dart",
