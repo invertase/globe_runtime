@@ -46,6 +46,28 @@ importers:
         specifier: 'catalog:'
         version: 5.9.3
 
+  examples/js_to_dart_docs:
+    dependencies:
+      pretty-bytes:
+        specifier: ^7.1.0
+        version: 7.1.0
+      pretty-ms:
+        specifier: ^9.3.0
+        version: 9.3.0
+    devDependencies:
+      '@globe/dart_source_generator':
+        specifier: workspace:*
+        version: link:../../packages/globe_runtime_ts/dart_source_generator
+      '@globe/runtime_types':
+        specifier: workspace:*
+        version: link:../../packages/globe_runtime_ts/runtime_types
+      '@types/node':
+        specifier: 'catalog:'
+        version: 25.0.3
+      typescript:
+        specifier: 'catalog:'
+        version: 5.9.3
+
   examples/mjml:
     dependencies:
       mjml-browser:
