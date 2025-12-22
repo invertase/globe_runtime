@@ -92,7 +92,7 @@ function formatReturnDoc(
   const returns = returnDoc ? returnDoc : returnType;
 
   if (returns && returns !== "void") {
-    return `${spaces}///\n${spaces}/// **Returns:** ${returns}\n`;
+    return `${spaces}///\n${spaces}/// **Returns:** \`${returns}\`\n`;
   }
 
   return "";
