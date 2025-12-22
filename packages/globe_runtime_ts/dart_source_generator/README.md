@@ -12,6 +12,15 @@ Your TypeScript files should export an SDK object that is used to generate the D
 
 - **Automatic Bundling**: Bundles TypeScript/JavaScript files with all dependencies into single, minified outputs
 - **Type Preservation**: Generates TypeScript declaration files (.d.ts) and converts them to Dart-compatible formats
+- **Documentation Transfer**: Function JSDoc comments and parameter names are preserved from TypeScript to Dart
+- **Init Documentation**: `init` function documentation and parameters are transferred to the Dart `create` factory
+
+```
+Notes: 
+- The `init` function is optional.
+- The `functions` object is required.
+- To preserve documentation all documentation must be in JSDoc format and declared within the defineSdk function.
+```
 - **Batch Processing**: Process multiple files in a single run
 - **Watch Mode**: Monitor files for changes and automatically regenerate
 - **Flexible Input**: Accept individual files or scan entire directories
@@ -86,7 +95,7 @@ npx @globe/dart_source_generator --files src/index.ts --output dist/ --verbose
 2. **Bundling**: Uses `tsdown` to bundle your code with all dependencies, applying tree-shaking and minification
 3. **Extraction**: Extracts the bundled ESM output and TypeScript declarations
 4. **Dart Generation**: Converts the bundled code and type information into Dart-compatible source files
-5. **Output**: Generates `<filename>_source.dart` files in your specified output directory
+5. **Output**: Generates `<filename>_source.dart` files in your specified output directory. The output filename is a snake_case version of the TypeScript filename (e.g., `my-sdk.ts` or `mySdk.ts` -> `my_sdk_source.dart`).
 
 ## Example Workflow
 
@@ -95,44 +104,78 @@ Your TypeScript SDK should export a default object created with `defineSdk()` th
 #### TypeScript Input (`src/sdk.ts`)
 
 ```typescript
-import { defineSdk, returnInt, streamString } from "@globe/runtime_types";
+import { defineSdk, returnInt, streamMap } from "@globe/runtime_types";
 
 type ModuleState = {
   apiUrl: string;
   timeout: number;
 };
 
-const fetch_users = streamString(
-  async (state: ModuleState, callbackId: number) => {
-    try {
-      const url = `${state.apiUrl}/users`;
-      const response = await fetch(url, { signal: AbortSignal.timeout(state.timeout) });
-
-      for await (const chunk of response.body!.values()) {
-        Dart.stream_value(callbackId, chunk);
-      }
-
-      Dart.stream_value_end(callbackId);
-    } catch (error) {
-      Dart.send_error(callbackId, `Stream failed: ${error.message}`);
-    }
-  }
-);
-
-const calculate_price = returnInt(
-  (state: ModuleState, quantity: number, price: number, callbackId: number) => {
-    const total = quantity * price;
-    Dart.send_value(callbackId, new TextEncoder().encode(total.toString()));
-  }
-);
-
 export default defineSdk({
-  init(apiUrl: string = "https://api.example.com", timeout: number = 5000): ModuleState {
+  /**
+   * Initialize the SDK with authentication credentials
+   *
+   * This sets up the SDK with your API key and configures the timeout
+   * for all network requests.
+   *
+   * @param apiUrl - The base URL for API requests
+   * @param timeout - Request timeout in milliseconds
+   */
+  init(
+    apiUrl: string = "https://api.example.com",
+    timeout: number = 5000
+  ): ModuleState {
     return { apiUrl, timeout };
   },
   functions: {
-    fetch_users,
-    calculate_price,
+    /**
+     * Streams user information from the API
+     *
+     * This function retrieves user information based on the provided user ID.
+     *
+     * @param userId - The unique identifier for the user
+     * @returns The user's information as a map of key-value pairs in a stream.
+     */
+    fetch_user: streamMap(
+      async (state: ModuleState, userId: string, callbackId: number) => {
+        try {
+          const url = `${state.apiUrl}/user/${userId}`;
+          const response = await fetch(url, {
+            signal: AbortSignal.timeout(state.timeout),
+          });
+
+          for await (const chunk of response.body!.values()) {
+            Dart.stream_value(callbackId, chunk);
+          }
+
+          Dart.stream_value_end(callbackId);
+        } catch (error) {
+          Dart.send_error(
+            callbackId,
+            `Stream failed: ${(error as Error).message}`
+          );
+        }
+      }
+    ),
+
+    /**
+     * Calculates the total price based on quantity and price per unit
+     *
+     * @param quantity - The number of units
+     * @param price - The price per unit
+     * @returns The total price
+     */
+    calculate_price: returnInt(
+      (
+        state: ModuleState,
+        quantity: number,
+        price: number,
+        callbackId: number
+      ) => {
+        const total = quantity * price;
+        Dart.send_value(callbackId, new TextEncoder().encode(total.toString()));
+      }
+    ),
   },
 });
 ```
@@ -142,6 +185,127 @@ export default defineSdk({
 ```bash
 npx @globe/dart_source_generator --files src/sdk.ts --output lib/generated/
 ```
+
+The generator will create a Dart file for each TypeScript file in the specified output directory.
+
+The generated Dart file would be (`lib/generated/sdk_source.dart`):
+
+```dart
+// GENERATED FILE — DO NOT MODIFY BY HAND
+// This file was generated from @globe/dart_source_generator
+// ignore_for_file: unused_import
+
+import 'dart:async';
+import 'dart:convert';
+import 'package:globe_runtime/globe_runtime.dart';
+
+/// Package version
+const packageVersion = '1.0.0';
+
+/// Package source code
+const packageSource = r'''
+...(minified code)
+''';
+
+/// {@template Sdk}
+/// Sdk class
+/// {@endtemplate}
+class Sdk {
+  /// {@macro Sdk}
+  Sdk._(this._module);
+
+  /// Module instance
+  final Module _module;
+
+  /// Initialize the SDK with authentication credentials
+  ///
+  /// This sets up the SDK with your API key and configures the timeout for all
+  /// network requests.
+  ///
+  /// **Parameters:**
+  /// * [apiUrl]: The base URL for API requests
+  /// * [timeout]: Request timeout in milliseconds
+  static Future<Sdk> create({String? apiUrl, num? timeout}) async {
+    const module = InlinedModule(
+      name: 'Sdk',
+      sourceCode: packageSource,
+    );
+
+    await module.register(args: [apiUrl?.toFFIType, timeout?.toFFIType]);
+    return Sdk._(module);
+  }
+
+  /// Disposes of the runtime instance
+  void dispose() {
+    GlobeRuntime.instance.dispose();
+  }
+
+  /// Streams user information from the API
+  ///
+  /// This function retrieves user information based on the provided user ID.
+  ///
+  /// **Parameters:**
+  /// * [userId]: The unique identifier for the user
+  ///
+  /// **Returns:** The user's information as a map of key-value pairs in a stream.
+  Stream<Map<dynamic, dynamic>> fetchUser(String userId) {
+    final controller = StreamController<Map<dynamic, dynamic>>();
+
+    _module.callFunction(
+      'fetch_user',
+      args: [userId.toFFIType],
+      onData: (data) {
+        if (data.hasError()) {
+          controller.addError(data.error);
+          return true;
+        }
+
+        if (data.hasData()) {
+          final value = data.data.unpack();
+          controller.add(value as Map<dynamic, dynamic>);
+        }
+
+        if (data.done) {
+          controller.close();
+          return true;
+        }
+
+        return false; // Keep listening for more data
+      },
+    );
+
+    return controller.stream;
+  }
+
+  /// Calculates the total price based on quantity and price per unit
+  ///
+  /// **Parameters:**
+  /// * [quantity]: The number of units
+  /// * [price]: The price per unit
+  ///
+  /// **Returns:** The total price
+  Future<num> calculatePrice(num quantity, num price) async {
+    final completer = Completer<num>();
+
+    _module.callFunction(
+      'calculate_price',
+      args: [quantity.toFFIType, price.toFFIType],
+      onData: (data) {
+        if (data.hasError()) {
+          completer.completeError(data.error);
+        } else {
+          final value = data.data.unpack();
+          completer.complete(value as num);
+        }
+        return true;
+      },
+    );
+
+    return completer.future;
+  }
+}
+```
+
 
 #### Output
 
@@ -172,7 +336,7 @@ void main() async {
   print('Total Price: $price');
 
   // Call streaming functions (returns a Stream)
-  final userStream = await sdk.fetchUsers();
+  final userStream = await sdk.fetchUser('123');
   
   final completer = Completer<void>();
   userStream.listen((user) {
